@@ -1,0 +1,43 @@
+# -------------------------------------------------------
+# create 3dDeconvolve -nodata command
+
+3dDeconvolve                                                                 \
+    -nodata 5256 1.000                                                       \
+    -polort 5                                                                \
+    -concat '1D: 0 657 1314 1971 2628 3285 3942 4599'                        \
+    -num_stimts 4                                                            \
+    -stim_times 1 fastloc.stimes.adv.1_01_VisWord.1D 'BLOCK(4,1)'            \
+    -stim_label 1 VisWord                                                    \
+    -stim_times 2 fastloc.stimes.adv.1_02_FalVisWord.1D 'BLOCK(4,1)'         \
+    -stim_label 2 FalVisWord                                                 \
+    -stim_times 3 fastloc.stimes.adv.1_03_AudWord.1D 'BLOCK(4,1)'            \
+    -stim_label 3 AudWord                                                    \
+    -stim_times 4 fastloc.stimes.adv.1_04_FalAudWord.1D 'BLOCK(4,1)'         \
+    -stim_label 4 FalAudWord                                                 \
+    -num_glt 6                                                               \
+    -gltsym 'SYM: VisWord -FalVisWord' -glt_label 1 VisWord-FalVisWord       \
+    -gltsym 'SYM: VisWord -AudWord' -glt_label 2 VisWord-AudWord             \
+    -gltsym 'SYM: VisWord -FalAudWord' -glt_label 3 VisWord-FalAudWord       \
+    -gltsym 'SYM: FalVisWord -AudWord' -glt_label 4 FalVisWord-AudWord       \
+    -gltsym 'SYM: FalVisWord -FalAudWord' -glt_label 5 FalVisWord-FalAudWord \
+    -gltsym 'SYM: AudWord -FalAudWord' -glt_label 6 AudWord-FalAudWord       \
+    -x1D X.fastloc.stimes.adv.1.xmat.1D
+
+# compute the sum of non-baseline regressors
+3dTstat -sum -prefix sum_ideal.1D X.fastloc.stimes.adv.1.xmat.1D'[48..$]'
+
+# consider plotting the SUM below non-polort regressors:
+# (if(0) allows easy copy-and-paste)
+if ( 0 ) then
+   1dplot -sepscl -xlabel Time -ynames SUM - sum_ideal.1D     \
+       X.fastloc.stimes.adv.1.xmat.1D'[48..$]'
+endif
+
+# or the more completely labeled command:
+if ( 0 ) then
+   1dplot -sepscl -xlabel "Time index"                        \
+          -ynames SUM VisWord FalVisWord AudWord FalAudWord - \
+           sum_ideal.1D X.fastloc.stimes.adv.1.xmat.1D'[48..$]'
+endif
+
+
