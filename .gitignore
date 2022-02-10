@@ -1,5 +1,5 @@
 # Psychopy Response Logs
-./PsychoPy/WordNonword/data/*
+PsychoPy/WordNonword/data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
