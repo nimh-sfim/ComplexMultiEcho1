@@ -1,14 +1,10 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-    Experiment Name:        fastloc_malins
-    Version:                4.0
-    Date:                   13 September 2017
-    Script Author:          Sibylla Leon Guerrero
-    Scripting               PsychoPy2 Experiment Builder&Coder (v1.85.3)
-    12 Nov2019
+    Original Experiment Name:        fastloc_malins, v4.0, 13-09-2017
+    Original Script Author:          Sibylla Leon Guerrero
     Updating Authors:       Ramya Varadarajan & Dan Handwerker
-    Updating Note:          Now works in PsychoPy3 and also edited inputs & timing
+    Updating Note:          Now works in PsychoPy v2021.2.3
                             Visual stimuli are spaced by 1 sec, just like audio stimuli
     Design  Author:==
     Malins, J. G., Gumkowski, N., Buis, B., Molfese, P., Rueckl, J. G., Frost, S. J.,  rbrrgrr
