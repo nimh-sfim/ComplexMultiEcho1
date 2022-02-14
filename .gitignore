@@ -1,5 +1,8 @@
 # Psychopy Response Logs
 PsychoPy/WordNonword/data/
+PsychoPy/MovieRespiration/data/
+PsychoPy/WordNonword/RunLogs/
+PsychoPy/MovieRespiration/RunLogs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

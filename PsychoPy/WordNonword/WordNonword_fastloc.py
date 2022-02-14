@@ -53,7 +53,7 @@ if dlg.OK:  print(expInfo)
 else:       print('User Cancelled'); core.quit() 
 
 # Data file name stem = absolute path + name + ID number + date
-filename = _thisDir + os.sep + 'data/%s_%s_RUN%s_%s' %(expInfo['ID'], expName, 
+filename = _thisDir + os.sep + 'RunLogs/%s_%s_RUN%s_%s' %(expInfo['ID'], expName, 
                 expInfo['RUN'], expInfo['date'])
 
 # An ExperimentHandler for data saving
