@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
     Original Experiment Name:        fastloc_malins, v4.0, 13-09-2017
@@ -23,7 +23,7 @@ from psychopy.constants import (NOT_STARTED, STARTED, PLAYING, PAUSED,
                                 STOPPED, FINISHED, PRESSED, RELEASED, FOREVER)
 import numpy as np  # whole numpy lib is available, prepend 'np.'
 from numpy import (sin, cos, tan, log, log10, pi, average,
-                   sqrt, std, deg2rad, rad2deg, linspace, asarray)
+                   sqrt, std, deg2rad, rad2deg, linspace, asarray, zeros)
 from numpy.random import random, randint, normal, shuffle
 import os           # system and path functions
 import sys          # to get file system encoding
@@ -38,10 +38,10 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))#.decode(sys.getfilesysteme
 os.chdir(_thisDir)
 
 # Store info about the experiment session
-expName = 'fastloc_malins_v4' 
+expName = 'WordNonword_fastloc' 
 expInfo = {'sync': u't', 'end_break': 'space', 
             'abort': 'escape','Choose': 'RUN 0 for Sound Test; RUN 1-8 for task',
-            'RUN':['0','1', '2', '3', '4', '5', '6', '7', '8', '99'], 'TR':['2000', '650'], 'ID': u''}
+            'RUN':['0','1', '2', '3', '4', '5', '6', '7', '8', '99'], 'TR':['2000', '1500'], 'ID': u''}
 
 expInfo['date'] = data.getDateStr() 
 expInfo['expName'] = expName
@@ -66,7 +66,7 @@ thisExp = data.ExperimentHandler(name=expName, version='4',
 #       Edit experiment parameters
 # ------------------------------------------------------------
 # Set experiment parameters: run onset, ends and test stimuli
-stimuli = '%s%s%s' %('fastloc_newrun',expInfo['RUN'],'.xlsx')
+stimuli = f"WordNonword_run{expInfo['RUN']}.csv"
 stimDuration = 0.600
 soundDuration = 0.900
 # Each stimulus is set to appear 1s after the previous stimulus as defined later in the code
@@ -91,8 +91,11 @@ win = visual.Window(
 
 # store frame rate of monitor if we can measure it
 expInfo['frameRate'] = win.getActualFrameRate()
-if expInfo['frameRate'] != None:    frameDur = 1.0 / round(expInfo['frameRate'])
-else:                               frameDur = 1.0 / 60.0  # if measuring doesn't work, then guess
+if expInfo['frameRate'] != None:    
+    frameDur = 1.0 / round(expInfo['frameRate'])
+else:                               
+    frameDur = 1.0 / 60.0  # if measuring doesn't work, then guess
+    print("WARNING: Frame Duration Unknown. Assuming 60Hz")
 
 #   Calculate the number of frames for the trial stimuli & ISIs
 stimFrames = round(stimDuration * expInfo['frameRate'])
@@ -109,16 +112,16 @@ rect0 = visual.Rect(        #RV: rect0 is the rectangle in the middle of the scr
     win=win, name='rect0',
     width=(0.5), height=(0.45),
     ori=0, pos=(0, 0),
-    lineWidth=1, lineColor=[-1.000,-1.000,-1.000], lineColorSpace='rgb',
-    fillColor=[-1.000,-1.000,-1.000], fillColorSpace='rgb',
+    lineWidth=1, lineColor=[0.004,0.004,0.004], lineColorSpace='rgb',
+    fillColor=[0.004,0.004,0.004], fillColorSpace='rgb',
     opacity=1, depth=-1.0, interpolate=True)
 
 rect1 = visual.Rect(    #RV: rect1 is the rectangle in the middle of the screen after the starting key (a, e, u, l, =, etc)
     win=win, name='rect0',
     width=(0.5), height=(0.45),
     ori=0, pos=(0, 0),
-    lineWidth=1, lineColor=[-1.000,-1.000,-1.000], lineColorSpace='rgb',
-    fillColor=[-1.000,-1.000,-1.000], fillColorSpace='rgb',
+    lineWidth=1, lineColor=[0.004,0.004,0.004], lineColorSpace='rgb',
+    fillColor=[0.004,0.004,0.004], fillColorSpace='rgb',
     opacity=1, depth=-1.0, interpolate=True)
     
 
@@ -191,13 +194,15 @@ def VisualTrial():
     stim3.setText(target3); stim3.setFont(Font); stim3.setHeight(Height);
     stim4.setText(target4); stim4.setFont(Font); stim4.setHeight(Height);
     
-    if expInfo['TR'] == '650':   
-        StartTR = StartTR650
-        thisITI = ITI650
-    elif expInfo['TR'] == '2000':
-        thisITI = ITI2000
-        StartTR = StartTR2000
+    # if expInfo['TR'] == '650':   
+    #     StartSec = StartSec650
+    #     thisITI = ITI650
+    # elif expInfo['TR'] == '2000':
+    #     thisITI = ITI2000
+    #     StartSec = StartSec2000
     
+    # print(f"StartSec={StartSec} thisITI={thisITI}, StartSec650={StartSec650}, ITI650={ITI650}, ITI2000={ITI2000}, StartSec2000={StartSec2000}")
+    print(f"StartSec={StartSec} thisITI={thisITI}")
     # keep track of which components have finished
     trialComponents = [rect1, stim1, stim2, stim3, stim4]
     for thisComponent in trialComponents:
@@ -217,12 +222,12 @@ def VisualTrial():
             # keep track of start time/frame for later
             rect1.frameNStart = frameN  # exact frame index
             rect1.setAutoDraw(True)
-        rect1_frameRemains = StartTR + thisITI - 0.05 - win.monitorFramePeriod * 0.75  # most of one frame period left
+        rect1_frameRemains = StartSec + thisITI - 0.05 - win.monitorFramePeriod * 0.75  # most of one frame period left
         if rect1.status == STARTED and stim4.status == STOPPED:
             rect1.setAutoDraw(False)
         
         # *stim1* updates
-        if gt >= StartTR + trigger_time -0.017 - win.monitorFramePeriod * 0.75 and stim1.status == NOT_STARTED:
+        if gt >= StartSec + trigger_time -0.017 - win.monitorFramePeriod * 0.75 and stim1.status == NOT_STARTED:
             # keep track of start time/frame for later
             stim1.frameNStart = frameN  # exact frame index
             stim1.setAutoDraw(True)
@@ -232,7 +237,7 @@ def VisualTrial():
             stim1.setAutoDraw(False)
         
         # *stim2* updates
-        if gt >= StartTR+1+trigger_time -0.017 - win.monitorFramePeriod * 0.75 and stim2.status == NOT_STARTED:
+        if gt >= StartSec+1+trigger_time -0.017 - win.monitorFramePeriod * 0.75 and stim2.status == NOT_STARTED:
             # keep track of start time/frame for later
             stim2.frameNStart = frameN  # exact frame index
             stim2.setAutoDraw(True)
@@ -242,7 +247,7 @@ def VisualTrial():
             stim2.setAutoDraw(False)
         
         # *stim3* updates
-        if gt >= StartTR+2+trigger_time -0.017 - win.monitorFramePeriod * 0.75 and stim3.status == NOT_STARTED:
+        if gt >= StartSec+2+trigger_time -0.017 - win.monitorFramePeriod * 0.75 and stim3.status == NOT_STARTED:
             # keep track of start time/frame for later
             stim3.frameNStart = frameN  # exact frame index
             stim3.setAutoDraw(True)
@@ -252,7 +257,7 @@ def VisualTrial():
             stim3.setAutoDraw(False)
         
         # *stim4* updates
-        if gt >= StartTR+3+trigger_time -0.017 - win.monitorFramePeriod * 0.75 and stim4.status == NOT_STARTED:
+        if gt >= StartSec+3+trigger_time -0.017 - win.monitorFramePeriod * 0.75 and stim4.status == NOT_STARTED:
             # keep track of start time/frame for later
             stim4.frameNStart = frameN  # exact frame index
             stim4.setAutoDraw(True)
@@ -307,12 +312,12 @@ def AudioTrial():
     sound2.setSound('sound_files/' + target2 + '.wav', secs=0.8)
     sound3.setSound('sound_files/' + target3 + '.wav', secs=0.8)
     sound4.setSound('sound_files/' + target4 + '.wav', secs=0.8)
-    if expInfo['TR'] == '650':   
-        StartTR = StartTR650
-        thisITI = ITI650
-    elif expInfo['TR'] == '2000':
-        thisITI = ITI2000
-        StartTR = StartTR2000
+    # if expInfo['TR'] == '650':   
+    #     StartSec = StartSec650
+    #     thisITI = ITI650
+    # elif expInfo['TR'] == '2000':
+    #     thisITI = ITI2000
+    #     StartSec = StartSec2000
     
     # keep track of which components have finished
     trialComponents = [rect1, sound1, sound2, sound3, sound4]
@@ -333,12 +338,12 @@ def AudioTrial():
             # keep track of start time/frame for later
             rect1.frameNStart = frameN  # exact frame index
             rect1.setAutoDraw(True)
-        rect1_frameRemains = StartTR + thisITI - 0.05 - win.monitorFramePeriod * 0.75  # most of one frame period left
+        rect1_frameRemains = StartSec + thisITI - 0.05 - win.monitorFramePeriod * 0.75  # most of one frame period left
         if rect1.status == STARTED and sound4.status == STOPPED:
             rect1.setAutoDraw(False)
         
         # *sound1* updates
-        if gt >= StartTR + trigger_time -0.017 - win.monitorFramePeriod * 0.75 and sound1.status == NOT_STARTED:
+        if gt >= StartSec + trigger_time -0.017 - win.monitorFramePeriod * 0.75 and sound1.status == NOT_STARTED:
             # keep track of start time/frame for later
             sound1.frameNStart = frameN  # exact frame index
             sound1.play()
@@ -348,7 +353,7 @@ def AudioTrial():
             sound1.stop()
         
         # *sound2* updates
-        if gt >= StartTR+1.0+trigger_time -0.017 - win.monitorFramePeriod * 0.75 and sound2.status == NOT_STARTED:
+        if gt >= StartSec+1.0+trigger_time -0.017 - win.monitorFramePeriod * 0.75 and sound2.status == NOT_STARTED:
             # keep track of start time/frame for later
             sound2.frameNStart = frameN  # exact frame index
             sound2.play()
@@ -358,7 +363,7 @@ def AudioTrial():
             sound2.stop()
         
         # *sound3* updates
-        if gt >= StartTR+2.0+trigger_time -0.017 - win.monitorFramePeriod * 0.75 and sound3.status == NOT_STARTED:
+        if gt >= StartSec+2.0+trigger_time -0.017 - win.monitorFramePeriod * 0.75 and sound3.status == NOT_STARTED:
             # keep track of start time/frame for later
             sound3.frameNStart = frameN  # exact frame index
             sound3.play()
@@ -368,7 +373,7 @@ def AudioTrial():
             sound3.stop()
         
         # *sound4* updates
-        if gt >= StartTR+3.0+trigger_time -0.017 - win.monitorFramePeriod * 0.75 and sound4.status == NOT_STARTED:
+        if gt >= StartSec+3.0+trigger_time -0.017 - win.monitorFramePeriod * 0.75 and sound4.status == NOT_STARTED:
             # keep track of start time/frame for later
             sound4.frameNStart = frameN  # exact frame index
             sound4.play()
@@ -567,6 +572,34 @@ trials = data.TrialHandler(nReps=1, method='sequential',
                            extraInfo=expInfo, originPath=-1,
                            trialList=data.importConditions(stimuli),
                            seed=None, name='trials')
+
+# Adjust trial start times so that every trial starts at the beginning of a TR
+NumTrials = len(trials.trialList)
+TrialStartSec = zeros(NumTrials)
+ITISec_byTR = zeros(NumTrials)
+TR = int(expInfo['TR'])/1000
+for tnum in range(NumTrials):
+    tmpITI = trials.trialList[tnum]["ITISec"]
+    TRdiff = tmpITI % TR
+    # If the nearest on TR start time is greater than the current ITI
+    # or if substracting would result in an ITI less than 8 sec, the
+    # round up to the next on-TR ITI. Otherwise round down.
+    if (TRdiff > (TR/2)) or ((tmpITI-TRdiff) < 8):
+        ITISec_byTR[tnum] = tmpITI + TR-TRdiff
+    else:
+        ITISec_byTR[tnum] = tmpITI -TRdiff
+    if tnum < (NumTrials-1):
+        TrialStartSec[tnum+1] = TrialStartSec[tnum]+ITISec_byTR[tnum]
+
+TotalRunLength = TrialStartSec[-1]+ITISec_byTR[-1]
+NumberOfVolumes = TotalRunLength/TR
+print(f"Run is {NumberOfVolumes} volumes, {TotalRunLength} sec or {TotalRunLength/60} min")
+
+# Insert the TR-locked times back into the trial handler
+for tnum in range(NumTrials):
+    trials.trialList[tnum]["StartSec"] = TrialStartSec[tnum]
+    trials.trialList[tnum]["thisITI"] = ITISec_byTR[tnum]
+
 thisExp.addLoop(trials)  # add the loop to the experiment
 thisTrial = trials.trialList[0]  # so we can initialise stimuli with some values
 print("thisTrial initial")

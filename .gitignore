@@ -3,6 +3,8 @@ PsychoPy/WordNonword/data/
 PsychoPy/MovieRespiration/data/
 PsychoPy/WordNonword/RunLogs/
 PsychoPy/MovieRespiration/RunLogs/
+# Current not uploading stimulus movies until we're more sure that we won't keep changing the movie choice
+*.mp4
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
