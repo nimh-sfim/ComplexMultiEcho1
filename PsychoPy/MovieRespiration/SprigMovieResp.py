@@ -1,3 +1,4 @@
+
 # Movie w/ Respiration task (2-3 runs)
 
 #GENERATE WITH:
@@ -65,21 +66,38 @@ thisExp = data.ExperimentHandler(name=expName,
 amplitude = [0.01,0.02,0.03];
 frequency = [(1.5*np.pi*0.2),(2*np.pi*0.2),(2.5*np.pi*0.2)];
 
+# 1st matrix
 mat1_0,mat1_1,mat1_2 = [(amplitude[0], i) for i in frequency],[(amplitude[1], i) for i in frequency],[(amplitude[2], i) for i in frequency]
-mat1 = mat1_0+mat1_1+mat1_2     # run 1
-mat2 = mat1[len(mat1)-1::-1]    # run 2 = reverse of run 1
+mat1 = mat1_0+mat1_1+mat1_2
+# 2nd matrix = reverse of 1st matrix
+mat2 = mat1[len(mat1)-1::-1]
+# 3rd matrix = odd frequencies 1st, even frequencies 2nd
 odd = [i for i in mat2 if round(i[1]) % 2 != 0]    # run 3 = odd freq then even freq runs (from mat2 order)
 even = [i for i in mat2 if round(i[1]) % 2 == 0]
 mat3 = odd+even
 
+# ==============================================================
+#       Counterbalancing Subject-Matrix Order
+# ==============================================================
+
 if expInfo['RUN'] == 1:
-    matrix_run = mat1
+    if int(expInfo['ID']) % 2 != 0:     # Run1 --> odd subjs have matrix 1
+        matrix_run = mat1
+    elif int(expInfo['ID']) % 2 == 0:   #      --> even subjs have matrix 2
+        matrix_run = mat2
+    else:
+        raise Exception("Subject ID invalid. Must be an integer type.")
 elif expInfo['RUN'] == 2:
-    matrix_run = mat2
+    if int(expInfo['ID']) % 2 != 0:     # Run 2 --> odd subjs have matrix 2
+        matrix_run = mat2
+    elif int(expInfo['ID']) % 2 == 0:   #      --> even subjs have matrix 1
+        matrix_run = mat1
+    else:
+        raise Exception("Subject ID invalid. Must be an integer type.")
 elif expInfo['RUN'] == 3:
     matrix_run = mat3
 else:
-    matrix_run = mat1       # run matrix 1 on test runs
+    matrix_run = mat1       # run matrix 1 on test runs (RUN = 0)
 
 resp_pattern = [np.sin(i[1]*np.linspace(0,300,num=3000))*i[0]+0.11 for i in matrix_run]
 print("Matrix of array blocks (9) for the run: ", resp_pattern)
