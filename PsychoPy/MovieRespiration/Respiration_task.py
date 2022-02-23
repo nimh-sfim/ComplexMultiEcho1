@@ -9,7 +9,7 @@ import numpy as np
 
 # CHOOSE YOUR monitor
 # =======================
-fullScreen=False # set to true during experiments
+fullScreen=True # set to true during experiments
 
 # CREATE SCREEN
 # ================
@@ -21,11 +21,16 @@ win = visual.Window(
     blendMode='avg', useFBO=True,
     units='height', depthBits=24)
 
-# allow window to close with keypress 'q'
-for quit in event.getKeys(keyList=['escape','q'], timeStamped=False):
-    if quit in ['escape','q']:
-        win.close();
-        core.quit();
+# ==================================================================
+# Allow Escape or "q" key   --> during "while" loop, while stim is AutoDrawing
+# ==================================================================
+def escape():
+    for key in event.getKeys(keyList=['escape','q'], timeStamped=False):
+        if key in ['escape','q']:                                                                       #could also be if key != [] or something to that effect
+            win.close();
+            core.quit();
+
+escape()
 
 # --------- Set Up Environment --------------------------------------------------
 
@@ -49,13 +54,19 @@ if dlg.OK:  print(expInfo)
 else:       print('User Cancelled'); core.quit() 
 
 # Data file name stem = absolute path + name + ID number + date
-filename = _thisDir + os.sep + 'data/%s_%s_RUN%s_%s' %(expInfo['ID'], expName, 
+filename = _thisDir + os.sep + 'RunLogs/%s_%s_RUN%s_%s' %(expInfo['ID'], expName, 
                 expInfo['RUN'], expInfo['date'])
 
 # An ExperimentHandler for data saving
 thisExp = data.ExperimentHandler(name=expName,
         extraInfo=expInfo, runtimeInfo=None, originPath=None,
         savePickle=True, saveWideText=True, dataFileName=filename)
+
+# save a log file for detailed verbose info
+logFile = logging.LogFile(filename+'.log', level=logging.EXP)
+logging.console.setLevel(logging.WARNING)  
+
+endExpNow = False  # flag for 'escape' or other condition => quit the exp
 
 # ==============================================================
 #       BUBBLE STIM PARAMETERS (BY RUN)
@@ -73,52 +84,22 @@ if expInfo['RUN'] == 1:
 else:
     matrix_run = mat1       # run matrix 1 on all practice & real runs
 
+# log matrix with tuple (ampl[0], freq[1])
+logging.log(level=logging.EXP,msg=f"Current (ampl,freq) matrix for run {expInfo['RUN']}: {matrix_run}")
+
 resp_pattern = [np.sin(i[1]*np.linspace(0,300,num=3000))*i[0]+0.11 for i in matrix_run]
-print("Matrix of array blocks (9) for the run: ", resp_pattern)
+logging.log(level=logging.EXP,msg=f"Current sine function (f(x)) matrix for run {expInfo['RUN']}: {resp_pattern}")
+
 
 # TASK DURATIONS & TIMING                                                                        TOTAL TIME = (21*5)+(39*5)+18+10.5=328.5s / 1.5 = 219 TRs (+ 4 extra)  ===> 5:34.5 min
 # ===================
 bubbletime = 60;
 blocks = 9;
 
-# SET LOG FILE NAME
-# ====================
-fileDlg = gui.Dlg(title="Run Information");
-fileDlg.addField('Log Prefix: ');
-
-"""
-DAN'S LOGGING:
-if gui.OK:      # if GUI works --> make log file & record data in it
-    Dlg_Responses=fileDlg.data;
-    LogFilePrefix=Dlg_Responses[0];
-    LogFileName = f"{_thisDir}{os.sep}RunLogs{os.sep}{LogFilePrefix}_RespTask_%s_log.txt"
-else:           # if not... --> test log
-    print('User Cancelled')
-    LogFileName = f"{_thisDir}{os.sep}RunLogs{os.sep}_RespTask_%s_log.txt"
-"""
-
-
-fileDlg.show();
-if gui.OK:      # if GUI works --> make log file & record data in it
-    Dlg_Responses=fileDlg.data;
-    LogFilePrefix=Dlg_Responses[0];
-    LogFileName='/Users/holnessmn/Desktop/Tasks_OHBM2022/FishBoy_Movie/Logs/'+LogFilePrefix+'_Log.txt';
-else:           # if not... --> test log
-    print('User Cancelled')
-    LogFileName='/Users/holnessmn/Desktop/Tasks_OHBM2022/FishBoy_Movie/Logs/testLog.txt';
-
-# writing 34 [empty] lines in logfile
-Logger=logging.LogFile(LogFileName,34,'w');
-
 # =========================================
-# SETTING LOGGING
+# SETTING GLOBAL CLOCK
 # =========================================                                                       # use the core clock
 globalClock = core.Clock()
-#logging.setDefaultClock(globalClock)                                                               #set logging according to core clock
-#logging.console.setLevel(logging.DATA)                                            #set the console to receive nearly all messages
-#Logger=logging.LogFile(LogFileName,logging.DATA,'w');               # prepare above logfile to write data
-#win.setRecordFrameIntervals(True);                                                  #capture frame intervals
-#win.saveFrameIntervals(fileName=LogFileName, clear=False);          #write frame intervals to LogFileName
 
 # ==============================================================================================================================
 # ======================                           OBJECTS                            ===============================================================
@@ -130,7 +111,7 @@ bubble = visual.ShapeStim(
     size=(0.1, 0.1),vertices='circle',
     ori=0.0,pos=(0, 0),lineWidth=1.0,
     colorSpace='rgb',lineColor=[0.8824, 0.9451, 1.0000],
-    fillColor=None,opacity=0.3,interpolate=True)
+    fillColor=None,opacity=0.3,interpolate=True,autoLog=False)
 
 # ==============================================================
 # ===========                INSTRUCTIONS                    ==============
@@ -142,36 +123,37 @@ Instr_Video_S=visual.TextStim(win,text=Instr_Video_T,height=25,units='pix',name=
 # PRINT FIRST SET OF INSTRUCTIONS AND WAIT FOR TRIGGER
 # ==================================================================
 Instr_Video_S.draw();win.flip();
-#win.logOnFlip('Instructions FRAME TIME = %s' %(win.lastFrameT),logging.DATA);
+win.logOnFlip('Instructions FRAME TIME = %s' %(win.lastFrameT),logging.DATA);
 event.waitKeys(keyList=['t']);        # MUST PRESS "T" to trigger rest period!!!                                                                                                                   # Wait for Scanner Trigger.                                                                                                               # Record Scanning Start Time
 
 # ==================================================================
 # RESET GLOBAL CLOCK & LOG EXP START TIME
 # ==================================================================
 globalClock.reset()
-#win.flip(); win.logOnFlip('ExpStartTime = %s' %(globalClock.getTime()),logging.DATA);
+win.flip(); win.logOnFlip('ExpStartTime = %s' %(globalClock.getTime()),logging.DATA);
 
-# STARTING REST BUBBLE --> 60s
+# REST BUBBLE --> 60s intervals
 # =========================
 bubbletimer = core.Clock()
 bubbletimer.add(bubbletime)
 for i in range(0,9):    # i = resp_pattern[0] 
     tmp_timer = core.MonotonicClock()
     tmp_array = resp_pattern[i]
-    print("Current time array: ", tmp_array)
+    logging.log(level=logging.EXP, msg=f"Array {i}: {tmp_array}")
     while bubbletimer.getTime() < 0:  # duration of 60s
         # get the time from the monotonic clock
         t = tmp_timer.getTime();
         bubble.size = tmp_array[round(t*10)]
         bubble.setAutoDraw(True)
+        escape()
         # update the window after every draw
         win.update()
     bubbletimer.add(bubbletime)     # re-add the time once it runs out (at end of while loop)
 bubble.setAutoDraw(False)
-win.flip()
+win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Resp START: {globalClock.getTime()}")
 
 # get the end global clock time
-#win.flip(); win.logOnFlip('ExpEndTime = %s' %(globalClock.getTime()),logging.DATA);
+win.flip(); win.logOnFlip('ExpEndTime = %s' %(globalClock.getTime()),logging.DATA);
 
 win.close()
 core.quit()
