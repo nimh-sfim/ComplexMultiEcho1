@@ -40,8 +40,8 @@ os.chdir(_thisDir)
 # Store info about the experiment session
 expName = 'WordNonword_fastloc' 
 expInfo = {'sync': u't', 'end_break': 'space', 
-            'abort': 'escape','Choose': 'RUN 0 for Sound Test; RUN 1-8 for task',
-            'RUN':['0','1', '2', '3', '4', '5', '6', '7', '8', '99'], 'TR':['2000', '1500'], 'ID': u''}
+            'abort': 'escape','Choose': 'RUN 1-9 for task',
+            'RUN':['1', '2', '3', '4', '5', '6', '7', '8', '9', 'audtest', 'shorttest'], 'TR':['1500', '2000'], 'ID': u''}
 
 expInfo['date'] = data.getDateStr() 
 expInfo['expName'] = expName
@@ -53,7 +53,7 @@ if dlg.OK:  print(expInfo)
 else:       print('User Cancelled'); core.quit() 
 
 # Data file name stem = absolute path + name + ID number + date
-filename = _thisDir + os.sep + 'RunLogs/%s_%s_RUN%s_%s' %(expInfo['ID'], expName, 
+filename = _thisDir + os.sep + 'RunLogs' + os.sep + '%s_%s_RUN%s_%s' %(expInfo['ID'], expName, 
                 expInfo['RUN'], expInfo['date'])
 
 # An ExperimentHandler for data saving
@@ -66,7 +66,7 @@ thisExp = data.ExperimentHandler(name=expName, version='4',
 #       Edit experiment parameters
 # ------------------------------------------------------------
 # Set experiment parameters: run onset, ends and test stimuli
-stimuli = f"WordNonword_run{expInfo['RUN']}.csv"
+stimuli = f"WordNonword_Run{expInfo['RUN']}.csv"
 stimDuration = 0.600
 soundDuration = 0.900
 # Each stimulus is set to appear 1s after the previous stimulus as defined later in the code
@@ -83,10 +83,12 @@ endExpNow = False  # flag for 'escape' or other condition => quit the exp
 
 
 # Setup the Window
+# resolution = [1440, 900] # Define screen resolution
+resolution = [2560, 1440] # Define screen resolution
 win = visual.Window(
-    size=(1920, 1080), fullscr=True, screen=0,
+    size=resolution, fullscr=True, screen=0,
     allowGUI=False, allowStencil=False, monitor='testMonitor', 
-    color=[0.004,0.004,0.004], colorSpace='rgb', useFBO=True)
+    color=[0.5,0.5,0.5], colorSpace='rgb', useFBO=True)
 
 
 # store frame rate of monitor if we can measure it
@@ -95,7 +97,7 @@ if expInfo['frameRate'] != None:
     frameDur = 1.0 / round(expInfo['frameRate'])
 else:                               
     frameDur = 1.0 / 60.0  # if measuring doesn't work, then guess
-    print("WARNING: Frame Duration Unknown. Assuming 60Hz")
+    logging.warning("WARNING: Frame Duration Unknown. Assuming 60Hz")
 
 #   Calculate the number of frames for the trial stimuli & ISIs
 stimFrames = round(stimDuration * expInfo['frameRate'])
@@ -112,16 +114,16 @@ rect0 = visual.Rect(        #RV: rect0 is the rectangle in the middle of the scr
     win=win, name='rect0',
     width=(0.5), height=(0.45),
     ori=0, pos=(0, 0),
-    lineWidth=1, lineColor=[0.004,0.004,0.004], lineColorSpace='rgb',
-    fillColor=[0.004,0.004,0.004], fillColorSpace='rgb',
+    lineWidth=1, lineColor=[0.5,0.5,0.5], lineColorSpace='rgb',
+    fillColor=[0.5,0.5,0.5], fillColorSpace='rgb',
     opacity=1, depth=-1.0, interpolate=True)
 
 rect1 = visual.Rect(    #RV: rect1 is the rectangle in the middle of the screen after the starting key (a, e, u, l, =, etc)
     win=win, name='rect0',
     width=(0.5), height=(0.45),
     ori=0, pos=(0, 0),
-    lineWidth=1, lineColor=[0.004,0.004,0.004], lineColorSpace='rgb',
-    fillColor=[0.004,0.004,0.004], fillColorSpace='rgb',
+    lineWidth=1, lineColor=[0.5,0.5,0.5], lineColorSpace='rgb',
+    fillColor=[0.5,0.5,0.5], fillColorSpace='rgb',
     opacity=1, depth=-1.0, interpolate=True)
     
 
@@ -194,15 +196,8 @@ def VisualTrial():
     stim3.setText(target3); stim3.setFont(Font); stim3.setHeight(Height);
     stim4.setText(target4); stim4.setFont(Font); stim4.setHeight(Height);
     
-    # if expInfo['TR'] == '650':   
-    #     StartSec = StartSec650
-    #     thisITI = ITI650
-    # elif expInfo['TR'] == '2000':
-    #     thisITI = ITI2000
-    #     StartSec = StartSec2000
-    
-    # print(f"StartSec={StartSec} thisITI={thisITI}, StartSec650={StartSec650}, ITI650={ITI650}, ITI2000={ITI2000}, StartSec2000={StartSec2000}")
-    print(f"StartSec={StartSec} thisITI={thisITI}")
+    logging.log(level=logging.EXP,msg=f"StartSec={StartSec} thisITI={thisITI}")
+
     # keep track of which components have finished
     trialComponents = [rect1, stim1, stim2, stim3, stim4]
     for thisComponent in trialComponents:
@@ -312,12 +307,7 @@ def AudioTrial():
     sound2.setSound('sound_files/' + target2 + '.wav', secs=0.8)
     sound3.setSound('sound_files/' + target3 + '.wav', secs=0.8)
     sound4.setSound('sound_files/' + target4 + '.wav', secs=0.8)
-    # if expInfo['TR'] == '650':   
-    #     StartSec = StartSec650
-    #     thisITI = ITI650
-    # elif expInfo['TR'] == '2000':
-    #     thisITI = ITI2000
-    #     StartSec = StartSec2000
+
     
     # keep track of which components have finished
     trialComponents = [rect1, sound1, sound2, sound3, sound4]
@@ -593,7 +583,7 @@ for tnum in range(NumTrials):
 
 TotalRunLength = TrialStartSec[-1]+ITISec_byTR[-1]
 NumberOfVolumes = TotalRunLength/TR
-print(f"Run is {NumberOfVolumes} volumes, {TotalRunLength} sec or {TotalRunLength/60} min")
+logging.log(level=logging.EXP,msg=f"Run is {NumberOfVolumes} volumes, {TotalRunLength} sec or {TotalRunLength/60} min")
 
 # Insert the TR-locked times back into the trial handler
 for tnum in range(NumTrials):
@@ -629,8 +619,9 @@ for thisTrial in trials:
     # update component parameters for each repeat
     trialType = Procedure
     
-    if trialType != "AudProc":  VisualTrial() 
-    else:  AudioTrial()
+    if (trialType == "AudProc") or (trialType =="FalAudProc"):  AudioTrial()
+    else:
+        VisualTrial() 
      
     # One loop completed, go to next
     thisExp.nextEntry()

@@ -1,0 +1,6 @@
+,Run,TrialN,ProcedureID,Procedure,Font,ITISec,target1,target2,target3,target4,Expected_Response
+0,1.0,0.0,0,Null,Arial,8.0,,,,,0
+13,1.0,1.0,1,VisProc,Arial,10.0,glare,foam,storm,wig,0
+76,1.0,2.0,4,FalAudProc,Arial,8.0,rear_fal,band_fal,guess_fal,safe_fal,0
+32,1.0,3.0,2,AudProc,Arial,10.0,pull,dress,late,nine,0
+61,1.0,4.0,3,FalVisProc,Wingdings,8.0,twizy,`uly,^izk,`ozk,0
