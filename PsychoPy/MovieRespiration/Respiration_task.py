@@ -7,31 +7,6 @@ import random
 import os,time
 import numpy as np
 
-# CHOOSE YOUR monitor
-# =======================
-fullScreen=True # set to true during experiments
-
-# CREATE SCREEN
-# ================
-# MAIN WINDOW
-win = visual.Window(
-    size=[800,600], fullscr=fullScreen, screen=0, 
-    winType='pyglet', allowGUI=True, allowStencil=False,
-    monitor='testMonitor', color=[0,0,0], colorSpace='rgb',
-    blendMode='avg', useFBO=True,
-    units='height', depthBits=24)
-
-# ==================================================================
-# Allow Escape or "q" key   --> during "while" loop, while stim is AutoDrawing
-# ==================================================================
-def escape():
-    for key in event.getKeys(keyList=['escape','q'], timeStamped=False):
-        if key in ['escape','q']:                                                                       #could also be if key != [] or something to that effect
-            win.close();
-            core.quit();
-
-escape()
-
 # --------- Set Up Environment --------------------------------------------------
 
 # Ensure that relative paths start from the same directory as this script
@@ -67,6 +42,31 @@ logFile = logging.LogFile(filename+'.log', level=logging.EXP)
 logging.console.setLevel(logging.WARNING)  
 
 endExpNow = False  # flag for 'escape' or other condition => quit the exp
+
+# CHOOSE YOUR monitor
+# =======================
+fullScreen=True # set to true during experiments
+
+# CREATE SCREEN
+# ================
+# MAIN WINDOW
+win = visual.Window(
+    size=[800,600], fullscr=fullScreen, screen=0, 
+    winType='pyglet', allowGUI=True, allowStencil=False,
+    monitor='testMonitor', color=[0,0,0], colorSpace='rgb',
+    blendMode='avg', useFBO=True,
+    units='height', depthBits=24)
+
+# ==================================================================
+# Allow Escape or "q" key   --> during "while" loop, while stim is AutoDrawing
+# ==================================================================
+def escape():
+    for key in event.getKeys(keyList=['escape','q'], timeStamped=False):
+        if key in ['escape','q']:                                                                       #could also be if key != [] or something to that effect
+            win.close();
+            core.quit();
+
+escape()
 
 # ==============================================================
 #       BUBBLE STIM PARAMETERS (BY RUN)
@@ -130,16 +130,17 @@ event.waitKeys(keyList=['t']);        # MUST PRESS "T" to trigger rest period!!!
 # RESET GLOBAL CLOCK & LOG EXP START TIME
 # ==================================================================
 globalClock.reset()
-win.flip(); win.logOnFlip('ExpStartTime = %s' %(globalClock.getTime()),logging.DATA);
+win.flip(); win.logOnFlip('Experiment START = %s' %(globalClock.getTime()),logging.DATA);
 
 # REST BUBBLE --> 60s intervals
 # =========================
 bubbletimer = core.Clock()
 bubbletimer.add(bubbletime)
+logging.log(level=logging.EXP, msg=f"Respiration START: {globalClock.getTime()}")
 for i in range(0,9):    # i = resp_pattern[0] 
     tmp_timer = core.MonotonicClock()
     tmp_array = resp_pattern[i]
-    logging.log(level=logging.EXP, msg=f"Array {i}: {tmp_array}")
+    logging.log(level=logging.EXP, msg=f"Sine Array {i}: {tmp_array}")
     while bubbletimer.getTime() < 0:  # duration of 60s
         # get the time from the monotonic clock
         t = tmp_timer.getTime();
@@ -150,10 +151,10 @@ for i in range(0,9):    # i = resp_pattern[0]
         win.update()
     bubbletimer.add(bubbletime)     # re-add the time once it runs out (at end of while loop)
 bubble.setAutoDraw(False)
-win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Resp START: {globalClock.getTime()}")
+win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Respiration END: {globalClock.getTime()}")
 
 # get the end global clock time
-win.flip(); win.logOnFlip('ExpEndTime = %s' %(globalClock.getTime()),logging.DATA);
+win.flip(); win.logOnFlip('Experiment END = %s' %(globalClock.getTime()),logging.DATA);
 
 win.close()
 core.quit()

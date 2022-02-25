@@ -7,31 +7,6 @@ import random
 import os,time
 import numpy as np
 
-# CHOOSE YOUR monitor
-# =======================
-fullScreen=True # set to true during experiments
-
-# CREATE SCREEN
-# ================
-# MAIN WINDOW
-win = visual.Window(
-    size=[800,600], fullscr=fullScreen, screen=0, 
-    winType='pyglet', allowGUI=True, allowStencil=False,
-    monitor='testMonitor', color=[0,0,0], colorSpace='rgb',
-    blendMode='avg', useFBO=True,
-    units='height', depthBits=24)
-
-# ==================================================================
-# Allow Escape or "q" key   --> during "while" loop, while stim is AutoDrawing
-# ==================================================================
-def escape():
-    for key in event.getKeys(keyList=['escape','q'], timeStamped=False):
-        if key in ['escape','q']:                                                                       #could also be if key != [] or something to that effect
-            win.close();
-            core.quit();
-
-escape()
-
 # --------- Set Up Environment --------------------------------------------------
 
 # Ensure that relative paths start from the same directory as this script
@@ -70,6 +45,31 @@ endExpNow = False  # flag for 'escape' or other condition => quit the exp
 
 # logging.log(level=logging.EXP,msg="some message here") --> log message timestamped by time of logging
 # win.logOnFlip(level=logging.EXP,msg="some message here") --> log message timestamped by frame flip (time when stim appears)
+
+# CHOOSE YOUR monitor
+# =======================
+fullScreen=True # set to true during experiments
+
+# CREATE SCREEN
+# ================
+# MAIN WINDOW
+win = visual.Window(
+    size=[800,600], fullscr=fullScreen, screen=0, 
+    winType='pyglet', allowGUI=True, allowStencil=False,
+    monitor='testMonitor', color=[0,0,0], colorSpace='rgb',
+    blendMode='avg', useFBO=True,
+    units='height', depthBits=24)
+
+# ==================================================================
+# Allow Escape or "q" key   --> during "while" loop, while stim is AutoDrawing
+# ==================================================================
+def escape():
+    for key in event.getKeys(keyList=['escape','q'], timeStamped=False):
+        if key in ['escape','q']:                                                                       #could also be if key != [] or something to that effect
+            win.close();
+            core.quit();
+
+escape()
 
 # ==============================================================
 #       BUBBLE STIM PARAMETERS (BY RUN)
@@ -166,16 +166,17 @@ event.waitKeys(keyList=['t']);        # MUST PRESS "T" to trigger rest period!!!
 # RESET GLOBAL CLOCK & LOG EXP START TIME
 # ==================================================================
 globalClock.reset()
-win.flip(); win.logOnFlip('ExpStartTime = %s' %(globalClock.getTime()),logging.DATA);
+win.flip(); win.logOnFlip('Experiment START = %s' %(globalClock.getTime()),logging.DATA);
 
 # STARTING REST BUBBLE --> 12s
 # =========================
 bubbletimer = core.Clock()
 bubbletimer.add(prebubbletime)      # 12s intervals
+logging.log(level=logging.EXP, msg=f"Respiration START: {globalClock.getTime()}")
 for i in range(0,1):    # i = resp_pattern[0]
     tmp_timer = core.MonotonicClock()
     tmp_array = resp_pattern[i]
-    logging.log(level=logging.EXP, msg=f"Array {i}: {tmp_array}")
+    logging.log(level=logging.EXP, msg=f"Sine Array {i}: {tmp_array}")
     while bubbletimer.getTime() < 0:  # duration of 60s
         # get the time from the monotonic clock
         t = tmp_timer.getTime();
@@ -186,7 +187,7 @@ for i in range(0,1):    # i = resp_pattern[0]
         win.update()
     bubbletimer.add(prebubbletime)     # re-add time to clock (at end of while loop)
 bubble.setAutoDraw(False)
-win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Resp START: {globalClock.getTime()}")
+win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Respiration END: {globalClock.getTime()}")
 
 
 # MOVIE BUBBLE --> 420s
@@ -195,13 +196,14 @@ movietimer = core.Clock()
 movietimer.add(movietime)
 bubbletimer.reset()
 bubbletimer.add(bubbletime)     # 60s intervals
+logging.log(level=logging.EXP, msg=f"Movie START: {globalClock.getTime()}")
 while movietimer.getTime() < 0:
     movie.setAutoDraw(True)
     escape()
     for i in range(1,8):    # i = resp_pattern[1:8] (1-7)
         tmp_timer = core.MonotonicClock()
         tmp_array = resp_pattern[i]
-        logging.log(level=logging.EXP, msg=f"Array {i}: {tmp_array}")
+        logging.log(level=logging.EXP, msg=f"Sine Array {i}: {tmp_array}")
         while bubbletimer.getTime() < 0:  # duration of 60s
             # get the time from the monotonic clock
             t = tmp_timer.getTime();
@@ -213,12 +215,13 @@ while movietimer.getTime() < 0:
         bubbletimer.add(bubbletime)     # re-add time to clock (at end of while loop)
     movie.setAutoDraw(False)
     bubble.setAutoDraw(False)
-win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Movie START: {globalClock.getTime()}")
+win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Movie END: {globalClock.getTime()}")
     
 # REST BUBBLE --> 12s
 # =========================
 bubbletimer.reset()
 bubbletimer.add(prebubbletime)     # 12s intervals
+logging.log(level=logging.EXP, msg=f"Respiration START: {globalClock.getTime()}")
 for i in range(8,9):    # i = resp_pattern[8]
     tmp_timer = core.MonotonicClock()
     tmp_array = resp_pattern[i]
@@ -230,13 +233,13 @@ for i in range(8,9):    # i = resp_pattern[8]
         escape()
         # update the window after every draw
         win.update()
-    logging.log(level=logging.EXP, msg=f"Array {i}: {tmp_array}")
+    logging.log(level=logging.EXP, msg=f"Sine Array {i}: {tmp_array}")
     bubbletimer.add(prebubbletime)     # re-add time to clock (at end of while loop)
 bubble.setAutoDraw(False)
-win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Resp START: {globalClock.getTime()}")
+win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Respiration END: {globalClock.getTime()}")
 
 # get the end global clock time
-win.flip(); win.logOnFlip('ExpEndTime = %s' %(globalClock.getTime()),logging.DATA);
+win.flip(); win.logOnFlip('Experiment END = %s' %(globalClock.getTime()),logging.DATA);
 
 win.close()
 core.quit()
