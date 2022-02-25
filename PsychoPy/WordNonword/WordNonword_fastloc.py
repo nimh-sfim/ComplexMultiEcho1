@@ -84,7 +84,8 @@ endExpNow = False  # flag for 'escape' or other condition => quit the exp
 
 # Setup the Window
 # resolution = [1440, 900] # Define screen resolution
-resolution = [2560, 1440] # Define screen resolution
+# resolution = [2560, 1440] # Define screen resolution
+resolution = [1920, 1080] # Define screen resolution (Likely BOLD screen resolution)
 win = visual.Window(
     size=resolution, fullscr=True, screen=0,
     allowGUI=False, allowStencil=False, monitor='testMonitor', 
