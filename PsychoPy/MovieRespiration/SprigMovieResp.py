@@ -17,7 +17,7 @@ os.chdir(_thisDir)
 expName = 'Movie_Resp' 
 expInfo = {'sync': u't', 'end_break': 'space', 
             'abort': 'escape','Choose': 'RUN 0 for Sound Test; RUN 1-3 for task',
-            'RUN':['0','1', '2', '3'], 'TR':['2000','650','1500'], 'ID': u''}
+            'RUN':['0','1', '2', '3'], 'ID': u''}
 
 expInfo['date'] = data.getDateStr() 
 expInfo['expName'] = expName
@@ -54,7 +54,7 @@ fullScreen=True # set to true during experiments
 # ================
 # MAIN WINDOW
 win = visual.Window(
-    size=[800,600], fullscr=fullScreen, screen=0, 
+    size=[1920, 1080], fullscr=fullScreen, screen=0, 
     winType='pyglet', allowGUI=True, allowStencil=False,
     monitor='testMonitor', color=[0,0,0], colorSpace='rgb',
     blendMode='avg', useFBO=True,
@@ -122,6 +122,7 @@ logging.log(level=logging.EXP,msg=f"Current sine function (f(x)) matrix for run 
 # ===================
 prebubbletime = 12;
 bubbletime = 60;
+bubbletime_loginterval = 1; # Log circle size every 1 sec
 movietime = 420;
 
 # =========================================
@@ -139,15 +140,15 @@ if not os.path.exists(movie_Filename):
     raise RuntimeError("Video File could not be found:" + os.path.split(movie_Filename)[1])
 
 # VIDEO OBJ
-movie=visual.MovieStim3(win,movie_Filename,size=(700,500),pos=(0,0),loop=False,autoLog=False);   # autostart = starts the video automatically when first drawn
+movie=visual.MovieStim3(win,movie_Filename,size=(1280,536),pos=(0,0),loop=False,autoLog=False);   # autostart = starts the video automatically when first drawn
 
 # Bubble OBJ
 bubble = visual.ShapeStim(
     win=win,name='bubble stimulus',
     size=(0.1, 0.1),vertices='circle',
     ori=0.0,pos=(0, 0),lineWidth=1.0,
-    colorSpace='rgb',lineColor=[0.8824, 0.9451, 1.0000],
-    fillColor=None,opacity=0.3,interpolate=True, autoLog=False)
+    colorSpace='rgb',lineColor=[1, 1, 1],
+    fillColor=None,opacity=1.0,interpolate=True, autoLog=False)
 
 # ==============================================================
 # ===========                INSTRUCTIONS                    ==============
@@ -177,6 +178,7 @@ for i in range(0,1):    # i = resp_pattern[0]
     tmp_timer = core.MonotonicClock()
     tmp_array = resp_pattern[i]
     logging.log(level=logging.EXP, msg=f"Sine Array {i}: {tmp_array}")
+    BubbleLogTime = bubbletimer.getTime()
     while bubbletimer.getTime() < 0:  # duration of 60s
         # get the time from the monotonic clock
         t = tmp_timer.getTime();
@@ -185,6 +187,10 @@ for i in range(0,1):    # i = resp_pattern[0]
         escape()
         # update the window after every draw
         win.update()
+        if bubbletimer.getTime()>(BubbleLogTime+bubbletime_loginterval):
+            logging.log(level=logging.EXP, msg=f"Breath circle width: {bubble.size}")
+            BubbleLogTime += bubbletime_loginterval
+
     bubbletimer.add(prebubbletime)     # re-add time to clock (at end of while loop)
 bubble.setAutoDraw(False)
 win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Respiration END: {globalClock.getTime()}")
@@ -196,6 +202,7 @@ movietimer = core.Clock()
 movietimer.add(movietime)
 bubbletimer.reset()
 bubbletimer.add(bubbletime)     # 60s intervals
+BubbleLogTime = bubbletimer.getTime()
 logging.log(level=logging.EXP, msg=f"Movie START: {globalClock.getTime()}")
 while movietimer.getTime() < 0:
     movie.setAutoDraw(True)
@@ -212,6 +219,10 @@ while movietimer.getTime() < 0:
             escape()
             # update the window after every draw
             win.update()
+            if bubbletimer.getTime()>(BubbleLogTime+bubbletime_loginterval):
+                logging.log(level=logging.EXP, msg=f"Breath circle width: {bubble.size}")
+                BubbleLogTime += bubbletime_loginterval
+            
         bubbletimer.add(bubbletime)     # re-add time to clock (at end of while loop)
     movie.setAutoDraw(False)
     bubble.setAutoDraw(False)
@@ -225,6 +236,7 @@ logging.log(level=logging.EXP, msg=f"Respiration START: {globalClock.getTime()}"
 for i in range(8,9):    # i = resp_pattern[8]
     tmp_timer = core.MonotonicClock()
     tmp_array = resp_pattern[i]
+    BubbleLogTime = bubbletimer.getTime()
     while bubbletimer.getTime() < 0:  # duration of 12s
         # get the time from the monotonic clock
         t = tmp_timer.getTime();
@@ -233,6 +245,9 @@ for i in range(8,9):    # i = resp_pattern[8]
         escape()
         # update the window after every draw
         win.update()
+        if bubbletimer.getTime()>(BubbleLogTime+bubbletime_loginterval):
+                logging.log(level=logging.EXP, msg=f"Breath circle width: {bubble.size}")
+                BubbleLogTime += bubbletime_loginterval
     logging.log(level=logging.EXP, msg=f"Sine Array {i}: {tmp_array}")
     bubbletimer.add(prebubbletime)     # re-add time to clock (at end of while loop)
 bubble.setAutoDraw(False)
