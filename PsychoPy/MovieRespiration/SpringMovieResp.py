@@ -14,23 +14,31 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))#.decode(sys.getfilesysteme
 os.chdir(_thisDir)
 
 # Store info about the experiment session
-expName = 'Movie_Resp' 
 expInfo = {'sync': u't', 'end_break': 'space', 
             'abort': 'escape','Choose': 'RUN 0 for Sound Test; RUN 1-3 for task',
-            'RUN':['0','1', '2', '3'], 'ID': u''}
+            'RUN': ['A','B', 'C'], 'ShowMovie': ['yes', 'no'], 'ID': u''}
+
+
 
 expInfo['date'] = data.getDateStr() 
-expInfo['expName'] = expName
 ID = expInfo['ID']
 
-dlg = gui.DlgFromDict(dictionary=expInfo, title=expName,
-        fixed=['sync','end_break','abort','expName', 'Choose'])
+dlg = gui.DlgFromDict(dictionary=expInfo, title="Enter Run Info",
+        fixed=['sync','end_break','abort','Choose'])
 if dlg.OK:  print(expInfo)
 else:       print('User Cancelled'); core.quit() 
 
+if expInfo['ShowMovie'] == 'yes':
+    expName = 'MovieResp'
+    ShowMovie = True
+else:
+    expName = 'Resp'
+    ShowMovie = False
+
+expInfo['expName'] = expName
+
 # Data file name stem = absolute path + name + ID number + date
-filename = _thisDir + os.sep + 'RunLogs/%s_%s_RUN%s_%s' %(expInfo['ID'], expName, 
-                expInfo['RUN'], expInfo['date'])
+filename = f"{_thisDir}{os.sep}RunLogs{os.sep}{expInfo['ID']}_{expName}_RUN{expInfo['RUN']}_{expInfo['date']}"
 
 # An ExperimentHandler for data saving
 thisExp = data.ExperimentHandler(name=expName,
@@ -93,24 +101,12 @@ mat3 = odd+even
 #       Counterbalancing Subject-Matrix Order
 # ==============================================================
 
-if expInfo['RUN'] == 1:
-    if int(expInfo['ID']) % 2 != 0:     # Run1 --> odd subjs have matrix 1
-        matrix_run = mat1
-    elif int(expInfo['ID']) % 2 == 0:   #      --> even subjs have matrix 2
-        matrix_run = mat2
-    else:
-        raise Exception("Subject ID invalid. Must be an integer type.")
-elif expInfo['RUN'] == 2:
-    if int(expInfo['ID']) % 2 != 0:     # Run 2 --> odd subjs have matrix 2
-        matrix_run = mat2
-    elif int(expInfo['ID']) % 2 == 0:   #      --> even subjs have matrix 1
-        matrix_run = mat1
-    else:
-        raise Exception("Subject ID invalid. Must be an integer type.")
-elif expInfo['RUN'] == 3:
+if expInfo['RUN'] == 'A':
+    matrix_run = mat1
+elif expInfo['RUN'] == 'B':
+    matrix_run = mat2
+elif expInfo['RUN'] == 'C':
     matrix_run = mat3
-else:
-    matrix_run = mat1       # run matrix 1 on test runs (RUN = 0)
 
 # log matrix with tuple (ampl[0], freq[1])
 logging.log(level=logging.EXP,msg=f"Current (ampl,freq) matrix for run {expInfo['RUN']}: {matrix_run}")
@@ -134,13 +130,14 @@ globalClock = core.Clock()
 # ======================                           OBJECTS                            ===============================================================
 # ==============================================================================================================================
 
-#      VIDEO PATH --> from relative path (same dir as script)                                       
-movie_Filename = _thisDir + os.sep + 'spring-blender-open-movie.mp4';
-if not os.path.exists(movie_Filename):
-    raise RuntimeError("Video File could not be found:" + os.path.split(movie_Filename)[1])
+if ShowMovie:
+    #      VIDEO PATH --> from relative path (same dir as script)                                    
+    movie_Filename = _thisDir + os.sep + 'spring-blender-open-movie.mp4';
+    if not os.path.exists(movie_Filename):
+        raise RuntimeError("Video File could not be found:" + os.path.split(movie_Filename)[1])
 
-# VIDEO OBJ
-movie=visual.MovieStim3(win,movie_Filename,size=(1280,536),pos=(0,0),loop=False,autoLog=False);   # autostart = starts the video automatically when first drawn
+    # VIDEO OBJ
+    movie=visual.MovieStim3(win,movie_Filename,size=(1280,536),pos=(0,0),loop=False,autoLog=False);   # autostart = starts the video automatically when first drawn
 
 # Bubble OBJ
 bubble = visual.ShapeStim(
@@ -153,7 +150,10 @@ bubble = visual.ShapeStim(
 # ==============================================================
 # ===========                INSTRUCTIONS                    ==============
 # ==============================================================
-Instr_Video_T='TASK NAME: VIDEO\n\n Watch the next video attentively.\n Relax & breathe with the bubble cue.';
+if ShowMovie:
+    Instr_Video_T='Watch the movie while breathing in and out with the circle.';
+else:
+    Instr_Video_T='Breathe in and out with the circle.';
 Instr_Video_S=visual.TextStim(win,text=Instr_Video_T,height=25,units='pix',name='intro',color='black',wrapWidth=800,pos=(0,0));
 
 # ==================================================================
@@ -195,7 +195,6 @@ for i in range(0,1):    # i = resp_pattern[0]
 bubble.setAutoDraw(False)
 win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Respiration END: {globalClock.getTime()}")
 
-
 # MOVIE BUBBLE --> 420s
 # =========================
 movietimer = core.Clock()
@@ -205,7 +204,8 @@ bubbletimer.add(bubbletime)     # 60s intervals
 BubbleLogTime = bubbletimer.getTime()
 logging.log(level=logging.EXP, msg=f"Movie START: {globalClock.getTime()}")
 while movietimer.getTime() < 0:
-    movie.setAutoDraw(True)
+    if ShowMovie:
+        movie.setAutoDraw(True)
     escape()
     for i in range(1,8):    # i = resp_pattern[1:8] (1-7)
         tmp_timer = core.MonotonicClock()
