@@ -17,20 +17,27 @@ def main():
     parser.add_argument("DEST", help="The nifti destination")
     parser.add_argument("SUBJID", help="Subject identifier")
     parser.add_argument(
-        "--start", type=int, required=False, default=5,
-        help="The mr number containing the T1w, default 5"
-    )
-    parser.add_argument(
         "--ignore", type=int, nargs="+", required=False, default=[],
         help="mr numbers to ignore as integers"
     )
     parser.add_argument(
-        "--verbose", action="store_true",
-        help="Run in verbose mode"
+        "--start", type=int, required=False, default=5,
+        help="The mr number containing the T1w, default 5"
+    )
+    parser.add_argument(
+        "--quiet", action="store_true",
+        help="Run in quiet mode"
+    )
+    parser.add_argument(
+        "--", action="store_true", dest="placeholder",
+        help= (
+            "Placeholder to allow you to indicate that the series of "
+            "integers for --ignore has terminated. Does nothing else."
+        )
     )
     args = parser.parse_args()
 
-    if args.verbose:
+    if not args.quiet:
         print(f"Converting {args.SUBJID} DICOM images in {args.SOURCE}...")
         if args.start:
             print(f"Using start of {args.start}")
@@ -40,14 +47,14 @@ def main():
     # Harvest series numbers and create a number to description mapping
     mrn = harvest_mrn(args.SOURCE)
 
-    if args.verbose:
+    if not args.quiet:
         print(f"Harvested mrn numbers from {args.DEST}: {mrn}")
 
     mr_used, desc = generate_series_mapping(
-        args.start, args.ignore, [x for x in range(18)], args.SUBJID
+        args.start, args.ignore, mrn, args.SUBJID, verbose=(not args.quiet)
     )
 
-    if args.verbose:
+    if not args.quiet:
         print("Made mapping:")
 
         for i in range(len(mr_used)):
@@ -58,7 +65,7 @@ def main():
         os.mkdir(args.DEST)
 
     # Run dcm2niix
-    if args.verbose:
+    if not args.quiet:
         print("Running dcm2niix, may take a minute or two...")
 
     out = run_dcm2niix(args.SOURCE, args.DEST)
@@ -87,7 +94,7 @@ def main():
             fmap[old] = new
 
     # Print out the filename mappings
-    if args.verbose:
+    if not args.quiet:
         print("Made new file mapping:")
         for old, new in fmap.items():
             print(f"{old} -> {new}")
@@ -148,7 +155,7 @@ def harvest_mrn(path):
     return mrn
 
 
-def generate_series_mapping(offset, ignore, mrn, subid):
+def generate_series_mapping(offset, ignore, mrn, subid, verbose=True):
     """Generate the mapping from series number to BIDS meaning
 
     Parameters
@@ -162,6 +169,11 @@ def generate_series_mapping(offset, ignore, mrn, subid):
     subid: str
         The subject ID
     """
+    # Offset is 1-indexed, but we're 0-indexed
+    offset -= 1
+    # Ignore is 1-indexed, but we're 0-indexed
+    ignore = set([i-1 for i in ignore])
+    print(ignore)
     # Guarantee that we're working with an in-order list of integers
     mrn.sort()
     # Initialize an empty list where each entry is an index into mrn that
@@ -173,6 +185,8 @@ def generate_series_mapping(offset, ignore, mrn, subid):
             continue
         elif i >= offset and i not in ignore:
             midx.append(i)
+    if verbose:
+        print(f"Using runs {[mrn[i] for i in midx]}")
     # sbref, mag, phase for each epi run, plus one for anatomical expected
     # therefore check that the mrns - 1 is divisible by 3
     if not (len(midx) - 1) % 3 == 0:
