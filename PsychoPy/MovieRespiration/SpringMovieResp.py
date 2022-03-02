@@ -62,7 +62,7 @@ fullScreen=True # set to true during experiments
 # ================
 # MAIN WINDOW
 win = visual.Window(
-    size=[1920, 1080], fullscr=fullScreen, screen=0, 
+    size=[1920, 1080], fullscr=fullScreen, screen=1, 
     winType='pyglet', allowGUI=True, allowStencil=False,
     monitor='testMonitor', color=[0,0,0], colorSpace='rgb',
     blendMode='avg', useFBO=True,
@@ -98,7 +98,7 @@ elif expInfo['RUN'] == 'C':
 
 bubbletime_loginterval = 1; # Log circle size every 1 sec
 
-premovietime = 15
+premovietime = 21
 movietime = 420
 postmovietime = 15
 totaltime = premovietime + movietime + postmovietime
