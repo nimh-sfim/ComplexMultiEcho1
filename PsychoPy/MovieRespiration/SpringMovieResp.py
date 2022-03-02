@@ -81,45 +81,51 @@ escape()
 
 # ==============================================================
 #       BUBBLE STIM PARAMETERS (BY RUN)
-#       Ampl = depth, Freq = speed
-# ==============================================================
-
-amplitude = [0.01,0.02,0.03];
-frequency = [(1.5*np.pi*0.2),(2*np.pi*0.2),(2.5*np.pi*0.2)];
-
-# 1st matrix
-mat1_0,mat1_1,mat1_2 = [(amplitude[0], i) for i in frequency],[(amplitude[1], i) for i in frequency],[(amplitude[2], i) for i in frequency]
-mat1 = mat1_0+mat1_1+mat1_2
-# 2nd matrix = reverse of 1st matrix
-mat2 = mat1[len(mat1)-1::-1]
-# 3rd matrix = odd frequencies 1st, even frequencies 2nd
-odd = [i for i in mat2 if round(i[1]) % 2 != 0]    # run 3 = odd freq then even freq runs (from mat2 order)
-even = [i for i in mat2 if round(i[1]) % 2 == 0]
-mat3 = odd+even
-
-# ==============================================================
-#       Counterbalancing Subject-Matrix Order
+#   All three runs have the same breathing patterns that starts
+#   at a different point
 # ==============================================================
 
 if expInfo['RUN'] == 'A':
-    matrix_run = mat1
+    BreathingPhase = 0
 elif expInfo['RUN'] == 'B':
-    matrix_run = mat2
+    BreathingPhase = np.pi
 elif expInfo['RUN'] == 'C':
-    matrix_run = mat3
+    BreathingPhase = np.pi/2
 
-# log matrix with tuple (ampl[0], freq[1])
-logging.log(level=logging.EXP,msg=f"Current (ampl,freq) matrix for run {expInfo['RUN']}: {matrix_run}")
-
-resp_pattern = [np.sin(i[1]*np.linspace(0,300,num=3000))*i[0]+0.11 for i in matrix_run]
-logging.log(level=logging.EXP,msg=f"Current sine function (f(x)) matrix for run {expInfo['RUN']}: {resp_pattern}")
 
 # TASK DURATIONS & TIMING                                                                        TOTAL TIME = (21*5)+(39*5)+18+10.5=328.5s / 1.5 = 219 TRs (+ 4 extra)  ===> 5:34.5 min
 # ===================
-prebubbletime = 12;
-bubbletime = 60;
+
 bubbletime_loginterval = 1; # Log circle size every 1 sec
-movietime = 420;
+
+premovietime = 15
+movietime = 420
+postmovietime = 15
+totaltime = premovietime + movietime + postmovietime
+
+
+# CREATE BREATHING PATTERNS
+# =============================
+amp = 0.1 # amplitude of the carrier frequency
+AMamp = 0.05 # Amplitude of the AM (depth) modulation
+meanshift = 0.11 # The mean circle diameter should always be positive
+# Due to frame rate differences and rounding, the final time point might be a few frames past the end of BreathingPattern
+#   add an extra second to make sure the script never gets past the last value
+TimingFudge = 1 
+FC = 1/5 # Averaging 5s breathing cycles
+FM = 1/60 # Breathing frequency modulates over 60s cycles
+FCscale = (2*FC*np.pi)
+FMscale = (2*FM*np.pi)
+FreqDev = FC-1/6 # Frequency deviation between 2s and 3s breathing cycles
+ModFreq = FreqDev/FM
+# Time in seconds spaced in 0.1 second intervals
+TimeInSec = np.linspace(0,totaltime+TimingFudge,num=(totaltime+TimingFudge)*10)
+AMmod = -AMamp*np.cos(2*np.pi*TimeInSec*FM+BreathingPhase)+0.2
+BreathingPattern = AMmod*np.sin(2*np.pi*FC*TimeInSec + ModFreq*np.sin(2*np.pi*FM*TimeInSec+BreathingPhase)+BreathingPhase)*amp+meanshift
+
+
+logging.log(level=logging.EXP,msg=f"Breathing Run {expInfo['RUN']} with Phase={BreathingPhase}, amp={amp}, AMamp={AMamp}, meanshift={meanshift}, FC={FC}, FM={FM}, FreqDev={FreqDev}")
+logging.log(level=logging.EXP, msg=f"BreathingPattern {BreathingPattern}")
 
 # =========================================
 # SETTING GLOBAL CLOCK
@@ -163,93 +169,67 @@ Instr_Video_S.draw();win.flip();
 win.logOnFlip('Instructions FRAME TIME = %s' %(win.lastFrameT),logging.DATA);
 event.waitKeys(keyList=['t']);        # MUST PRESS "T" to trigger rest period!!!                                                                                                                   # Wait for Scanner Trigger.                                                                                                               # Record Scanning Start Time
 
+win.mouseVisible = False
 # ==================================================================
 # RESET GLOBAL CLOCK & LOG EXP START TIME
 # ==================================================================
 globalClock.reset()
 win.flip(); win.logOnFlip('Experiment START = %s' %(globalClock.getTime()),logging.DATA);
 
-# STARTING REST BUBBLE --> 12s
+# STARTING REST BUBBLE --> 15s
 # =========================
-bubbletimer = core.Clock()
-bubbletimer.add(prebubbletime)      # 12s intervals
 logging.log(level=logging.EXP, msg=f"Respiration START: {globalClock.getTime()}")
-for i in range(0,1):    # i = resp_pattern[0]
-    tmp_timer = core.MonotonicClock()
-    tmp_array = resp_pattern[i]
-    logging.log(level=logging.EXP, msg=f"Sine Array {i}: {tmp_array}")
-    BubbleLogTime = bubbletimer.getTime()
-    while bubbletimer.getTime() < 0:  # duration of 60s
-        # get the time from the monotonic clock
-        t = tmp_timer.getTime();
-        bubble.size = tmp_array[round(t*10)]
-        bubble.setAutoDraw(True)
-        escape()
-        # update the window after every draw
-        win.update()
-        if bubbletimer.getTime()>(BubbleLogTime+bubbletime_loginterval):
-            logging.log(level=logging.EXP, msg=f"Breath circle width: {bubble.size}")
-            BubbleLogTime += bubbletime_loginterval
 
-    bubbletimer.add(prebubbletime)     # re-add time to clock (at end of while loop)
+exp_timer = core.MonotonicClock()
+BubbleLogTime = exp_timer.getTime()
+while exp_timer.getTime()<premovietime:
+    t = exp_timer.getTime()
+    bubble.size = BreathingPattern[round(t*10)]
+    bubble.setAutoDraw(True)
+    win.update()
+    escape()
+    if t>(BubbleLogTime+bubbletime_loginterval):
+        logging.log(level=logging.EXP, msg=f"Breath circle width pre movie: {bubble.size}")
+        BubbleLogTime += bubbletime_loginterval
 bubble.setAutoDraw(False)
-win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Respiration END: {globalClock.getTime()}")
-
-# MOVIE BUBBLE --> 420s
+win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Premovie respiration END: {globalClock.getTime()}")   
+ 
+# MOVIE AND BUBBLE --> 420s
 # =========================
-movietimer = core.Clock()
-movietimer.add(movietime)
-bubbletimer.reset()
-bubbletimer.add(bubbletime)     # 60s intervals
-BubbleLogTime = bubbletimer.getTime()
+movietimer = core.MonotonicClock()
 logging.log(level=logging.EXP, msg=f"Movie START: {globalClock.getTime()}")
-while movietimer.getTime() < 0:
+while movietimer.getTime() < movietime:
     if ShowMovie:
         movie.setAutoDraw(True)
     escape()
-    for i in range(1,8):    # i = resp_pattern[1:8] (1-7)
-        tmp_timer = core.MonotonicClock()
-        tmp_array = resp_pattern[i]
-        logging.log(level=logging.EXP, msg=f"Sine Array {i}: {tmp_array}")
-        while bubbletimer.getTime() < 0:  # duration of 60s
-            # get the time from the monotonic clock
-            t = tmp_timer.getTime();
-            bubble.size = tmp_array[round(t*10)]
-            bubble.setAutoDraw(True)
-            escape()
-            # update the window after every draw
-            win.update()
-            if bubbletimer.getTime()>(BubbleLogTime+bubbletime_loginterval):
-                logging.log(level=logging.EXP, msg=f"Breath circle width: {bubble.size}")
-                BubbleLogTime += bubbletime_loginterval
-            
-        bubbletimer.add(bubbletime)     # re-add time to clock (at end of while loop)
+    t = exp_timer.getTime()
+    bubble.size = BreathingPattern[round(t*10)]
+    bubble.setAutoDraw(True)
+    win.update()
+    escape()
+    if t>(BubbleLogTime+bubbletime_loginterval):
+        logging.log(level=logging.EXP, msg=f"Breath circle width in movie: {bubble.size}")
+        BubbleLogTime += bubbletime_loginterval
+if ShowMovie:
     movie.setAutoDraw(False)
-    bubble.setAutoDraw(False)
+bubble.setAutoDraw(False)
+        
 win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Movie END: {globalClock.getTime()}")
-    
-# REST BUBBLE --> 12s
+escape()
+
+# POST MOVIE BUBBLE --> 15s
 # =========================
-bubbletimer.reset()
-bubbletimer.add(prebubbletime)     # 12s intervals
-logging.log(level=logging.EXP, msg=f"Respiration START: {globalClock.getTime()}")
-for i in range(8,9):    # i = resp_pattern[8]
-    tmp_timer = core.MonotonicClock()
-    tmp_array = resp_pattern[i]
-    BubbleLogTime = bubbletimer.getTime()
-    while bubbletimer.getTime() < 0:  # duration of 12s
-        # get the time from the monotonic clock
-        t = tmp_timer.getTime();
-        bubble.size = tmp_array[round(t*10)]
-        bubble.setAutoDraw(True)
-        escape()
-        # update the window after every draw
-        win.update()
-        if bubbletimer.getTime()>(BubbleLogTime+bubbletime_loginterval):
-                logging.log(level=logging.EXP, msg=f"Breath circle width: {bubble.size}")
-                BubbleLogTime += bubbletime_loginterval
-    logging.log(level=logging.EXP, msg=f"Sine Array {i}: {tmp_array}")
-    bubbletimer.add(prebubbletime)     # re-add time to clock (at end of while loop)
+while exp_timer.getTime()<totaltime:
+    t = exp_timer.getTime()
+    bubble.size = BreathingPattern[round(t*10)]
+    bubble.setAutoDraw(True)
+    win.update()
+    escape()
+    if t>(BubbleLogTime+bubbletime_loginterval):
+        logging.log(level=logging.EXP, msg=f"Breath circle width post movie: {bubble.size}")
+        BubbleLogTime += bubbletime_loginterval
+win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Postmovie respiration END: {globalClock.getTime()}")  
+        
 bubble.setAutoDraw(False)
 win.flip(); win.logOnFlip(level=logging.EXP, msg=f"Respiration END: {globalClock.getTime()}")
 
