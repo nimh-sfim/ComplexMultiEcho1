@@ -89,7 +89,7 @@ resolution = [1920, 1080] # Define screen resolution (Likely BOLD screen resolut
 win = visual.Window(
     size=resolution, fullscr=True, screen=0,
     allowGUI=False, allowStencil=False, monitor='testMonitor', 
-    color=[0.5,0.5,0.5], colorSpace='rgb', useFBO=True)
+    color='black', colorSpace='rgb', useFBO=True)
 
 
 # store frame rate of monitor if we can measure it
@@ -115,16 +115,16 @@ rect0 = visual.Rect(        #RV: rect0 is the rectangle in the middle of the scr
     win=win, name='rect0',
     width=(0.5), height=(0.45),
     ori=0, pos=(0, 0),
-    lineWidth=1, lineColor=[0.5,0.5,0.5], lineColorSpace='rgb',
-    fillColor=[0.5,0.5,0.5], fillColorSpace='rgb',
+    lineWidth=1, lineColor='black', lineColorSpace='rgb',
+    fillColor='black', fillColorSpace='rgb',
     opacity=1, depth=-1.0, interpolate=True)
 
 rect1 = visual.Rect(    #RV: rect1 is the rectangle in the middle of the screen after the starting key (a, e, u, l, =, etc)
     win=win, name='rect0',
     width=(0.5), height=(0.45),
     ori=0, pos=(0, 0),
-    lineWidth=1, lineColor=[0.5,0.5,0.5], lineColorSpace='rgb',
-    fillColor=[0.5,0.5,0.5], fillColorSpace='rgb',
+    lineWidth=1, lineColor='black', lineColorSpace='rgb',
+    fillColor='black', fillColorSpace='rgb',
     opacity=1, depth=-1.0, interpolate=True)
     
 
@@ -154,7 +154,7 @@ stim4 = visual.TextStim(win=win, name='stim4',
     depth=-5.0);
 
 setupText = visual.TextStim(win=win, name='setupText',
-    text='waiting for ready...\n\n<spacebar>', 
+    text='Press a button if one of the 4 images or sounds in a group repeats...\n\n<spacebar>', 
     font='Arial', units = 'cm', ori = 0,
     pos=[0, 0], height=0.8, wrapWidth=None,
     color=u'white', colorSpace='rgb', opacity=1,
@@ -419,7 +419,7 @@ frameN = -1
 continueRoutine = True
 # update component parameters for each repeat
 key_resp_1 = event.BuilderKeyResponse()  #RV: this controls the first spacebar keypress
-
+win.mouseVisible = False
 # keep track of which components have finished
 setupComponents = [setupText, key_resp_1]
 for thisComponent in setupComponents:
