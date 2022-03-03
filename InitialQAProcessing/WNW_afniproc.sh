@@ -2,10 +2,24 @@
 # Note: -tcat_remove_first_trs 0 for now, but might want to adjust timing files later
 # Note: Removing last 5 TRs because those are the noise scans
 
-cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/TechPhantomScans/TechScan_900/QuickQAProcess
+# cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/TechPhantomScans/TechScan_900/QuickQAProcess
+# origdir='../Unprocessed/sub-T01/'
+# subj_id='sub-T01'
 
-origdir='../Unprocessed/sub-T01/'
-subj_id='sub-T01'
+
+# MAKE SURE TO RUN THIS ON A NODE WITH A DECENT AMOUNT OF MEMORY 16GB? SO TEDANA CAN RUN
+
+module load afni
+source /home/handwerkerd/InitConda.sh
+
+
+
+cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-01/QuickQAProcess
+origdir='../Unprocessed/'
+subj_id='sub-01'
+
+mkdir stimfiles
+cp ../DataOffScanner/psychopy/*.1D ./stimfiles/
 
 afni_proc.py -subj_id $subj_id \
    -blocks despike tshift align volreg mask combine scale regress \
