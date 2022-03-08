@@ -14,6 +14,7 @@
 # Note: -tcat_remove_first_trs 0 for now, but might want to adjust timing files later
 # Note: Removing last 5 TRs because those are the noise scans
 
+# Note: Want to set the tedana default criterion to PCA to AIC rather than MDL
 
 # The input is the subject ID (i.e. sub-01)
 subj_id=$1
@@ -143,6 +144,7 @@ echo "jobhist ${moviebreath_jobID} >> ${subj_id}_jobhist_results.txt " >> ${subj
 sbatch --dependency=afterany:${moviebreath_jobID} --time 00:30:00 --cpus-per-task=1 --partition=norm,quick ${subj_id}_QA_jobhist_sbatch.txt
 
 
+# scrap code of from trying to figure out alignment
 #     echo "cat_matvec -ONELINE ../WNW/${subj_id}.results/${subj_id}_T1w_al_junk_mat.aff12.1D -I  > ${subj_id}_epi_al_T1w_mat.aff12.1D; \\" >> ${subj_id}_QA_moviebreath_swarm.txt
 
 #        "  -align_opts_aea -check_flip -Allineate_opts -1Dparam_apply ${rootdir}/${runid}/${subj_id}_epi_al_T1w_mat.aff12.1D" \\$'\n' \
