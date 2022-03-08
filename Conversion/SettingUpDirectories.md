@@ -38,6 +38,8 @@ mkdir biopac DICOM psychopy
 
 - Move BIDSified data to /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/${sbj}/Data/UnProcessed
 
+- The BIDSified data need the slice timing information in the nii file headers. Run `AddingSliceTiming.sh ${sbj}` to add that information to the header
+
 - Delete DICOM data with PII from computer
 
 ```sh
