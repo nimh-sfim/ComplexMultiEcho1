@@ -18,7 +18,7 @@
 # --------- Import Components --------------------------------------------------
 # 
 from __future__ import absolute_import, division
-from psychopy import locale_setup, sound, gui, visual, core, data, event, logging
+from psychopy import locale_setup, sound, gui, visual, core, data, event, logging, prefs
 from psychopy.constants import (NOT_STARTED, STARTED, PLAYING, PAUSED,
                                 STOPPED, FINISHED, PRESSED, RELEASED, FOREVER)
 import numpy as np  # whole numpy lib is available, prepend 'np.'
@@ -28,6 +28,9 @@ from numpy.random import random, randint, normal, shuffle
 import os           # system and path functions
 import sys          # to get file system encoding
 
+# See: https://psychopy.org/api/preferences.html for why this line needs to be before importing sound
+prefs.hardware['audioLib'] = ['PTB']
+from psychopy import sound
 
 # --------- Set Up Environment --------------------------------------------------
 # Start the global clock right away
@@ -79,6 +82,7 @@ soundDuration = 0.900
 logFile = logging.LogFile(filename+'.log', level=logging.EXP)
 logging.console.setLevel(logging.WARNING)  
 
+
 endExpNow = False  # flag for 'escape' or other condition => quit the exp
 
 
@@ -87,9 +91,9 @@ endExpNow = False  # flag for 'escape' or other condition => quit the exp
 # resolution = [2560, 1440] # Define screen resolution
 resolution = [1920, 1080] # Define screen resolution (Likely BOLD screen resolution)
 win = visual.Window(
-    size=resolution, fullscr=True, screen=1,
+    size=resolution, fullscr=True, screen=0,
     allowGUI=False, allowStencil=False, monitor='testMonitor', 
-    color='black', colorSpace='rgb', useFBO=True)
+    color='#505050', useFBO=True)
 
 
 # store frame rate of monitor if we can measure it
@@ -115,8 +119,8 @@ rect0 = visual.Rect(        #RV: rect0 is the rectangle in the middle of the scr
     win=win, name='rect0',
     width=(0.5), height=(0.45),
     ori=0, pos=(0, 0),
-    lineWidth=1, lineColor='black', lineColorSpace='rgb',
-    fillColor='black', fillColorSpace='rgb',
+    lineWidth=1, lineColor='#505050',
+    fillColor='#505050',
     opacity=1, depth=-1.0, interpolate=True)
 
 rect1 = visual.Rect(    #RV: rect1 is the rectangle in the middle of the screen after the starting key (a, e, u, l, =, etc)
@@ -124,7 +128,7 @@ rect1 = visual.Rect(    #RV: rect1 is the rectangle in the middle of the screen 
     width=(0.5), height=(0.45),
     ori=0, pos=(0, 0),
     lineWidth=1, lineColor='black', lineColorSpace='rgb',
-    fillColor='black', fillColorSpace='rgb',
+    fillColor='#000000',
     opacity=1, depth=-1.0, interpolate=True)
     
 
@@ -413,6 +417,7 @@ def AudioTrial():
 
 
 # ------Initialize Routine "Setup"-------
+logging.log(level=logging.EXP,msg=f"Sound Engine = {sound.Sound}")
 t = 0
 waitClock.reset()  # clock
 frameN = -1

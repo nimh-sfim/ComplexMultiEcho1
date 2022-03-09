@@ -2,11 +2,14 @@
 
 #GENERATE WITH:
 # ffmpeg -sameq -ss [start_seconds] -t [duration_seconds] -i [input_file] [outputfile]
-from psychopy import visual,event,core,gui,logging,data
+from psychopy import visual,event,core,gui,logging,data,prefs
 import random
 import os,time
 import numpy as np
 
+# See: https://psychopy.org/api/preferences.html for why this line needs to be before importing sound
+prefs.hardware['audioLib'] = ['PTB']
+from psychopy import sound
 # --------- Set Up Environment --------------------------------------------------
 
 # Ensure that relative paths start from the same directory as this script
@@ -62,7 +65,7 @@ fullScreen=True # set to true during experiments
 # ================
 # MAIN WINDOW
 win = visual.Window(
-    size=[1920, 1080], fullscr=fullScreen, screen=1, 
+    size=[1920, 1080], fullscr=fullScreen, screen=0, 
     winType='pyglet', allowGUI=True, allowStencil=False,
     monitor='testMonitor', color=[0,0,0], colorSpace='rgb',
     blendMode='avg', useFBO=True,
@@ -96,7 +99,7 @@ elif expInfo['RUN'] == 'C':
 # TASK DURATIONS & TIMING                                                                        TOTAL TIME = (21*5)+(39*5)+18+10.5=328.5s / 1.5 = 219 TRs (+ 4 extra)  ===> 5:34.5 min
 # ===================
 
-bubbletime_loginterval = 1; # Log circle size every 1 sec
+bubbletime_loginterval = 0.5; # Log circle size every 0.5 sec
 
 premovietime = 21
 movietime = 420
@@ -149,9 +152,9 @@ if ShowMovie:
 bubble = visual.ShapeStim(
     win=win,name='bubble stimulus',
     size=(0.1, 0.1),vertices='circle',
-    ori=0.0,pos=(0, 0),lineWidth=1.0,
+    ori=0.0,pos=(0, 0),lineWidth=2.0,
     colorSpace='rgb',lineColor=[1, 1, 1],
-    fillColor=None,opacity=1.0,interpolate=True, autoLog=False)
+    fillColor=None,opacity=0.5,interpolate=True, autoLog=False)
 
 # ==============================================================
 # ===========                INSTRUCTIONS                    ==============

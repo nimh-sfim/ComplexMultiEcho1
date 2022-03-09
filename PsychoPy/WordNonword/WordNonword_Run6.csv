@@ -1,5 +1,5 @@
 ,Run,TrialN,ProcedureID,Procedure,Font,ITISec,target1,target2,target3,target4,Expected_Response
-0,6.0,0.0,0,Null,Arial,14.0,,,,,0
+0,6.0,0.0,0,Null,Arial,14.0, , , , ,0
 53,6.0,1.0,3,FalVisProc,Wingdings,10.0,b`i_h,thin,nyzk,boat,0
 94,6.0,2.0,4,FalAudProc,Arial,12.0,slow_fal,land_fal,bank_fal,girl_fal,0
 14,6.0,3.0,1,VisProc,Arial,8.0,risk,stand,talk,talk,1
@@ -48,3 +48,4 @@
 86,6.0,46.0,4,FalAudProc,Arial,10.0,trade_fal,feed_fal,step_fal,wife_fal,0
 62,6.0,47.0,3,FalVisProc,Wingdings,10.0,zlub,fily,byd,byd,1
 35,6.0,48.0,2,AudProc,Arial,18.0,claim,play,tree,smile,0
+0,6.0,49.0,0,Null,Arial,0.0, , , , ,0

@@ -1,5 +1,5 @@
 ,Run,TrialN,ProcedureID,Procedure,Font,ITISec,target1,target2,target3,target4,Expected_Response
-0,7.0,0.0,0,Null,Arial,14.0,,,,,0
+0,7.0,0.0,0,Null,Arial,14.0, , , , ,0
 43,7.0,1.0,2,AudProc,Arial,14.0,charge,fast,huge,seek,0
 72,7.0,2.0,4,FalAudProc,Arial,16.0,claim_fal,tree_fal,smile_fal,play_fal,0
 1,7.0,3.0,1,VisProc,Arial,10.0,bed,grass,tape,view,0
@@ -48,3 +48,4 @@
 84,7.0,46.0,4,FalAudProc,Arial,16.0,gross_fal,start_fal,plan_fal,sleep_fal,0
 18,7.0,47.0,1,VisProc,Arial,12.0,curse,drink,light,cup,0
 13,7.0,48.0,1,VisProc,Arial,18.0,glare,foam,storm,wig,0
+0,7.0,49.0,0,Null,Arial,0.0, , , , ,0
