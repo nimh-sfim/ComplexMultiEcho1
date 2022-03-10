@@ -212,14 +212,29 @@ def generate_series_mapping(offset, ignore, mrn, subid, verbose=True):
         ("movie", 2),
         ("breathing", 2),
     ]
-    while currpos <= len(midx) + 1:
-        newset = series_sets[int((currpos  - 1) / 3)]
-        descs = generate_descriptions(subid, newset)
-        for d in descs:
-            mdesc.append(d)
-        currpos += 3
 
+    for s in series_sets:
+        mdesc.append(s)
+
+    if (len(midx) - 1) % 3 != 0:
+        raise ValueError(
+            "Expected to process a number of series equal to one "
+            "anatomical plus a multiple of 3 EPI series. "
+            f"Instead found {len(midx)} series to process."
+        )
+    
+    if len(midx) > len(mdesc):
+        raise ValueError(
+            "Encountered more data than expected; maximum number of series "
+            f"is {len(mdesc)}; encountered {len(midx)} instead."
+        )
+
+    # Remap indices to the series numbers
     rel = [mrn[i] for i in midx]
+
+    # Truncate mdesc to be the same size as rel
+    mdesc = [desc for desc, _ in zip(mdesc, rel)]
+
     return (rel, mdesc)
 
 
