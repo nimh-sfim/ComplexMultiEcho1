@@ -15,7 +15,7 @@ def main():
     )
     parser.add_argument("SOURCE", help="The root DICOM directory")
     parser.add_argument("DEST", help="The nifti destination")
-    parser.add_argument("SUBJID", help="Subject identifier")
+    parser.add_argument("SUBJID", help="Subject identifier (01, NOT sub-01)")
     parser.add_argument(
         "--ignore", type=int, nargs="+", required=False, default=[],
         help="mr numbers to ignore as integers"
@@ -173,7 +173,6 @@ def generate_series_mapping(offset, ignore, mrn, subid, verbose=True):
     offset -= 1
     # Ignore is 1-indexed, but we're 0-indexed
     ignore = set([i-1 for i in ignore])
-    print(ignore)
     # Guarantee that we're working with an in-order list of integers
     mrn.sort()
     # Initialize an empty list where each entry is an index into mrn that
@@ -187,6 +186,7 @@ def generate_series_mapping(offset, ignore, mrn, subid, verbose=True):
             midx.append(i)
     if verbose:
         print(f"Using runs {[mrn[i] for i in midx]}")
+
     # sbref, mag, phase for each epi run, plus one for anatomical expected
     # therefore check that the mrns - 1 is divisible by 3
     if not (len(midx) - 1) % 3 == 0:
@@ -212,14 +212,24 @@ def generate_series_mapping(offset, ignore, mrn, subid, verbose=True):
         ("movie", 2),
         ("breathing", 2),
     ]
-    while currpos <= len(midx) + 1:
-        newset = series_sets[int((currpos  - 1) / 3)]
-        descs = generate_descriptions(subid, newset)
+
+    for s in series_sets:
+        descs = generate_descriptions(subid, s)
         for d in descs:
             mdesc.append(d)
-        currpos += 3
+   
+    if len(midx) > len(mdesc):
+        raise ValueError(
+            "Encountered more data than expected; maximum number of series "
+            f"is {len(mdesc)}; encountered {len(midx)} instead."
+        )
 
+    # Remap indices to the series numbers
     rel = [mrn[i] for i in midx]
+
+    # Truncate mdesc to be the same size as rel
+    mdesc = [desc for desc, _ in zip(mdesc, rel)]
+
     return (rel, mdesc)
 
 
