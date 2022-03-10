@@ -173,7 +173,6 @@ def generate_series_mapping(offset, ignore, mrn, subid, verbose=True):
     offset -= 1
     # Ignore is 1-indexed, but we're 0-indexed
     ignore = set([i-1 for i in ignore])
-    print(ignore)
     # Guarantee that we're working with an in-order list of integers
     mrn.sort()
     # Initialize an empty list where each entry is an index into mrn that
@@ -187,6 +186,7 @@ def generate_series_mapping(offset, ignore, mrn, subid, verbose=True):
             midx.append(i)
     if verbose:
         print(f"Using runs {[mrn[i] for i in midx]}")
+
     # sbref, mag, phase for each epi run, plus one for anatomical expected
     # therefore check that the mrns - 1 is divisible by 3
     if not (len(midx) - 1) % 3 == 0:
@@ -214,15 +214,10 @@ def generate_series_mapping(offset, ignore, mrn, subid, verbose=True):
     ]
 
     for s in series_sets:
-        mdesc.append(s)
-
-    if (len(midx) - 1) % 3 != 0:
-        raise ValueError(
-            "Expected to process a number of series equal to one "
-            "anatomical plus a multiple of 3 EPI series. "
-            f"Instead found {len(midx)} series to process."
-        )
-    
+        descs = generate_descriptions(subid, s)
+        for d in descs:
+            mdesc.append(d)
+   
     if len(midx) > len(mdesc):
         raise ValueError(
             "Encountered more data than expected; maximum number of series "
