@@ -15,7 +15,7 @@ def main():
     )
     parser.add_argument("SOURCE", help="The root DICOM directory")
     parser.add_argument("DEST", help="The nifti destination")
-    parser.add_argument("SUBJID", help="Subject identifier")
+    parser.add_argument("SUBJID", help="Subject identifier (01, NOT sub-01)")
     parser.add_argument(
         "--ignore", type=int, nargs="+", required=False, default=[],
         help="mr numbers to ignore as integers"
