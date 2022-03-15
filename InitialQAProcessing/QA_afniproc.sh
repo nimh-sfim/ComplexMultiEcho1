@@ -19,6 +19,7 @@
 # The input is the subject ID (i.e. sub-01)
 subj_id=$1
 
+RunJobs=0
 
 rootdir=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/QuickQAProcess
 cd ${rootdir}
@@ -111,6 +112,8 @@ for runid in  movie_run-1 movie_run-2 movie_run-3 breathing_run-1 breathing_run-
         "  -tcat_remove_first_trs 0" \\$'\n' \
         "  -tcat_remove_last_trs 5" \\$'\n' \
         "  -align_opts_aea -cost lpc+ZZ"  \\$'\n' \
+        "  -volreg_post_vr_allin yes"  \\$'\n' \
+        "  -volreg_pvra_base_index MIN_OUTLIER"  \\$'\n' \
         "  -volreg_base_dset ../WNW/${subj_id}.results/vr_base_min_outlier+orig" \\$'\n' \
         "  -volreg_align_e2a"  \\$'\n' \
         "  -combine_method m_tedana" \\$'\n' \
@@ -127,27 +130,29 @@ for runid in  movie_run-1 movie_run-2 movie_run-3 breathing_run-1 breathing_run-
 done
 
 
+
+
 # Note: This assignment of a jobid from sbatch works on biowulf, but not elsewhere.
 #   See: https://hpc.nih.gov/docs/job_dependencies.html
-WNWjobID=$(sbatch --time 6:00:00 --cpus-per-task=8 --mem=24G --error=slurm_QA_WNW.e --output=slurm_${subj_id}_QA_WNW.o ${subj_id}_QA_WNW_sbatch.txt)
-moviebreath_jobID=$(swarm --time 6:00:00 --dependency=afterok:${WNWjobID} -g 24 -t 8 -m afni --merge-output --job-name moviebreath ${subj_id}_QA_moviebreath_swarm.txt)
+if [ $RunJobs -eq 1 ]; then
+  WNWjobID=$(sbatch --time 6:00:00 --cpus-per-task=8 --mem=24G --error=slurm_QA_WNW.e --output=slurm_${subj_id}_QA_WNW.o ${subj_id}_QA_WNW_sbatch.txt)
+  moviebreath_jobID=$(swarm --time 6:00:00 --dependency=afterok:${WNWjobID} -g 24 -t 8 -m afni --merge-output --job-name moviebreath ${subj_id}_QA_moviebreath_swarm.txt)
+
+  cd $rootdir
+  if [ -f ${subj_id}_QA_jobhist_sbatch.txt ]; then
+      echo Deleting and recreating ${subj_id}_QA_jobhist_sbatch.txt
+      rm ${subj_id}_QA_jobhist_sbatch.txt
+  fi
+  touch ${subj_id}_QA_jobhist_sbatch.txt
+
+  echo '#!/bin/sh' >> ${subj_id}_QA_jobhist_sbatch.txt
+  echo "jobhist ${WNWjobID} > ${subj_id}_jobhist_results.txt " >> ${subj_id}_QA_jobhist_sbatch.txt
+  echo "jobhist ${moviebreath_jobID} >> ${subj_id}_jobhist_results.txt " >> ${subj_id}_QA_jobhist_sbatch.txt
 
 
-cd $rootdir
-if [ -f ${subj_id}_QA_jobhist_sbatch.txt ]; then
-    echo Deleting and recreating ${subj_id}_QA_jobhist_sbatch.txt
-    rm ${subj_id}_QA_jobhist_sbatch.txt
+  sbatch --dependency=afterany:${moviebreath_jobID} --time 00:30:00 --cpus-per-task=1 --partition=norm,quick ${subj_id}_QA_jobhist_sbatch.txt
+
 fi
-touch ${subj_id}_QA_jobhist_sbatch.txt
-
-echo '#!/bin/sh' >> ${subj_id}_QA_jobhist_sbatch.txt
-echo "jobhist ${WNWjobID} > ${subj_id}_jobhist_results.txt " >> ${subj_id}_QA_jobhist_sbatch.txt
-echo "jobhist ${moviebreath_jobID} >> ${subj_id}_jobhist_results.txt " >> ${subj_id}_QA_jobhist_sbatch.txt
-
-
-sbatch --dependency=afterany:${moviebreath_jobID} --time 00:30:00 --cpus-per-task=1 --partition=norm,quick ${subj_id}_QA_jobhist_sbatch.txt
-
-
 # scrap code of from trying to figure out alignment
 #     echo "cat_matvec -ONELINE ../WNW/${subj_id}.results/${subj_id}_T1w_al_junk_mat.aff12.1D -I  > ${subj_id}_epi_al_T1w_mat.aff12.1D; \\" >> ${subj_id}_QA_moviebreath_swarm.txt
 
