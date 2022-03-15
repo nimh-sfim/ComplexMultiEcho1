@@ -122,7 +122,7 @@ FMscale = (2*FM*np.pi)
 FreqDev = FC-1/6 # Frequency deviation between 2s and 3s breathing cycles
 ModFreq = FreqDev/FM
 # Time in seconds spaced in 0.1 second intervals
-TimeInSec = np.linspace(0,totaltime+TimingFudge,num=(totaltime+TimingFudge)*10)
+TimeInSec = np.round(np.linspace(0,totaltime+TimingFudge,num=(totaltime+TimingFudge)*10+1), decimals=5)
 AMmod = -AMamp*np.cos(2*np.pi*TimeInSec*FM+BreathingPhase)+0.2
 BreathingPattern = AMmod*np.sin(2*np.pi*FC*TimeInSec + ModFreq*np.sin(2*np.pi*FM*TimeInSec+BreathingPhase)+BreathingPhase)*amp+meanshift
 
