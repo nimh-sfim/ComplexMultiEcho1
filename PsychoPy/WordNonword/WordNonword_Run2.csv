@@ -1,5 +1,5 @@
 ,Run,TrialN,ProcedureID,Procedure,Font,ITISec,target1,target2,target3,target4,Expected_Response
-0,2.0,0.0,0,Null,Arial,14.0, , , , ,0
+0,2.0,0.0,0,Null,Arial,16.0, , , , ,0
 9,2.0,1.0,1,VisProc,Arial,14.0,beat,plug,judge,track,0
 5,2.0,2.0,1,VisProc,Arial,8.0,cart,dance,flesh,sheep,0
 66,2.0,3.0,3,FalVisProc,Wingdings,16.0,son_,food,sha`y,b`in_,0

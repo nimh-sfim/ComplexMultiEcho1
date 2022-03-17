@@ -4,7 +4,7 @@ These are instructions to make data from various sources all end up in appropria
 
 ## Set up directory structure
 
-Set a subject ID like `snum=$01; sbj=sbj-${snum}`
+Set a subject ID like `snum=$01; sbj=sub-${snum}`
 
 ```sh
 {
@@ -19,7 +19,7 @@ mkdir biopac DICOM psychopy
 
 ## Other things to move after scan is done
 
-- Copy biopac data to `/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/${sbj}/Data/DataOffScanner/biopac`
+- Copy biopac data to `/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sbj}/DataOffScanner/biopac`
 
 - Copy PsycoPy logs for all tasks to `/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/${sbj}/Data/DataOffScanner/psychopy`
 

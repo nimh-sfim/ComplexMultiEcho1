@@ -1,5 +1,5 @@
 ,Run,TrialN,ProcedureID,Procedure,Font,ITISec,target1,target2,target3,target4,Expected_Response
-0,8.0,0.0,0,Null,Arial,14.0, , , , ,0
+0,8.0,0.0,0,Null,Arial,16.0, , , , ,0
 40,8.0,1.0,2,AudProc,Arial,8.0,pool,wall,ground,mass,0
 27,8.0,2.0,2,AudProc,Arial,10.0,foot,game,soil,wide,0
 64,8.0,3.0,3,FalVisProc,Wingdings,8.0,stay,stand,b`yak,d`o^,0

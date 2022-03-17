@@ -1,5 +1,5 @@
 ,Run,TrialN,ProcedureID,Procedure,Font,ITISec,target1,target2,target3,target4,Expected_Response
-0,9.0,0.0,0,Null,Arial,14.0, , , , ,0
+0,9.0,0.0,0,Null,Arial,16.0, , , , ,0
 91,9.0,1.0,4,FalAudProc,Arial,8.0,full_fal,draw_fal,fort_fal,vote_fal,0
 20,9.0,2.0,1,VisProc,Arial,8.0,plate,rule,soft,spend,0
 54,9.0,3.0,3,FalVisProc,Wingdings,10.0,_`ow,hyat,loosy,danzy,0
