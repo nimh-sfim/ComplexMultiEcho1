@@ -202,6 +202,11 @@ def generate_series_mapping(offset, ignore, mrn, subid, verbose=True):
         f"sub-{subid}_task-EpiTest_echo-%e_part-mag_bold",
         f"sub-{subid}_task-EpiTest_echo-%e_part-phase_bold",
     ]
+    if int(subid)>=3:
+        mdesc.extend(
+            [f"sub-{subid}_task-EpiTestPA_echo-%e_part-_sbref",
+            f"sub-{subid}_task-EpiTestPA_echo-%e_part-mag_bold",
+            f"sub-{subid}_task-EpiTestPA_echo-%e_part-phase_bold"])
     currpos = 3
     series_sets = [
         ("wnw", 1),
