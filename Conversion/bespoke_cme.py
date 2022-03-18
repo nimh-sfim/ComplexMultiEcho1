@@ -202,11 +202,17 @@ def generate_series_mapping(offset, ignore, mrn, subid, verbose=True):
         f"sub-{subid}_task-EpiTest_echo-%e_part-mag_bold",
         f"sub-{subid}_task-EpiTest_echo-%e_part-phase_bold",
     ]
+    # NOTE: early subjects did not have any reverse phase encode (a.k.a.
+    # "blip-up, blip-down") and so did not convert the below because it was
+    # not included.
     if int(subid)>=3:
         mdesc.extend(
             [f"sub-{subid}_task-EpiTestPA_echo-%e_part-_sbref",
             f"sub-{subid}_task-EpiTestPA_echo-%e_part-mag_bold",
             f"sub-{subid}_task-EpiTestPA_echo-%e_part-phase_bold"])
+    # NOTE: if you want to add additional subject-specific conversion
+    # requirements or scans which cannot be accessed via the --start or
+    # --ignore options, add that logic above this line with an explanation
     currpos = 3
     series_sets = [
         ("wnw", 1),
