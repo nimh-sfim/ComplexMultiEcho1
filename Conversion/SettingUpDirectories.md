@@ -7,26 +7,29 @@ These are instructions to make data from various sources all end up in appropria
 Set a subject ID like `snum=$01; sbj=sub-${snum}`
 
 ```sh
-{
 cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/
 mkdir ${sbj}
 cd ${sbj}
 mkdir DataOffScanner QuickQAProcess Unprocessed
 cd DataOffScanner
 mkdir biopac DICOM psychopy
-}
 ```
 
 ## Other things to move after scan is done
 
-- Copy biopac data to `/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sbj}/DataOffScanner/biopac`
+- Create a document named `${sbj}_ScanningNotes.txt` in `/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/${sbj}`
 
 - Copy PsycoPy logs for all tasks to `/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/${sbj}/Data/DataOffScanner/psychopy`
+  - For the WordNonword task run script to extract timing files for AFNI GLMS running something like:
+
+    `python [path to ComplexMultiEcho1 code repo]/PsychoPy/WordNonword/CreateEventTimesForGLM.py --sbjnum 3 --runnums 7 8 9 --rootdir /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/`
+
+    Look at the stdout of that script to confirm that there's little to no difference between expect and actual trial times, the TR is <1ms of 1.5sec, and the participant's behavioral response rates show some level of attention. `sub-??_CreateEventTimesForGLM.log` containes more details about responses during each run
+
+- Copy biopac data to `/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sbj}/DataOffScanner/biopac`
 
 - Put deidentified DICOM README-Study.txt in `/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/${sbj}/Data/DataOffScanner/DICOM`
   - README-Study.txt has PII in the following fields at the top: Subject Name, Subject ID, Study Date, Study ID, Accession Number and the scan date is in the repeated "Organized" field
-
-- Create a document named `${sbj}_ScanningNotes.txt` in `/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/${sbj}`
 
 - On a local computer were the DICOMs with PII are downloaded run something like:
     `python bespoke_cme.py --ignore 3 4 5 18 19 20 27 28 29 --start 2 ../DataOffScanner/DICOM ./ ${snum} > dcm2nii_mapping.txt`

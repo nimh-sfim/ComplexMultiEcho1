@@ -35,6 +35,22 @@ if [ -f ${subj_id}_QA_WNW_sbatch.txt ]; then
 fi
 touch ${subj_id}_QA_WNW_sbatch.txt
 
+if [ ${subj_id} == 'sub-01' ] ||  [ ${subj_id} == 'sub-01' ];
+then
+   volregstateWNW="  -volreg_align_to MIN_OUTLIER"
+   volregstateOther="  -volreg_post_vr_allin yes \
+          -volreg_pvra_base_index MIN_OUTLIER  \
+          -volreg_base_dset ../WNW/${subj_id}.results/vr_base_min_outlier+orig"
+
+else
+   volregstateWNW="  -blip_forward_dset ${origdir}func/sub-03_task-EpiTest_echo-1_part-mag_bold.nii  \
+                       -blip_reverse_dset ${origdir}func/sub-03_task-EpiTestPA_echo-1_part-mag_bold.nii  \
+                       -volreg_post_vr_allin yes  \
+                       -volreg_pvra_base_index MIN_OUTLIER  \
+                       -volreg_align_to MEDIAN_BLIP"
+   volregstateOther=${volregstateWNW}
+
+fi
 
 
 echo '#!/bin/sh' > ${subj_id}_QA_WNW_sbatch.txt
@@ -58,8 +74,9 @@ echo \
  "  -echo_times 13.44 31.7 49.96 -reg_echo 2" \\$'\n' \
  "  -tcat_remove_first_trs 0" \\$'\n' \
  "  -tcat_remove_last_trs 5" \\$'\n' \
+ ${volregstateWNW} \\$'\n' \
+ "  -volreg_align_e2a" \\$'\n' \
  "  -align_opts_aea -cost lpc+ZZ -check_flip" \\$'\n' \
- "  -volreg_align_to MIN_OUTLIER -volreg_align_e2a" \\$'\n' \
  "  -combine_method m_tedana" \\$'\n' \
  "  -combine_opts_tedana --tedpca aic" \\$'\n' \
  "  -regress_censor_motion 0.2 -regress_censor_outliers 0.05" \\$'\n' \
@@ -78,7 +95,9 @@ echo \
  "  -regress_est_blur_epits -regress_est_blur_errts" \\$'\n' \
  "  -regress_apply_mot_types demean deriv" \\$'\n' \
  "  -regress_reml_exec -html_review_style pythonic" \\$'\n' \
- "  -execute" \
+ "  -execute" \\$'\n' \
+ 
+
     >> ${subj_id}_QA_WNW_sbatch.txt
 
 
@@ -112,9 +131,7 @@ for runid in  movie_run-1 movie_run-2 movie_run-3 breathing_run-1 breathing_run-
         "  -tcat_remove_first_trs 0" \\$'\n' \
         "  -tcat_remove_last_trs 5" \\$'\n' \
         "  -align_opts_aea -cost lpc+ZZ"  \\$'\n' \
-        "  -volreg_post_vr_allin yes"  \\$'\n' \
-        "  -volreg_pvra_base_index MIN_OUTLIER"  \\$'\n' \
-        "  -volreg_base_dset ../WNW/${subj_id}.results/vr_base_min_outlier+orig" \\$'\n' \
+        ${volregstateOther} \\$'\n' \
         "  -volreg_align_e2a"  \\$'\n' \
         "  -combine_method m_tedana" \\$'\n' \
         "  -combine_opts_tedana --tedpca aic" \\$'\n' \
