@@ -20,7 +20,7 @@ This specific study is examining ways to combine:
 ## Organization & Processing Steps
 
 1. [SettingUpDirectories.md](Conversion/SettingUpDirectories.md) is instructions for getting the MRI, biopac, & psychopy data from a scanning session to where it belongs. This (will) include:
-    - DICOM to BIDS with Personally identifiable information removal
+    - DICOM to BIDS with Personally identifiable information removed
     - PsychoPy run logs to GLM regressors for AFNI & BIDS (and eventually other relevant reporting)
     - TODO: Biopac traces to BIDS-style cardiac, respiratory time series & TTL pulse times.
 
