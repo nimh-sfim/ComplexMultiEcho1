@@ -51,3 +51,11 @@ chgrp -R SFIM /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sbj}
 chmod -R 2770 /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sbj}
 }
 ```
+
+## Converting BIOPAC .acq to .tsv.gz/.json
+
+```sh
+{
+acq2bidsphysio --infile file.acq --bidsprefix full/path/to/outdir/sub-01_task-wnw_acq-b_run-1_physio
+}
+```
