@@ -19,7 +19,7 @@
 # The input is the subject ID (i.e. sub-01)
 subj_id=$1
 
-RunJobs=0
+RunJobs=1
 
 rootdir=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/QuickQAProcess
 cd ${rootdir}
@@ -28,6 +28,7 @@ origdir='../../Unprocessed/'
 mkdir WNW
 mkdir ./WNW/stimfiles
 cp ../DataOffScanner/psychopy/*.1D ./WNW/stimfiles/
+cp ../DataOffScanner/psychopy/${subj_id}_CreateEventTimesForGLM.log ./WNW/stimfiles/
 
 if [ -f ${subj_id}_QA_WNW_sbatch.txt ]; then
     echo Deleting and recreating ${subj_id}_QA_WNW_sbatch.txt
@@ -35,7 +36,7 @@ if [ -f ${subj_id}_QA_WNW_sbatch.txt ]; then
 fi
 touch ${subj_id}_QA_WNW_sbatch.txt
 
-if [ ${subj_id} == 'sub-01' ] ||  [ ${subj_id} == 'sub-01' ];
+if [ ${subj_id} == 'sub-01' ] ||  [ ${subj_id} == 'sub-03' ];
 then
    volregstateWNW="  -volreg_align_to MIN_OUTLIER"
    volregstateOther="  -volreg_post_vr_allin yes \
@@ -80,11 +81,11 @@ echo \
  "  -combine_method m_tedana" \\$'\n' \
  "  -combine_opts_tedana --tedpca aic" \\$'\n' \
  "  -regress_censor_motion 0.2 -regress_censor_outliers 0.05" \\$'\n' \
- "  -regress_stim_times ./stimfiles/VisProc_Times.1D" \\$'\n' \
- "                     ./stimfiles/FalVisProc_Times.1D" \\$'\n'  \
- "                     ./stimfiles/AudProc_Times.1D" \\$'\n' \
- "                     ./stimfiles/FalAudProc_Times.1D" \\$'\n' \
- "                     ./stimfiles/Keypress_Times.1D" \\$'\n' \
+ "  -regress_stim_times ./stimfiles/${subj_id}_VisProc_Times.1D" \\$'\n' \
+ "                     ./stimfiles/${subj_id}_FalVisProc_Times.1D" \\$'\n'  \
+ "                     ./stimfiles/${subj_id}_AudProc_Times.1D" \\$'\n' \
+ "                     ./stimfiles/${subj_id}_FalAudProc_Times.1D" \\$'\n' \
+ "                     ./stimfiles/${subj_id}_Keypress_Times.1D" \\$'\n' \
  "  -regress_stim_labels VisWord FalVisWord AudWord FalAudWord Keypress" \\$'\n' \
    -regress_basis_multi \'BLOCK\(4,1\)\' \'BLOCK\(4,1\)\' \'BLOCK\(4,1\)\' \'BLOCK\(4,1\)\' \'BLOCK\(1,1\)\' \\$'\n' \
  "  -regress_opts_3dD -jobs 8" \\$'\n' \
@@ -95,10 +96,8 @@ echo \
  "  -regress_est_blur_epits -regress_est_blur_errts" \\$'\n' \
  "  -regress_apply_mot_types demean deriv" \\$'\n' \
  "  -regress_reml_exec -html_review_style pythonic" \\$'\n' \
- "  -execute" \\$'\n' \
- 
-
-    >> ${subj_id}_QA_WNW_sbatch.txt
+ "  -execute" \
+     >> ${subj_id}_QA_WNW_sbatch.txt
 
 
 
@@ -152,7 +151,7 @@ done
 # Note: This assignment of a jobid from sbatch works on biowulf, but not elsewhere.
 #   See: https://hpc.nih.gov/docs/job_dependencies.html
 if [ $RunJobs -eq 1 ]; then
-  WNWjobID=$(sbatch --time 6:00:00 --cpus-per-task=8 --mem=24G --error=slurm_QA_WNW.e --output=slurm_${subj_id}_QA_WNW.o ${subj_id}_QA_WNW_sbatch.txt)
+  WNWjobID=$(sbatch --time 6:00:00 --cpus-per-task=8 --mem=24G --error=slurm_${subj_id}_QA_WNW.e --output=slurm_${subj_id}_QA_WNW.o ${subj_id}_QA_WNW_sbatch.txt)
   moviebreath_jobID=$(swarm --time 6:00:00 --dependency=afterok:${WNWjobID} -g 24 -t 8 -m afni --merge-output --job-name moviebreath ${subj_id}_QA_moviebreath_swarm.txt)
 
   cd $rootdir
