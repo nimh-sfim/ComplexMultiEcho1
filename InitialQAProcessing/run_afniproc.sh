@@ -21,7 +21,7 @@ subj_id=$1
 
 RunJobs=1
 
-rootdir=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/preproc
+rootdir=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/afniproc_orig
 mkdir ${rootdir}
 cd ${rootdir}
 origdir='../../Unprocessed/'
@@ -64,6 +64,9 @@ echo \
  "  -blocks despike tshift align volreg mask combine scale regress" \\$'\n' \
  "  -copy_anat ../Proc_Anat/${subj_id}_T1_masked.nii.gz" \\$'\n' \
  "  -anat_has_skull no" \\$'\n' \
+ "  -anat_follower_ROI FSvent epi ../Proc_Anat/fs_ap_latvent.nii.gz" \\$'\n' \
+ "  -anat_follower_ROI FSWe epi ../Proc_Anat/fs_ap_wm.nii.gz" \\$'\n' \
+ "  -anat_follower_erode FSvent FSWe" \\$'\n' \
  "  -dsets_me_echo ${origdir}func/${subj_id}_task-wnw_run-1_echo-1_part-mag_bold.nii" \\$'\n' \
  "      ${origdir}func/${subj_id}_task-wnw_run-2_echo-1_part-mag_bold.nii" \\$'\n' \
  "      ${origdir}func/${subj_id}_task-wnw_run-3_echo-1_part-mag_bold.nii" \\$'\n' \
@@ -95,13 +98,14 @@ echo \
    -gltsym \'SYM: +AudWord +VisWord -FalAudWord -FalVisWord\' -glt_label 3 Word-NonWord \\$'\n' \
    -gltsym \'SYM: -AudWord +VisWord -FalAudWord +FalVisWord\' -glt_label 4 Vis-Aud \\$'\n' \
  "  -regress_est_blur_epits -regress_est_blur_errts" \\$'\n' \
+ "  -regress_motion_per_run" \\$'\n' \
  "  -regress_apply_mot_types demean deriv" \\$'\n' \
+ "  -regress_ROI_PC FSvent 3" \\$'\n' \
+ "  -regress_ROI_PC_per_run FSvent" \\$'\n' \
+ "  -regress_make_corr_vols FSWe FSvent" \\$'\n' \
  "  -regress_reml_exec -html_review_style pythonic" \\$'\n' \
  "  -execute" \
      >> ${subj_id}_WNW_sbatch.txt
-
-
-
 
 # Creating a separate swarm for each potential movie or breathing
 
@@ -123,6 +127,9 @@ for runid in  movie_run-1 movie_run-2 movie_run-3 breathing_run-1 breathing_run-
         "afni_proc.py -subj_id $subj_id" \\$'\n' \
         "  -blocks despike tshift align volreg mask combine regress" \\$'\n' \
         "  -copy_anat ../Proc_Anat/${subj_id}_T1_masked.nii.gz" \\$'\n' \
+        "  -anat_follower_ROI FSvent epi ../Proc_Anat/fs_ap_latvent.nii.gz" \\$'\n' \
+        "  -anat_follower_ROI FSWe epi ../Proc_Anat/fs_ap_wm.nii.gz" \\$'\n' \
+        "  -anat_follower_erode FSvent FSWe" \\$'\n' \
         "  -anat_has_skull no" \\$'\n' \
         "  -dsets_me_echo ${origdir}func/${subj_id}_task-${runid}_echo-1_part-mag_bold.nii" \\$'\n' \
         "  -dsets_me_echo ${origdir}func/${subj_id}_task-${runid}_echo-2_part-mag_bold.nii" \\$'\n' \
@@ -139,6 +146,9 @@ for runid in  movie_run-1 movie_run-2 movie_run-3 breathing_run-1 breathing_run-
         "  -regress_opts_3dD -jobs 8" \\$'\n' \
         "  -regress_est_blur_epits -regress_est_blur_errts" \\$'\n' \
         "  -regress_apply_mot_types demean deriv" \\$'\n' \
+        "  -regress_ROI_PC FSvent 3" \\$'\n' \
+        "  -regress_ROI_PC_per_run FSvent" \\$'\n' \
+        "  -regress_make_corr_vols FSWe FSvent" \\$'\n' \
         "  -regress_reml_exec -html_review_style pythonic" \\$'\n' \
         "  -execute" \
         >> ${subj_id}_moviebreath_swarm.txt
