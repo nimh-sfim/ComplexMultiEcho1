@@ -249,6 +249,17 @@ def get_keypress_timing(sbjnum, RunNums, ShowExpected=True):
         # by the first TR. Subtract the first trigger time so they are on the same clock
         keypresstimes = keypresstimes[:keypressidx]-triggertimes[0]
 
+        tmp_negkeypress = keypresstimes < 0
+        if tmp_negkeypress.any():
+            logger.info(f"NOTE: Removing keypress(es) {keypresstimes[tmp_negkeypress]}sec before the start of the scan")
+            keypresstimes = keypresstimes[not tmp_negkeypress]
+        tmp_scanlength = triggertimes[-1]-triggertimes[0]
+        tmp_postscankeypress = keypresstimes > tmp_scanlength
+        if tmp_postscankeypress.any():
+            logger.info(f"NOTE: Removing keypress(es) {keypresstimes[tmp_postscankeypress]}sec after the end of the scan")
+            keypresstimes = keypresstimes[not tmp_postscankeypress]
+
+
         # Go through all trials where a response is expected and count trials with or without a response thats
         # 0.1 sec before the expected response to 3 sec after (starting before in case there are any frame/timer refresh issues)
         MissedResponseCount = 0
