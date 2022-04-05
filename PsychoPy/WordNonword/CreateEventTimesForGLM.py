@@ -250,12 +250,12 @@ def get_keypress_timing(sbjnum, RunNums, ShowExpected=True):
         keypresstimes = keypresstimes[:keypressidx]-triggertimes[0]
 
         tmp_negkeypress = keypresstimes < 0
-        if tmp_negkeypress.any():
+        if np.any(tmp_negkeypress):
             logger.info(f"NOTE: Removing keypress(es) {keypresstimes[tmp_negkeypress]}sec before the start of the scan")
             keypresstimes = keypresstimes[not tmp_negkeypress]
         tmp_scanlength = triggertimes[-1]-triggertimes[0]
         tmp_postscankeypress = keypresstimes > tmp_scanlength
-        if tmp_postscankeypress.any():
+        if np.any(tmp_postscankeypress):
             logger.info(f"NOTE: Removing keypress(es) {keypresstimes[tmp_postscankeypress]}sec after the end of the scan")
             keypresstimes = keypresstimes[not tmp_postscankeypress]
 
