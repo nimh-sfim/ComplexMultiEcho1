@@ -252,12 +252,12 @@ def get_keypress_timing(sbjnum, RunNums, ShowExpected=True):
         tmp_negkeypress = keypresstimes < 0
         if np.any(tmp_negkeypress):
             logger.info(f"NOTE: Removing keypress(es) {keypresstimes[tmp_negkeypress]}sec before the start of the scan")
-            keypresstimes = keypresstimes[not tmp_negkeypress]
+            keypresstimes = keypresstimes[keypresstimes>=0]
         tmp_scanlength = triggertimes[-1]-triggertimes[0]
         tmp_postscankeypress = keypresstimes > tmp_scanlength
         if np.any(tmp_postscankeypress):
             logger.info(f"NOTE: Removing keypress(es) {keypresstimes[tmp_postscankeypress]}sec after the end of the scan")
-            keypresstimes = keypresstimes[not tmp_postscankeypress]
+            keypresstimes = keypresstimes[keypresstimes < tmp_scanlength]
 
 
         # Go through all trials where a response is expected and count trials with or without a response thats
