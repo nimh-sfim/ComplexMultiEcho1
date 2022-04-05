@@ -21,7 +21,8 @@ subj_id=$1
 
 RunJobs=1
 
-rootdir=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/QuickQAProcess
+rootdir=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/preproc
+mkdir ${rootdir}
 cd ${rootdir}
 origdir='../../Unprocessed/'
 
@@ -30,13 +31,13 @@ mkdir ./WNW/stimfiles
 cp ../DataOffScanner/psychopy/*.1D ./WNW/stimfiles/
 cp ../DataOffScanner/psychopy/${subj_id}_CreateEventTimesForGLM.log ./WNW/stimfiles/
 
-if [ -f ${subj_id}_QA_WNW_sbatch.txt ]; then
-    echo Deleting and recreating ${subj_id}_QA_WNW_sbatch.txt
-    rm ${subj_id}_QA_WNW_sbatch.txt
+if [ -f ${subj_id}_WNW_sbatch.txt ]; then
+    echo Deleting and recreating ${subj_id}_WNW_sbatch.txt
+    rm ${subj_id}_WNW_sbatch.txt
 fi
-touch ${subj_id}_QA_WNW_sbatch.txt
+touch ${subj_id}_WNW_sbatch.txt
 
-if [ ${subj_id} == 'sub-01' ] ||  [ ${subj_id} == 'sub-03' ];
+if [ ${subj_id} == 'sub-01' ] ||  [ ${subj_id} == 'sub-02' ];
 then
    volregstateWNW="  -volreg_align_to MIN_OUTLIER"
    volregstateOther="  -volreg_post_vr_allin yes \
@@ -44,8 +45,8 @@ then
           -volreg_base_dset ../WNW/${subj_id}.results/vr_base_min_outlier+orig"
 
 else
-   volregstateWNW="  -blip_forward_dset ${origdir}func/sub-03_task-EpiTest_echo-1_part-mag_bold.nii  \
-                       -blip_reverse_dset ${origdir}func/sub-03_task-EpiTestPA_echo-1_part-mag_bold.nii  \
+   volregstateWNW="  -blip_forward_dset ${origdir}func/${subj_id}_task-EpiTest_echo-1_part-mag_bold.nii  \
+                       -blip_reverse_dset ${origdir}func/${subj_id}_task-EpiTestPA_echo-1_part-mag_bold.nii  \
                        -volreg_post_vr_allin yes  \
                        -volreg_pvra_base_index MIN_OUTLIER  \
                        -volreg_align_to MEDIAN_BLIP"
@@ -54,15 +55,15 @@ else
 fi
 
 
-echo '#!/bin/sh' > ${subj_id}_QA_WNW_sbatch.txt
-echo "module load afni" >> ${subj_id}_QA_WNW_sbatch.txt
-echo "source /home/handwerkerd/InitConda.sh" >> ${subj_id}_QA_WNW_sbatch.txt
-echo "cd ${rootdir}/WNW" >> ${subj_id}_QA_WNW_sbatch.txt
+echo '#!/bin/sh' > ${subj_id}_WNW_sbatch.txt
+echo "module load afni" >> ${subj_id}_WNW_sbatch.txt
+echo "source /home/handwerkerd/InitConda.sh" >> ${subj_id}_WNW_sbatch.txt
+echo "cd ${rootdir}/WNW" >> ${subj_id}_WNW_sbatch.txt
 echo \
  "afni_proc.py -subj_id $subj_id" \\$'\n' \
  "  -blocks despike tshift align volreg mask combine scale regress" \\$'\n' \
- "  -copy_anat ${origdir}anat/${subj_id}_T1w.nii" \\$'\n' \
- "  -anat_has_skull yes" \\$'\n' \
+ "  -copy_anat ../Proc_Anat/${subj_id}_T1_masked.nii.gz" \\$'\n' \
+ "  -anat_has_skull no" \\$'\n' \
  "  -dsets_me_echo ${origdir}func/${subj_id}_task-wnw_run-1_echo-1_part-mag_bold.nii" \\$'\n' \
  "      ${origdir}func/${subj_id}_task-wnw_run-2_echo-1_part-mag_bold.nii" \\$'\n' \
  "      ${origdir}func/${subj_id}_task-wnw_run-3_echo-1_part-mag_bold.nii" \\$'\n' \
@@ -97,7 +98,7 @@ echo \
  "  -regress_apply_mot_types demean deriv" \\$'\n' \
  "  -regress_reml_exec -html_review_style pythonic" \\$'\n' \
  "  -execute" \
-     >> ${subj_id}_QA_WNW_sbatch.txt
+     >> ${subj_id}_WNW_sbatch.txt
 
 
 
@@ -105,23 +106,23 @@ echo \
 # Creating a separate swarm for each potential movie or breathing
 
 
-if [ -f ${subj_id}_QA_moviebreath_swarm.txt ]; then
-    echo Deleting and recreating ${subj_id}_QA_moviebreath_swarm.txt
-    rm ${subj_id}_QA_moviebreath_swarm.txt
+if [ -f ${subj_id}_moviebreath_swarm.txt ]; then
+    echo Deleting and recreating ${subj_id}_moviebreath_swarm.txt
+    rm ${subj_id}_moviebreath_swarm.txt
 fi
-touch ${subj_id}_QA_moviebreath_swarm.txt
+touch ${subj_id}_moviebreath_swarm.txt
 
 for runid in  movie_run-1 movie_run-2 movie_run-3 breathing_run-1 breathing_run-2 breathing_run-3 ; do
   cd ${rootdir} 
   if [ -f ../Unprocessed/func/${subj_id}_task-${runid}_echo-1_part-mag_bold.nii ]; then
     mkdir $runid
-    echo "module load afni; \\"  >> ${subj_id}_QA_moviebreath_swarm.txt
-    echo "source /home/handwerkerd/InitConda.sh; \\" >> ${subj_id}_QA_moviebreath_swarm.txt
-    echo "cd ${rootdir}/${runid}; \\" >> ${subj_id}_QA_moviebreath_swarm.txt
+    echo "module load afni; \\"  >> ${subj_id}_moviebreath_swarm.txt
+    echo "source /home/handwerkerd/InitConda.sh; \\" >> ${subj_id}_moviebreath_swarm.txt
+    echo "cd ${rootdir}/${runid}; \\" >> ${subj_id}_moviebreath_swarm.txt
     echo \
         "afni_proc.py -subj_id $subj_id" \\$'\n' \
         "  -blocks despike tshift align volreg mask combine regress" \\$'\n' \
-        "  -copy_anat ../WNW/${subj_id}.results/${subj_id}_T1w_ns+orig" \\$'\n' \
+        "  -copy_anat ../Proc_Anat/${subj_id}_T1_masked.nii.gz" \\$'\n' \
         "  -anat_has_skull no" \\$'\n' \
         "  -dsets_me_echo ${origdir}func/${subj_id}_task-${runid}_echo-1_part-mag_bold.nii" \\$'\n' \
         "  -dsets_me_echo ${origdir}func/${subj_id}_task-${runid}_echo-2_part-mag_bold.nii" \\$'\n' \
@@ -140,7 +141,7 @@ for runid in  movie_run-1 movie_run-2 movie_run-3 breathing_run-1 breathing_run-
         "  -regress_apply_mot_types demean deriv" \\$'\n' \
         "  -regress_reml_exec -html_review_style pythonic" \\$'\n' \
         "  -execute" \
-        >> ${subj_id}_QA_moviebreath_swarm.txt
+        >> ${subj_id}_moviebreath_swarm.txt
 
   fi
 done
@@ -151,22 +152,22 @@ done
 # Note: This assignment of a jobid from sbatch works on biowulf, but not elsewhere.
 #   See: https://hpc.nih.gov/docs/job_dependencies.html
 if [ $RunJobs -eq 1 ]; then
-  WNWjobID=$(sbatch --time 6:00:00 --cpus-per-task=8 --mem=24G --error=slurm_${subj_id}_QA_WNW.e --output=slurm_${subj_id}_QA_WNW.o ${subj_id}_QA_WNW_sbatch.txt)
-  moviebreath_jobID=$(swarm --time 6:00:00 --dependency=afterok:${WNWjobID} -g 24 -t 8 -m afni --merge-output --job-name moviebreath ${subj_id}_QA_moviebreath_swarm.txt)
+  WNWjobID=$(sbatch --time 6:00:00 --cpus-per-task=8 --mem=24G --error=slurm_${subj_id}_WNW.e --output=slurm_${subj_id}_WNW.o ${subj_id}_WNW_sbatch.txt)
+  moviebreath_jobID=$(swarm --time 6:00:00 --dependency=afterok:${WNWjobID} -g 24 -t 8 -m afni --merge-output --job-name moviebreath ${subj_id}_moviebreath_swarm.txt)
 
   cd $rootdir
-  if [ -f ${subj_id}_QA_jobhist_sbatch.txt ]; then
-      echo Deleting and recreating ${subj_id}_QA_jobhist_sbatch.txt
-      rm ${subj_id}_QA_jobhist_sbatch.txt
+  if [ -f ${subj_id}_jobhist_sbatch.txt ]; then
+      echo Deleting and recreating ${subj_id}_jobhist_sbatch.txt
+      rm ${subj_id}_jobhist_sbatch.txt
   fi
-  touch ${subj_id}_QA_jobhist_sbatch.txt
+  touch ${subj_id}_jobhist_sbatch.txt
 
-  echo '#!/bin/sh' >> ${subj_id}_QA_jobhist_sbatch.txt
-  echo "jobhist ${WNWjobID} > ${subj_id}_jobhist_results.txt " >> ${subj_id}_QA_jobhist_sbatch.txt
-  echo "jobhist ${moviebreath_jobID} >> ${subj_id}_jobhist_results.txt " >> ${subj_id}_QA_jobhist_sbatch.txt
+  echo '#!/bin/sh' >> ${subj_id}_jobhist_sbatch.txt
+  echo "jobhist ${WNWjobID} > ${subj_id}_jobhist_results.txt " >> ${subj_id}_jobhist_sbatch.txt
+  echo "jobhist ${moviebreath_jobID} >> ${subj_id}_jobhist_results.txt " >> ${subj_id}_jobhist_sbatch.txt
 
 
-  sbatch --dependency=afterany:${moviebreath_jobID} --time 00:30:00 --cpus-per-task=1 --partition=norm,quick ${subj_id}_QA_jobhist_sbatch.txt
+  sbatch --dependency=afterany:${moviebreath_jobID} --time 00:30:00 --cpus-per-task=1 --partition=norm,quick ${subj_id}_jobhist_sbatch.txt
 
 fi
 # scrap code of from trying to figure out alignment
