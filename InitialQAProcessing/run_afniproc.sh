@@ -62,10 +62,10 @@ echo "cd ${rootdir}/WNW" >> ${subj_id}_WNW_sbatch.txt
 echo \
  "afni_proc.py -subj_id $subj_id" \\$'\n' \
  "  -blocks despike tshift align volreg mask combine scale regress" \\$'\n' \
- "  -copy_anat ../Proc_Anat/${subj_id}_T1_masked.nii.gz" \\$'\n' \
+ "  -copy_anat ../../Proc_Anat/${subj_id}_T1_masked.nii.gz" \\$'\n' \
  "  -anat_has_skull no" \\$'\n' \
- "  -anat_follower_ROI FSvent epi ../Proc_Anat/fs_ap_latvent.nii.gz" \\$'\n' \
- "  -anat_follower_ROI FSWe epi ../Proc_Anat/fs_ap_wm.nii.gz" \\$'\n' \
+ "  -anat_follower_ROI FSvent epi ../../Proc_Anat/fs_ap_latvent.nii.gz" \\$'\n' \
+ "  -anat_follower_ROI FSWe epi ../../Proc_Anat/fs_ap_wm.nii.gz" \\$'\n' \
  "  -anat_follower_erode FSvent FSWe" \\$'\n' \
  "  -dsets_me_echo ${origdir}func/${subj_id}_task-wnw_run-1_echo-1_part-mag_bold.nii" \\$'\n' \
  "      ${origdir}func/${subj_id}_task-wnw_run-2_echo-1_part-mag_bold.nii" \\$'\n' \
@@ -126,9 +126,9 @@ for runid in  movie_run-1 movie_run-2 movie_run-3 breathing_run-1 breathing_run-
     echo \
         "afni_proc.py -subj_id $subj_id" \\$'\n' \
         "  -blocks despike tshift align volreg mask combine regress" \\$'\n' \
-        "  -copy_anat ../Proc_Anat/${subj_id}_T1_masked.nii.gz" \\$'\n' \
-        "  -anat_follower_ROI FSvent epi ../Proc_Anat/fs_ap_latvent.nii.gz" \\$'\n' \
-        "  -anat_follower_ROI FSWe epi ../Proc_Anat/fs_ap_wm.nii.gz" \\$'\n' \
+        "  -copy_anat ../Proc_Anat/../${subj_id}_T1_masked.nii.gz" \\$'\n' \
+        "  -anat_follower_ROI FSvent epi ../../Proc_Anat/fs_ap_latvent.nii.gz" \\$'\n' \
+        "  -anat_follower_ROI FSWe epi ../../Proc_Anat/fs_ap_wm.nii.gz" \\$'\n' \
         "  -anat_follower_erode FSvent FSWe" \\$'\n' \
         "  -anat_has_skull no" \\$'\n' \
         "  -dsets_me_echo ${origdir}func/${subj_id}_task-${runid}_echo-1_part-mag_bold.nii" \\$'\n' \
