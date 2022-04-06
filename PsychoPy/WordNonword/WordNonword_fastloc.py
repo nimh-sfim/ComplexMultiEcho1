@@ -7,7 +7,7 @@
     Updating Note:          Now works in PsychoPy v2021.2.3
                             Visual stimuli are spaced by 1 sec, just like audio stimuli
     Design  Author:==
-    Malins, J. G., Gumkowski, N., Buis, B., Molfese, P., Rueckl, J. G., Frost, S. J.,  rbrrgrr
+    Malins, J. G., Gumkowski, N., Buis, B., Molfese, P., Rueckl, J. G., Frost, S. J.,  
         Mencl, W. E. (2016). Dough, tough, cough, rough: A "fast" fMRI localizer of 
         component processes in reading. Neuropsychologia, 91, 394406.t
     Software Author:

@@ -10,7 +10,7 @@ Set a subject ID like `snum=$01; sbj=sub-${snum}`
 cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/
 mkdir ${sbj}
 cd ${sbj}
-mkdir DataOffScanner QuickQAProcess Unprocessed
+mkdir DataOffScanner Unprocessed
 cd DataOffScanner
 mkdir biopac DICOM psychopy
 ```
@@ -32,7 +32,7 @@ mkdir biopac DICOM psychopy
   - README-Study.txt has PII in the following fields at the top: Subject Name, Subject ID, Study Date, Study ID, Accession Number and the scan date is in the repeated "Organized" field
 
 - On a local computer were the DICOMs with PII are downloaded run something like:
-    `python bespoke_cme.py --ignore 3 4 5 18 19 20 27 28 29 --start 2 ../DataOffScanner/DICOM ./ ${snum} > dcm2nii_mapping.txt`
+    `python bespoke_cme.py --ignore 3 4 5 18 19 20 27 28 29 --start 2 ../DataOffScanner/DICOM ./ ${snum} > ${sbj}_dcm2nii_mapping.txt`
   - The ignored numbers are the mr_00?? directories taht should not be reconstructed.
   - This script assumed the data are collected in the order: MPRAGE, 3 runs of WNW, movie, breathing, movie, breathing
   - If that's not the order, corrections may be necessary
@@ -46,16 +46,12 @@ mkdir biopac DICOM psychopy
 - Delete DICOM data with PII from computer
 
 ```sh
-{
 chgrp -R SFIM /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sbj}
 chmod -R 2770 /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sbj}
-}
 ```
 
 ## Converting BIOPAC .acq to .tsv.gz/.json
 
 ```sh
-{
 acq2bidsphysio --infile file.acq --bidsprefix full/path/to/outdir/sub-01_task-wnw_acq-b_run-1_physio
-}
 ```
