@@ -46,6 +46,7 @@ ln -s ./freesurfer/surf/SUMA/fs_ap_wm.nii.gz ./
 ln -s ./freesurfer/surf/SUMA/fs_ap_latvent.nii.gz ./
 ln -s ./freesurfer/surf/SUMA/fs_parc_wb_mask.nii.gz ./
 ln -s ./freesurfer/surf/SUMA/aparc.a2009s+aseg_REN_gmrois.nii.gz ./
+ln -s ./freesurfer/surf/SUMA/aparc.a2009s+aseg_REN_all.niml.lt
 3dcalc -a ./freesurfer/surf/SUMA/T1.nii.gz -b fs_parc_wb_mask.nii.gz \
    -prefix ${subj}_T1_masked.nii.gz -expr 'a*ispositive(b)'
 
