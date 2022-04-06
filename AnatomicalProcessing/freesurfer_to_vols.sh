@@ -26,6 +26,9 @@ subj=$1
 module load freesurfer
 module load afni
 
+# Freesurfer processing command
+recon-all -all -i /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}/Unprocessed/anat/${subj}_T1w.nii -s ${subj} -sd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}/Proc_Anat/freesurfer
+
 cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}/Proc_Anat/freesurfer/surf
 
 # Create the SUMA/NII files from the freesurfer results. 
