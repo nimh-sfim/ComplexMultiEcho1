@@ -15,11 +15,31 @@
 # 92   tiss__gm     ctx_lh_S_calcarine
 # 167   tiss__gm     ctx_rh_S_calcarine
 
-
 # fusiform (visual word form area in left OT/fusiform) (visual words > nonwords)
-# another part of bilateral fusiform showed nonwords>words)... might want to consider breaking up this ROI?)
+# another part of bilateral fusiform showed nonwords>words)... might want to consider breaking up this ROI or creating 2 clusters 1 for positive & one for negative)
 # 69   tiss__gm     ctx_lh_G_oc-temp_lat-fusifor
 # 144   tiss__gm     ctx_rh_G_oc-temp_lat-fusifor
+
+# visual word>nonword
+# 121   tiss__gm     ctx_lh_S_temporal_sup
+# 196   tiss__gm     ctx_rh_S_temporal_sup
+
+# visal word>nonword
+# 86   tiss__gm     ctx_lh_G_temporal_middle
+# 161   tiss__gm     ctx_rh_G_temporal_middle
+
+# visual word>nonword
+# 60 ctx_lh_G_front_inf-Opercular + 62 ctx_lh_G_front_inf-Triangul
+# 135 ctx_rh_G_front_inf-Opercular + 137 ctx_rh_G_front_inf-Triangul
+
+
+
+
+
+
+
+
+
 
 # superior parietal lobule
 # 75   tiss__gm     ctx_lh_G_parietal_sup
@@ -37,19 +57,12 @@
 # 14   tiss__gm     Left-Hippocampus
 # 31   tiss__gm     Right-Hippocampus
 
-# Additional ROIs for Word-Nonword contrast
-# word>nonword
-# 86   tiss__gm     ctx_lh_G_temporal_middle
-# 161   tiss__gm     ctx_rh_G_temporal_middle
 
-# 
 # 85   tiss__gm     ctx_lh_G_temporal_inf
 # 160   tiss__gm     ctx_rh_G_temporal_inf
 # 120   tiss__gm     ctx_lh_S_temporal_inf
 # 195   tiss__gm     ctx_rh_S_temporal_inf
 
-# 121   tiss__gm     ctx_lh_S_temporal_sup
-# 196   tiss__gm     ctx_rh_S_temporal_sup
 
 # 67   tiss__gm     ctx_lh_G_occipital_middle
 # 142   tiss__gm     ctx_rh_G_occipital_middle
