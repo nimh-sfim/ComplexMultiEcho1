@@ -22,9 +22,11 @@ echo "Input is subject ID, like: freesurfer_to_vols.sh sub-01"
 subj=$1
 
 
-
 module load freesurfer
 module load afni
+
+# make directories
+cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}; mkdir Proc_Anat; cd Proc_Anat; mkdir freesurfer; cd freesurfer
 
 # Freesurfer processing command
 recon-all -all -i /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}/Unprocessed/anat/${subj}_T1w.nii -s ${subj} -sd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}/Proc_Anat/freesurfer
