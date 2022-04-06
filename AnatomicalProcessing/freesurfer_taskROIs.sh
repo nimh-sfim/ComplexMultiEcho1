@@ -2,19 +2,22 @@
 
 # Given the correct grid, this will be used to generate ROIs to use for Contrast-to-noise and other measurements
 
-# ROIS used in Ramya's poster:
+# Explanations from https://doi.org/10.1016/j.neuropsychologia.2016.08.027
+
+# ROIS used in Ramya's poster with explanations:
 
 # ROIs for audio vs visual contrasts
-# Primary auditory cortex (Roughly Heschl's gyrus)
+# Primary auditory cortex (Roughly Heschl's gyrus) (audio > visual)
 # 122   tiss__gm     ctx_lh_S_temporal_transverse
 # 197   tiss__gm     ctx_rh_S_temporal_transverse
 
-# Primary visual cortex
+# Primary visual cortex (visual > audio)
 # 92   tiss__gm     ctx_lh_S_calcarine
 # 167   tiss__gm     ctx_rh_S_calcarine
 
 
-# fusiform ???
+# fusiform (visual word form area in left OT/fusiform) (visual words > nonwords)
+# another part of bilateral fusiform showed nonwords>words)... might want to consider breaking up this ROI?)
 # 69   tiss__gm     ctx_lh_G_oc-temp_lat-fusifor
 # 144   tiss__gm     ctx_rh_G_oc-temp_lat-fusifor
 
@@ -35,10 +38,11 @@
 # 31   tiss__gm     Right-Hippocampus
 
 # Additional ROIs for Word-Nonword contrast
-
+# word>nonword
 # 86   tiss__gm     ctx_lh_G_temporal_middle
 # 161   tiss__gm     ctx_rh_G_temporal_middle
 
+# 
 # 85   tiss__gm     ctx_lh_G_temporal_inf
 # 160   tiss__gm     ctx_rh_G_temporal_inf
 # 120   tiss__gm     ctx_lh_S_temporal_inf
