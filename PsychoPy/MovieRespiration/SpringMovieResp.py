@@ -149,12 +149,14 @@ if ShowMovie:
     movie=visual.MovieStim3(win,movie_Filename,size=(1280,536),pos=(0,0),loop=False,autoLog=False);   # autostart = starts the video automatically when first drawn
 
 # Bubble OBJ
+# Note: Changed to line thickness of 3 and opacity of 0.75 for a volunteer who couldn't wear corrective lenses
 bubble = visual.ShapeStim(
     win=win,name='bubble stimulus',
     size=(0.1, 0.1),vertices='circle',
-    ori=0.0,pos=(0, 0),lineWidth=2.0,
+    ori=0.0,pos=(0, 0),lineWidth=2.0, #3.0,
     colorSpace='rgb',lineColor=[1, 1, 1],
-    fillColor=None,opacity=0.5,interpolate=True, autoLog=False)
+    fillColor=None,opacity=0.5, #rbg0.75,
+    interpolate=True, autoLog=False)
 
 # ==============================================================
 # ===========                INSTRUCTIONS                    ==============

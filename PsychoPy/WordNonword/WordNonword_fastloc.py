@@ -193,8 +193,10 @@ def VisualTrial():
     continueRoutine = True
     
     # update component parameters for each repeat
-    if Font == "Arial": Height = 1.8
-    elif Font == "Wingdings": Height = 1.5
+    # Note: Changed to Heights of 3.6 and 1.5 for a volunteer who couldn't wear corrective lenses
+    #  This was outside of the central box for 6-letter Wingdings words
+    if Font == "Arial": Height = 1.8 # 3.6
+    elif Font == "Wingdings": Height = 1.5 #3
     
     stim1.setText(target1); stim1.setFont(Font); stim1.setHeight(Height); #RV: this is what makes the stimulus show up on the screen in word trials 
     stim2.setText(target2); stim2.setFont(Font); stim2.setHeight(Height);
