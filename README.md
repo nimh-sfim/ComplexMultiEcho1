@@ -16,6 +16,7 @@ This specific study is examining ways to combine:
   - [Visual vs Audio & Word vs Nonword task](PsychoPy/WordNonword/README_WordNonword.md) (3 8.5 min runs)
   - [Movie viewing runs](PsychoPy/MovieRespiration/README_MovieRespiration.md) with different patterns of cued breathing (2-3 7.5 min runs)
   - [Cued breathing "rest" runs](PsychoPy/MovieRespiration/README_MovieRespiration.md) where runs match the breathing patterns of a movie run (1-2 7.5 min runs)
+  - [DataCollectionGuide.md](DataCollectionGuide.md) is guide/reminder for our data collection procedure
 
 ## Organization & Processing Steps
 

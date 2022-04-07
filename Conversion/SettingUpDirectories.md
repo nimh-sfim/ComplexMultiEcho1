@@ -24,7 +24,7 @@ mkdir biopac DICOM psychopy
 
     `python [path to ComplexMultiEcho1 code repo]/PsychoPy/WordNonword/CreateEventTimesForGLM.py --sbjnum 3 --runnums 7 8 9 --rootdir /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/`
 
-    Look at the stdout of that script to confirm that there's little to no difference between expect and actual trial times, the TR is <1ms of 1.5sec, and the participant's behavioral response rates show some level of attention. `sub-??_CreateEventTimesForGLM.log` containes more details about responses during each run
+    Look at the stdout of that script to confirm that there's little to no difference between expected and actual trial times, the TR is <1ms of 1.5sec, and the participant's behavioral response rates show some level of attention. `sub-??_CreateEventTimesForGLM.log` contains more details about responses during each run
 
 - Copy biopac data to `/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sbj}/DataOffScanner/biopac`
 
