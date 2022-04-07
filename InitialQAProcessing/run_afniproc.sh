@@ -126,7 +126,7 @@ for runid in  movie_run-1 movie_run-2 movie_run-3 breathing_run-1 breathing_run-
     echo \
         "afni_proc.py -subj_id $subj_id" \\$'\n' \
         "  -blocks despike tshift align volreg mask combine regress" \\$'\n' \
-        "  -copy_anat ../Proc_Anat/../${subj_id}_T1_masked.nii.gz" \\$'\n' \
+        "  -copy_anat ../../Proc_Anat/${subj_id}_T1_masked.nii.gz" \\$'\n' \
         "  -anat_follower_ROI FSvent epi ../../Proc_Anat/fs_ap_latvent.nii.gz" \\$'\n' \
         "  -anat_follower_ROI FSWe epi ../../Proc_Anat/fs_ap_wm.nii.gz" \\$'\n' \
         "  -anat_follower_erode FSvent FSWe" \\$'\n' \
@@ -180,9 +180,3 @@ if [ $RunJobs -eq 1 ]; then
   sbatch --dependency=afterany:${moviebreath_jobID} --time 00:30:00 --cpus-per-task=1 --partition=norm,quick ${subj_id}_jobhist_sbatch.txt
 
 fi
-# scrap code of from trying to figure out alignment
-#     echo "cat_matvec -ONELINE ../WNW/${subj_id}.results/${subj_id}_T1w_al_junk_mat.aff12.1D -I  > ${subj_id}_epi_al_T1w_mat.aff12.1D; \\" >> ${subj_id}_QA_moviebreath_swarm.txt
-
-#        "  -align_opts_aea -check_flip -Allineate_opts -1Dparam_apply ${rootdir}/${runid}/${subj_id}_epi_al_T1w_mat.aff12.1D" \\$'\n' \
-#        "  -volreg_base_dset ../WNW/${subj_id}.results/vr_base_min_outlier+orig" \\$'\n' \
-#        "  -Allineate_opts -master ../WNW/${subj_id}.results/final_epi_vr_base_min_outlier+orig"  \\$'\n' \

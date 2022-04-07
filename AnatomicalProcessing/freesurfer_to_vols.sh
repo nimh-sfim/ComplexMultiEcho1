@@ -31,7 +31,7 @@ cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}; mkdir Proc_Anat; 
 # Freesurfer processing command
 recon-all -all -i /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}/Unprocessed/anat/${subj}_T1w.nii -s ${subj} -sd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}/Proc_Anat/freesurfer
 
-cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}/Proc_Anat/freesurfer/surf
+cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}/Proc_Anat/freesurfer/${subj}/surf
 
 # Create the SUMA/NII files from the freesurfer results. 
 # These will end up in a ./SUMA subdirectory
@@ -42,12 +42,12 @@ cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}/Proc_Anat/freesurf
     -fspath    ./
 
 cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}/Proc_Anat
-ln -s ./freesurfer/surf/SUMA/fs_ap_wm.nii.gz ./
-ln -s ./freesurfer/surf/SUMA/fs_ap_latvent.nii.gz ./
-ln -s ./freesurfer/surf/SUMA/fs_parc_wb_mask.nii.gz ./
-ln -s ./freesurfer/surf/SUMA/aparc.a2009s+aseg_REN_gmrois.nii.gz ./
-ln -s ./freesurfer/surf/SUMA/aparc.a2009s+aseg_REN_all.niml.lt
-3dcalc -a ./freesurfer/surf/SUMA/T1.nii.gz -b fs_parc_wb_mask.nii.gz \
+ln -sf ./freesurfer/${subj}/surf/SUMA/fs_ap_wm.nii.gz ./
+ln -sf ./freesurfer/${subj}/surf/SUMA/fs_ap_latvent.nii.gz ./
+ln -sf ./freesurfer/${subj}/surf/SUMA/fs_parc_wb_mask.nii.gz ./
+ln -sf ./freesurfer/${subj}/surf/SUMA/aparc.a2009s+aseg_REN_gmrois.nii.gz ./
+ln -sf ./freesurfer/${subj}/surf/SUMA/aparc.a2009s+aseg_REN_all.niml.lt
+3dcalc -overwrite -a ./freesurfer/${subj}/surf/SUMA/T1.nii.gz -b fs_parc_wb_mask.nii.gz \
    -prefix ${subj}_T1_masked.nii.gz -expr 'a*ispositive(b)'
 
 
