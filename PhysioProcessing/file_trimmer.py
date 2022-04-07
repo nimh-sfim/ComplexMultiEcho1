@@ -34,7 +34,7 @@ print("File length:", len(Array), "Low (liberal) trigger threshold (3.0 - 5.0 vo
 """
 MAKE SURE FILE CORRELATES WITH SUBJECT FUNCTIONAL: 
 average vol num:
-wnw_tot_subbriks = 345
+wnw_tot_subbriks = 345 or 350
 resp_tot_subbriks = 304
 movie_tot_subbriks = 304
 
