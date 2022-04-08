@@ -56,11 +56,12 @@ set ktrs = `1d_tool.py -infile censor_${subj}_combined_2.1D               \
     -glt_label 3 Word-NonWord                                             \
     -gltsym 'SYM: -AudWord +VisWord -FalAudWord +FalVisWord'              \
     -glt_label 4 Vis-Aud                                                  \
-    -fout -tout -x1D X.xmat.1D -xjpeg X.jpg                               \
+    -fout -tout -rout -x1D X.xmat.1D -xjpeg X.jpg                               \
     -x1D_uncensored X.nocensor.xmat.1D                                    \
     -fitts fitts.$subj                                                    \
     -errts errts.${subj}                                                  \
-    -bucket stats.$subj
+    -bucket stats.$subj   \
+    -cbucket cbucket.$subj
 
 
 # display degrees of freedom info from X-matrix
