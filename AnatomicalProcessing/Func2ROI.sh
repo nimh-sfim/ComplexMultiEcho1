@@ -6,6 +6,7 @@ subj_id=$1
 
 cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/Proc_Anat
 mkdir StudyROIs
+cp aparc.a2009s+aseg_REN_gmrois.nii.gz ./StudyROIs/
 cd StudyROIs
 
 3dcopy -overwrite ../aparc.a2009s+aseg_REN_gmrois.nii.gz tmp_all_gmROIs.nii.gz
@@ -65,7 +66,7 @@ done
 # Identify voxels that are in more than one ROI and remove them from all ROIs
 3dTstat -overwrite -nzcount -prefix tmp_ROIs_EPIres_nzcount.nii.gz tmp_ROIs_EPIres.nii.gz
 
-3dcalc -overwrite  -a tmp_ROIs_EPIres_nzcount.nii.gz  \
+3dcalc -overwrite -a tmp_ROIs_EPIres_nzcount.nii.gz \
 -prefix ROI_1vox_per_mask.nii.gz -expr '1*equals(a,1)'
 
 
@@ -92,10 +93,14 @@ done
 # output: map of ROIs
 
 # NOTE CURRENTLY RUNNING ON THE DENOISED STATS FILE. WILL WANT TO USE OPTIMALLY COMBINED OR 2nd ECHO
-# NOTE THRESHOLD IS ARBITARARY t>3
+# NOTE THRESHOLD IS ARBITRARY t>3
 
-cp ../aparc.a2009s+aseg_REN_all.niml.lt ./ROIs_EPIres.niml.lt
+# cp ../aparc.a2009s+aseg_REN_all.niml.lt ./ROIs_EPIres.niml.lt
 
-3dROIMaker -overwrite  -inset ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[23,26]' \
-  -refset ROIs_EPIres.nii.gz -thresh 3.3 -volthr 5 -prefix testFuncROIs
+# word-nonword T-stat: 23 visual-audio T-stat: 26
+3dROIMaker -overwrite  -inset ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[23]' \
+  -refset ROIs_EPIres.nii.gz -thresh 3.3 -volthr 5 -prefix WordnonWord_FuncROIs
+
+3dROIMaker -overwrite  -inset ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[26]' \
+  -refset ROIs_EPIres.nii.gz -thresh 3.3 -volthr 5 -prefix VisAud_FuncROIs
 
