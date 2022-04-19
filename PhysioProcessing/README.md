@@ -7,7 +7,6 @@ Processing BIDS-formatted physiological files:
 ```
 python3 file_trimmer.py --filepath /Users/holnessmn/Desktop/BIDS_conversions/${sub}_physios/sub-04_task-wnw_run-1_physio.tsv
 rm *_physio.tsv 
-mv --> rename... (make a renaming function...)
 ```
 
 ## 2. Downsample physiological files (2000 Hz) to match PsychoPy log sampling rate (0.1 Hz)
@@ -45,4 +44,15 @@ python3 Linear_Model.py
 --regressors /Users/holnessmn/Desktop/BIDS_conversions/${sub}_physios/wnw/run1/RegressorModels_wnw_r1.tsv
 --ica_mixing /Users/holnessmn/Desktop/BIDS_conversions/${sub}_physios/wnw/run1/ica_mixing.tsv
 --prefix LinearModel_wnw_r1
+```
+
+## 7. Call all the above with Physio_Proc.sh
+```
+zsh Physio_Proc.sh
+
+Enter subject: (Ex: sub-01)
+sub-01
+
+Enter process to call: (Ex: trim)
+check
 ```
