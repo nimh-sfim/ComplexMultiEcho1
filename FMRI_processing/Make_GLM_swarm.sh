@@ -47,7 +47,7 @@ cat << EOF > ${sbj}_WNW_GLM_sbatch.txt
 
 EOF
 
-
+swarm --time 6:00:00 -g 12 -t 8 -m afni --merge-output --job-name ${sbj}_GLMS ${sbj}_WNW_GLM_sbatch.txt
 
 
 
