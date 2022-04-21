@@ -106,8 +106,8 @@ def main():
     FullStatement = [
         "#!/bin/tcsh -xef",
         "",
-        f"cd {os.getcwd}",
-        f"echo Running {GLMlabel} in {os.getcwd}",
+        f"cd {os.getcwd()}",
+        f"echo Running {GLMlabel} in {os.getcwd()}",
         ""
     ]
 
