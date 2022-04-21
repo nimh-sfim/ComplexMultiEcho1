@@ -33,7 +33,7 @@ cat << EOF > ${sbj}_WNW_GLM_sbatch.txt
     source /home/handwerkerd/InitConda.sh; \
     cd ${rootdir}; module load afni; \
       python /data/handwerkerd/nimh-sfim/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-        $sbj ./ ../afniproc_orig/WNW/sub-01.results/ e2_mot 
+        $sbj ./ ../afniproc_orig/WNW/sub-01.results/ e2_mot \
         --inputfiles pb03.sub-01.r0?.e02.volreg+orig.HEAD \
         --include_motion --scale_ts
     source /home/handwerkerd/InitConda.sh; \

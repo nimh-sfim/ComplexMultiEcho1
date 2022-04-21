@@ -105,8 +105,12 @@ def main():
 
     FullStatement = [
         "#!/bin/tcsh -xef",
+        "",
+        f"cd {os.getcwd}",
+        f"echo Running {GLMlabel} in {os.getcwd}",
         ""
     ]
+
     # Save the scaled time series in the directory with the GLM output
     #  and point input_files to the new file names
     if scale_ts:
@@ -140,17 +144,21 @@ def scale_time_series(subj, GLMlabel, input_files, maskfile):
     new_input_files = []
     scale_statement = []
     for idx, fname in enumerate(input_files):
-        outfile = f"scaled_{subj}_{GLMlabel}"
+        outfile = f"scaled_{subj}_{GLMlabel}_r{idx+1}"
         scale_statement.extend([
             f"3dTstat -prefix rm.mean_r{idx+1} {fname}",
-            f"if [ -f rm.mean_r{idx+1}+tlrc.HEAD ]; then",
+            f"if ( -f rm.mean_r{idx+1}+tlrc.HEAD ) then",
             f"   3drefit -view orig -space ORIG rm.mean_r{idx+1}+tlrc",
-            f"fi",
-            f"3dcalc -a {fname} -b rm.mean_r{idx+1}+orig \\",
+            f"endif",
+            f"3dcalc -a {fname} \\",
+            f"  -b rm.mean_r{idx+1}+orig \\",
             f"  -c {maskfile} \\",
-            f"-expr 'c * min(200, a/b*100)*step(a)*step(b)' \\",
-            f"-prefix {outfile}",
+            f"  -expr 'c * min(200, a/b*100)*step(a)*step(b)' \\",
+            f"  -prefix {outfile}",
             ""
+            f"if ( -f {outfile}+tlrc.HEAD ) then",
+            f"   3drefit -view orig -space ORIG {outfile}+tlrc",
+            f"endif",          
         ])
         new_input_files.append(f"{outfile}+orig")
 
@@ -375,7 +383,7 @@ def generate_post_GLM_statements(subj, GLMlabel, censorfile):
         "",
         "# run 3drefit to attach 3dClustSim results to stats",
         "set cmd = ( `cat 3dClustSim.ACF.cmd` )",
-        f"$cmd stats.{subj}.{GLMlabel}+orig stats.{subj}.{GLMlabel}_REML+orig"
+        f"$cmd stats.{subj}.{GLMlabel}_REML+orig"
     ])
 
     return(post_GLMstatements)
