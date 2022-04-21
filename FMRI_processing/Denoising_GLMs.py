@@ -143,6 +143,9 @@ def scale_time_series(subj, GLMlabel, input_files, maskfile):
         outfile = f"scaled_{subj}_{GLMlabel}"
         scale_statement.extend([
             f"3dTstat -prefix rm.mean_r{idx+1} {fname}",
+            f"if [ -f rm.mean_r{idx+1}+tlrc.HEAD ]; then",
+            f"   3drefit -view orig -space ORIG rm.mean_r{idx+1}+tlrc",
+            f"fi",
             f"3dcalc -a {fname} -b rm.mean_r{idx+1}+orig \\",
             f"  -c {maskfile} \\",
             f"-expr 'c * min(200, a/b*100)*step(a)*step(b)' \\",
@@ -284,6 +287,10 @@ def generate_post_GLM_statements(subj, GLMlabel, censorfile):
     post_GLMstatements.extend([
         "# ============================ blur estimation =============================",
         "# compute blur estimates",
+        "",
+        "# set list of runs",
+        "set runs = (`count -digits 2 1 3`)",
+        "",
         f"touch blur_est.{subj}.{GLMlabel}.1D   # start with empty file",
         "# create directory for ACF curve files",
         "mkdir files_ACF",
@@ -335,8 +342,6 @@ def generate_post_GLM_statements(subj, GLMlabel, censorfile):
         "# -- estimate blur for each run in err_reml --",
         "touch blur.err_reml.1D",
         "",
-        "# set list of runs",
-        "set runs = (`count -digits 2 1 3`)",
         "# restrict to uncensored TRs, per run",
         "foreach run ( $runs )",
         "    set trs = `1d_tool.py -infile X.xmat.1D -show_trs_uncensored encoded  \\",
