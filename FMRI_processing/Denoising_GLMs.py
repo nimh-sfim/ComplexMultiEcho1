@@ -27,8 +27,12 @@ def main():
     parser.add_argument("--noise_regressors", help="Name of tsv file with the noise regressors to use. Include full path or relative path from OUTDIR",
         default=None)
     parser.add_argument(
-        "--inputsfx", type=str, required=False, default="scale",
-        help="The suffix of the file type to use. Default=scale (i.e. pb06.sub-??.r0?.scale+orig)"
+        "--inputfiles", type=str, required=False, default="tedana_r0?/ts_OC.nii.gz",
+        help="The file names, with ? wildcards for the 3 runs of WNW data to input. Default=tedana_r0?/ts_OC.nii.gz"
+    )
+    parser.add_argument(
+        "--scale_ts", action="store_true",
+        help="Scale inputted data time series as done in afni_preproc"
     )
     parser.add_argument(
         "--include_motion", action="store_true",
@@ -51,9 +55,11 @@ def main():
     out_dir = args.OUTDIR
     regressors = args.noise_regressors
     GLMlabel = args.LABEL
-    input_sfx = args.inputsfx
+    inputfiles = args.inputfiles
+    scale_ts = args.scale_ts
     include_motion = args.include_motion
     include_CSF = args.include_CSF
+
     dontrunscript = args.dontrunscript
 
     # Make sure key files & directories exist and create output directory
@@ -72,7 +78,7 @@ def main():
 
 
     # Find fMRI files for GLM in input_dir
-    file_targets = os.path.join(input_dir, f"pb0?.{subj}.r0?.{input_sfx}+orig.HEAD")
+    file_targets = os.path.join(input_dir, inputfiles)
     input_files = sorted(glob.glob(file_targets))
     if not input_files:
         raise OSError(f"{file_targets} not found")
@@ -90,22 +96,62 @@ def main():
 
     os.chdir(GLMlabel)
 
+
     # TODO: We might want to test running with less censoring to see if certain methods
     #   can handle less censoring. In that case, we can add a function to create new
     #   censor files based on different censoring thresholds
     censorfile = os.path.abspath(os.path.join(input_dir, f"censor_{subj}_combined_2.1D"))
+
+
+    FullStatement = [
+        "#!/bin/tcsh -xef",
+        ""
+    ]
+    # Save the scaled time series in the directory with the GLM output
+    #  and point input_files to the new file names
+    if scale_ts:
+        maskfile = os.path.join(os.path.dirname(censorfile), f"full_mask.{subj}+orig")
+        scale_statement, input_files = scale_time_series(subj, GLMlabel, input_files, maskfile)
+        FullStatement.extend(scale_statement)
+
+
     
+
+
+
     # One function to generate the GLM, which includes all of the conditional logic based on inputs
-    GLMstatement = generate_GLM_statement(subj, GLMlabel, input_files, censorfile, regressors=regressors, 
-                    include_motion=include_motion, include_CSF=include_CSF)
+    FullStatement.extend(generate_GLM_statement(subj, GLMlabel, input_files, censorfile, regressors=regressors, 
+                    include_motion=include_motion, include_CSF=include_CSF))
     
     # Generate fixed commands for everything after the GLM
-    post_GLMstatements = generate_post_GLM_statements(subj, GLMlabel, censorfile)
+    FullStatement.extend(generate_post_GLM_statements(subj, GLMlabel, censorfile))
 
     # Put all commands into one script file and run it.
-    create_and_run_glm(subj, GLMlabel, GLMstatement, post_GLMstatements, dontrunscript=dontrunscript)
+    create_and_run_glm(subj, GLMlabel, FullStatement, dontrunscript=dontrunscript)
 
 
+
+def scale_time_series(subj, GLMlabel, input_files, maskfile):
+    """
+    Save the scaled time series in the directory with the GLM output
+    and return the new file names
+    """
+
+    new_input_files = []
+    scale_statement = []
+    for idx, fname in enumerate(input_files):
+        outfile = f"scaled_{subj}_{GLMlabel}"
+        scale_statement.extend([
+            f"3dTstat -prefix rm.mean_r{idx+1} {fname}",
+            f"3dcalc -a {fname} -b rm.mean_r{idx+1}+orig \\",
+            f"  -c {maskfile} \\",
+            f"-expr 'c * min(200, a/b*100)*step(a)*step(b)' \\",
+            f"-prefix {outfile}",
+            ""
+        ])
+        new_input_files.append(f"{outfile}+orig")
+
+    return scale_statement, new_input_files
 
 def generate_GLM_statement(subj, GLMlabel, input_files, censorfile, regressors=None, include_motion=False, include_CSF=False):
     """
@@ -115,11 +161,7 @@ def generate_GLM_statement(subj, GLMlabel, input_files, censorfile, regressors=N
 
     input_dir = os.path.dirname(censorfile)
 
-    GLMstatement = [
-        "#!/bin/tcsh -xef",
-        "",
-        "3dDeconvolve -input \\"
-    ]    
+    GLMstatement = ["3dDeconvolve -input \\"]    
 
     for i in input_files:
         GLMstatement.append(i + " \\")
@@ -333,7 +375,7 @@ def generate_post_GLM_statements(subj, GLMlabel, censorfile):
 
     return(post_GLMstatements)
 
-def  create_and_run_glm(subj, GLMlabel, GLMstatement, post_GLMstatements, dontrunscript=False):
+def  create_and_run_glm(subj, GLMlabel, Fullstatement, dontrunscript=False):
     """
     Write GLMstatement and post_statements to one shell script in
     the output directory.
@@ -341,7 +383,7 @@ def  create_and_run_glm(subj, GLMlabel, GLMstatement, post_GLMstatements, dontru
     """
 
 
-    Fullstatement = GLMstatement + post_GLMstatements
+    # Fullstatement = GLMstatement + post_GLMstatements
     # print(*Fullstatement, sep="\n")
 
     OutFile = f"{subj}.{GLMlabel}_cmd.sh"
