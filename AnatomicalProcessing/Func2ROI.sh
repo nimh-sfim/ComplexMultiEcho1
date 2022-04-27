@@ -106,7 +106,7 @@ if [ -f tmpROI_nooverlap_EPIres_all.nii.gz ]; then
   rm tmpROI_nooverlap_EPIres_all.nii.gz
 fi
 3dTcat -prefix tmpROI_nooverlap_EPIres_all.nii.gz tmpROI_nooverlap_EPIres_*.nii.gz
-3dTstat -overwrite -short -sum -prefix ROIs_EPIres.nii.gz tmpROI_nooverlap_EPIres_all.nii.gz 
+3dTstat -overwrite -datum short -sum -prefix ROIs_EPIres.nii.gz tmpROI_nooverlap_EPIres_all.nii.gz 
 
 
 # Make functional masks for Visual-Audio
@@ -172,7 +172,7 @@ done
 # make functional masks for vis-aud contrast
 for ((idx=0; $idx<${#ROIidxVS[@]}; idx++)); do
     echo idx $idx ROIidx  ${ROIidxVS[$idx]} label ${ROIidxVSlabels[$idx]}
-    3dcalc -overwrite -a VisAud_Cluster+orig \
+    3dcalc -overwrite -a VisAud_Clusters+orig \
    -b tmpROI_nooverlap_EPIres_${ROIidxVSlabels[$idx]}.nii.gz \
    -expr 'int(0.5+ispositive(abs(a)-3.3)*b)' -short \
    -prefix tmpfuncROI_${ROIidxVSlabels[$idx]}.nii.gz
@@ -183,4 +183,4 @@ if [ -f tmpfuncROI_EPIres_all.nii.gz ]; then
   rm tmpfuncROI_EPIres_all.nii.gz
 fi
 3dTcat -prefix tmpfuncROI_EPIres_all.nii.gz tmpfuncROI_*.nii.gz
-3dTstat -overwrite -short -sum -prefix ROIs_FuncLocalized.nii.gz tmpfuncROI_EPIres_all.nii.gz
+3dTstat -overwrite -datum short -sum -prefix ROIs_FuncLocalized.nii.gz tmpfuncROI_EPIres_all.nii.gz
