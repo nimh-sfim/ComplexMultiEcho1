@@ -23,22 +23,45 @@ cd StudyROIs
 
 
 # get ROI indices
-ROIidxlist=(122 197 92 167 \
-             69 144 121 196 \
+# ROIs is for Word-Nonword contrasts
+ROIidxWNW=(  69 144 121 196 \
              86 161 60 135 \
              75 150 6 26 \
              59 134 78 153 \
              14 31 85 160 \
              120 195 67 142)
 
-# get ROI labels
-ROIidxlabels=(ctx_lh_S_temporal_transverse ctx_rh_S_temporal_transverse ctx_lh_S_calcarine ctx_rh_S_calcarine \
-              ctx_lh_G_oc-temp_lat-fusifor ctx_rh_G_oc-temp_lat-fusifor ctx_lh_S_temporal_sup ctx_rh_S_temporal_sup \
+ROIidxWNWlabels=(ctx_lh_G_oc-temp_lat-fusifor ctx_rh_G_oc-temp_lat-fusifor ctx_lh_S_temporal_sup ctx_rh_S_temporal_sup \
               ctx_lh_G_temporal_middle ctx_rh_G_temporal_middle ctx_lh_G_front_inf-OperTri ctx_rh_G_front_inf-OperTri \
               ctx_lh_G_parietal_sup ctx_rh_G_parietal_sup Left-Cerebellum-Cortex Right-Cerebellum-Cortex \
               ctx_lh_G_cuneus ctx_rh_G_cuneus ctx_lh_G_precuneus ctx_rh_G_precuneus \
               Left-Hippocampus Right-Hippocampus ctx_lh_G_temporal_inf ctx_rh_G_temporal_inf \
               ctx_lh_S_temporal_inf ctx_rh_S_temporal_inf ctx_lh_G_occipital_middle ctx_rh_G_occipital_middle)
+
+ROIidxVS=(122 197 92 167)
+ROIidxVSlabels=(ctx_lh_S_temporal_transverse ctx_rh_S_temporal_transverse ctx_lh_S_calcarine ctx_rh_S_calcarine)
+
+
+####
+
+ROIidxlist=(${ROIidxVS[@]} ${ROIidxWNW[@]})
+ROIidxlabels=(${ROIidxVSlabels[@]} ${ROIidxWNWlabels[@]})
+# ROIidxlist=(122 197 92 167 \
+#              69 144 121 196 \
+#              86 161 60 135 \
+#              75 150 6 26 \
+#              59 134 78 153 \
+#              14 31 85 160 \
+#              120 195 67 142)
+
+# get ROI labels
+# ROIidxlabels=(ctx_lh_S_temporal_transverse ctx_rh_S_temporal_transverse ctx_lh_S_calcarine ctx_rh_S_calcarine \
+#               ctx_lh_G_oc-temp_lat-fusifor ctx_rh_G_oc-temp_lat-fusifor ctx_lh_S_temporal_sup ctx_rh_S_temporal_sup \
+#               ctx_lh_G_temporal_middle ctx_rh_G_temporal_middle ctx_lh_G_front_inf-OperTri ctx_rh_G_front_inf-OperTri \
+#               ctx_lh_G_parietal_sup ctx_rh_G_parietal_sup Left-Cerebellum-Cortex Right-Cerebellum-Cortex \
+#               ctx_lh_G_cuneus ctx_rh_G_cuneus ctx_lh_G_precuneus ctx_rh_G_precuneus \
+#               Left-Hippocampus Right-Hippocampus ctx_lh_G_temporal_inf ctx_rh_G_temporal_inf \
+#               ctx_lh_S_temporal_inf ctx_rh_S_temporal_inf ctx_lh_G_occipital_middle ctx_rh_G_occipital_middle)
 
 echo Length ROIidxlist is ${#ROIidxlist[@]}
 echo Length ROIidxlabels is ${#ROIidxlabels[@]}
@@ -79,8 +102,16 @@ for ((idx=0; $idx<${numROIs}; idx++)); do
        -overwrite
 done
 
-3dTcat -overwrite -prefix tmpROI_nooverlap_EPIres_all.nii.gz tmpROI_nooverlap_EPIres_*.nii.gz
+if [ -f tmpROI_nooverlap_EPIres_all.nii.gz]; then
+  rm tmpROI_nooverlap_EPIres_all.nii.gz
+fi
+3dTcat -prefix tmpROI_nooverlap_EPIres_all.nii.gz tmpROI_nooverlap_EPIres_*.nii.gz
 3dTstat -overwrite -sum -prefix ROIs_EPIres.nii.gz tmpROI_nooverlap_EPIres_all.nii.gz 
+
+
+# Make functional masks for Visual-Audio
+
+
 
 
 # Create Functional ROIs:
@@ -98,9 +129,33 @@ done
 # cp ../aparc.a2009s+aseg_REN_all.niml.lt ./ROIs_EPIres.niml.lt
 
 # word-nonword T-stat: 23 visual-audio T-stat: 26
-3dROIMaker -overwrite  -inset ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[23]' \
-  -refset ROIs_EPIres.nii.gz -thresh 3.3 -volthr 5 -prefix WordnonWord_FuncROIs
+# 3dROIMaker -overwrite  -inset ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[23]' \
+#   -refset ROIs_EPIres.nii.gz -thresh 3.3 -volthr 5 -prefix WordnonWord_FuncROIs
 
-3dROIMaker -overwrite  -inset ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[26]' \
-  -refset ROIs_EPIres.nii.gz -thresh 3.3 -volthr 5 -prefix VisAud_FuncROIs
+# 3dROIMaker -overwrite  -inset ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[26]' \
+#   -refset ROIs_EPIres.nii.gz -thresh 3.3 -volthr 5 -prefix VisAud_FuncROIs
 
+# make functional masks for Word-nonword contrast
+for ((idx=0; $idx<${#ROIidxWNW[@]}; idx++)); do
+    echo idx $idx ROIidx  ${ROIidxWNW[$idx]} label ${ROIidxWNWlabels[$idx]}
+    3dcalc -overwrite -a ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[23]' \
+   -b tmpROI_nooverlap_EPIres_${ROIidxWNWlabels[$idx]}.nii.gz \
+   -expr 'ispositive(abs(a)-3.3)*b' \
+   -prefix tmpfuncROI_${ROIidxWNWlabels[$idx]}.nii.gz
+done
+
+# make functional masks for vis-aud contrast
+for ((idx=0; $idx<${#ROIidxVS[@]}; idx++)); do
+    echo idx $idx ROIidx  ${ROIidxVS[$idx]} label ${ROIidxVSlabels[$idx]}
+    3dcalc -overwrite -a ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[26]' \
+   -b tmpROI_nooverlap_EPIres_${ROIidxVSlabels[$idx]}.nii.gz \
+   -expr 'ispositive(abs(a)-3.3)*b' \
+   -prefix tmpfuncROI_${ROIidxVSlabels[$idx]}.nii.gz
+done
+
+# Combine all the function ROIS into one mask
+if [ -f tmpfuncROI_EPIres_all.nii.gz]; then
+  rm tmpfuncROI_EPIres_all.nii.gz
+fi
+3dTcat -prefix tmpfuncROI_EPIres_all.nii.gz tmpfuncROI_*.nii.gz
+3dTstat -overwrite -sum -prefix ROIs_FuncLocalized.nii.gz tmpfuncROI_EPIres_all.nii.gz
