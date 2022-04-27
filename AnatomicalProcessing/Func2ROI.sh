@@ -106,7 +106,7 @@ if [ -f tmpROI_nooverlap_EPIres_all.nii.gz ]; then
   rm tmpROI_nooverlap_EPIres_all.nii.gz
 fi
 3dTcat -prefix tmpROI_nooverlap_EPIres_all.nii.gz tmpROI_nooverlap_EPIres_*.nii.gz
-3dTstat -overwrite -sum -prefix ROIs_EPIres.nii.gz tmpROI_nooverlap_EPIres_all.nii.gz 
+3dTstat -overwrite -short -sum -prefix ROIs_EPIres.nii.gz tmpROI_nooverlap_EPIres_all.nii.gz 
 
 
 # Make functional masks for Visual-Audio
@@ -135,10 +135,35 @@ fi
 # 3dROIMaker -overwrite  -inset ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[26]' \
 #   -refset ROIs_EPIres.nii.gz -thresh 3.3 -volthr 5 -prefix VisAud_FuncROIs
 
+
+# Separately making a functional mask with clusters that have at least 5 voxels.
+# Note: Using an uncorrected threshold of p<0.01 because the goal is to get functionally localized
+#  voxels in each ROI. It's better to have things that are slightly below threshold than to exclude
+#  voxels or ROIs that might have more robust responses with other denoising pipelines
+
+# WNW clusters
+echo "LOOK TO MAKE SURE SUBBRIK IS word-nonword TSTAT"
+3dinfo -subbrick_info ../../GLMs/OC_mot/stats.sub-01.OC_mot_REML+orig'[31]'
+3dClusterize -inset ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig \
+   -mask_from_hdr -ithr 31 \
+   -bisided p=0.01 \
+   -NN 1 -clust_nvox 5 \
+   -pref_map WNW_Clusters -overwrite
+
+# Vis-Aud clusters
+echo "LOOK TO MAKE SURE SUBBRIK IS vis-aud TSTAT"
+3dinfo -subbrick_info ../../GLMs/OC_mot/stats.sub-01.OC_mot_REML+orig'[35]'
+3dClusterize -inset ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig \
+   -mask_from_hdr -ithr 35 \
+   -bisided p=0.01 \
+   -NN 1 -clust_nvox 5 \
+   -pref_map VisAud_Clusters  -overwrite
+
+
 # make functional masks for Word-nonword contrast
 for ((idx=0; $idx<${#ROIidxWNW[@]}; idx++)); do
     echo idx $idx ROIidx  ${ROIidxWNW[$idx]} label ${ROIidxWNWlabels[$idx]}
-    3dcalc -overwrite -a ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[23]' \
+    3dcalc -overwrite -a WNW_Clusters+orig \
    -b tmpROI_nooverlap_EPIres_${ROIidxWNWlabels[$idx]}.nii.gz \
    -expr 'int(0.5+ispositive(abs(a)-3.3)*b)' -short \
    -prefix tmpfuncROI_${ROIidxWNWlabels[$idx]}.nii.gz
@@ -147,7 +172,7 @@ done
 # make functional masks for vis-aud contrast
 for ((idx=0; $idx<${#ROIidxVS[@]}; idx++)); do
     echo idx $idx ROIidx  ${ROIidxVS[$idx]} label ${ROIidxVSlabels[$idx]}
-    3dcalc -overwrite -a ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[26]' \
+    3dcalc -overwrite -a VisAud_Cluster+orig \
    -b tmpROI_nooverlap_EPIres_${ROIidxVSlabels[$idx]}.nii.gz \
    -expr 'int(0.5+ispositive(abs(a)-3.3)*b)' -short \
    -prefix tmpfuncROI_${ROIidxVSlabels[$idx]}.nii.gz
@@ -158,4 +183,4 @@ if [ -f tmpfuncROI_EPIres_all.nii.gz ]; then
   rm tmpfuncROI_EPIres_all.nii.gz
 fi
 3dTcat -prefix tmpfuncROI_EPIres_all.nii.gz tmpfuncROI_*.nii.gz
-3dTstat -overwrite -sum -prefix ROIs_FuncLocalized.nii.gz tmpfuncROI_EPIres_all.nii.gz
+3dTstat -overwrite -short -sum -prefix ROIs_FuncLocalized.nii.gz tmpfuncROI_EPIres_all.nii.gz
