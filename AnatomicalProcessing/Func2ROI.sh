@@ -143,7 +143,7 @@ fi
 
 # WNW clusters
 echo "LOOK TO MAKE SURE SUBBRIK IS word-nonword TSTAT"
-3dinfo -subbrick_info ../../GLMs/OC_mot/stats.sub-01.OC_mot_REML+orig'[31]'
+3dinfo -subbrick_info ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig'[31]'
 3dClusterize -inset ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig \
    -mask_from_hdr -ithr 31 \
    -bisided p=0.01 \
@@ -152,7 +152,7 @@ echo "LOOK TO MAKE SURE SUBBRIK IS word-nonword TSTAT"
 
 # Vis-Aud clusters
 echo "LOOK TO MAKE SURE SUBBRIK IS vis-aud TSTAT"
-3dinfo -subbrick_info ../../GLMs/OC_mot/stats.sub-01.OC_mot_REML+orig'[35]'
+3dinfo -subbrick_info ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig'[35]'
 3dClusterize -inset ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig \
    -mask_from_hdr -ithr 35 \
    -bisided p=0.01 \
