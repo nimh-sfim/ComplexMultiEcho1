@@ -97,8 +97,8 @@ for ((idx=0; $idx<${numROIs}; idx++)); do
     echo idx $idx ROIidx  ${ROIidxlist[$idx]} label ${ROIidxlabels[$idx]}
     3dcalc -a tmpROI_EPIres_${ROIidxlabels[$idx]}.nii.gz \
        -b ROI_1vox_per_mask.nii.gz \
-       -expr '(ispositive(a)*ispositive(b)*'${ROIidxlist[$idx]}')' \
-       -prefix tmpROI_nooverlap_EPIres_${ROIidxlabels[$idx]}.nii.gz \
+       -expr 'int(0.5+(ispositive(a)*ispositive(b)*'${ROIidxlist[$idx]}'))' \
+       -prefix tmpROI_nooverlap_EPIres_${ROIidxlabels[$idx]}.nii.gz -short \
        -overwrite
 done
 
@@ -140,7 +140,7 @@ for ((idx=0; $idx<${#ROIidxWNW[@]}; idx++)); do
     echo idx $idx ROIidx  ${ROIidxWNW[$idx]} label ${ROIidxWNWlabels[$idx]}
     3dcalc -overwrite -a ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[23]' \
    -b tmpROI_nooverlap_EPIres_${ROIidxWNWlabels[$idx]}.nii.gz \
-   -expr 'ispositive(abs(a)-3.3)*b' \
+   -expr 'int(0.5+ispositive(abs(a)-3.3)*b)' -short \
    -prefix tmpfuncROI_${ROIidxWNWlabels[$idx]}.nii.gz
 done
 
@@ -149,7 +149,7 @@ for ((idx=0; $idx<${#ROIidxVS[@]}; idx++)); do
     echo idx $idx ROIidx  ${ROIidxVS[$idx]} label ${ROIidxVSlabels[$idx]}
     3dcalc -overwrite -a ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[26]' \
    -b tmpROI_nooverlap_EPIres_${ROIidxVSlabels[$idx]}.nii.gz \
-   -expr 'int(0.5+ispositive(abs(a)-3.3)*b))' -short \
+   -expr 'int(0.5+ispositive(abs(a)-3.3)*b)' -short \
    -prefix tmpfuncROI_${ROIidxVSlabels[$idx]}.nii.gz
 done
 
