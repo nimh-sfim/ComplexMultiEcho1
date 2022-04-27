@@ -102,7 +102,7 @@ for ((idx=0; $idx<${numROIs}; idx++)); do
        -overwrite
 done
 
-if [ -f tmpROI_nooverlap_EPIres_all.nii.gz]; then
+if [ -f tmpROI_nooverlap_EPIres_all.nii.gz ]; then
   rm tmpROI_nooverlap_EPIres_all.nii.gz
 fi
 3dTcat -prefix tmpROI_nooverlap_EPIres_all.nii.gz tmpROI_nooverlap_EPIres_*.nii.gz
@@ -149,12 +149,12 @@ for ((idx=0; $idx<${#ROIidxVS[@]}; idx++)); do
     echo idx $idx ROIidx  ${ROIidxVS[$idx]} label ${ROIidxVSlabels[$idx]}
     3dcalc -overwrite -a ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[26]' \
    -b tmpROI_nooverlap_EPIres_${ROIidxVSlabels[$idx]}.nii.gz \
-   -expr 'ispositive(abs(a)-3.3)*b' \
+   -expr 'int(0.5+ispositive(abs(a)-3.3)*b))' -short \
    -prefix tmpfuncROI_${ROIidxVSlabels[$idx]}.nii.gz
 done
 
 # Combine all the function ROIS into one mask
-if [ -f tmpfuncROI_EPIres_all.nii.gz]; then
+if [ -f tmpfuncROI_EPIres_all.nii.gz ]; then
   rm tmpfuncROI_EPIres_all.nii.gz
 fi
 3dTcat -prefix tmpfuncROI_EPIres_all.nii.gz tmpfuncROI_*.nii.gz
