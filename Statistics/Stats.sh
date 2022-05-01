@@ -1,8 +1,4 @@
-# zsh or not
-
-# Graphs & Visualization:
-
-# call: zsh Stats.sh sub-09
+# zsh
 
 # notes: sub-02 REML origtedana_mot & origtedana_mot_csf do NOT exist
 
@@ -17,8 +13,8 @@ for g in $GLMs_out; do
     if [[ $task == 'wnw' ]]; then
 
         # Concatenate all the stats you need into 1 file (Vis-Aud, Word-NonWord)
-        3dTcat -prefix Coefficients stats.${sub}.${g}_REML+orig'[2..$(4)]'
-        3dTcat -prefix R2 stats.${sub}.${g}_REML+orig'[4..$(4)]'
+        3dTcat -prefix Stats/Coefficients stats.${sub}.${g}_REML+orig'[2..$(4)]'
+        3dTcat -prefix Stats/R2 stats.${sub}.${g}_REML+orig'[4..$(4)]'
         # 'Word-NonWord' = [7], 'Vis-Aud' = [8]
 
         # calculate Coef / stdev residual
@@ -26,8 +22,8 @@ for g in $GLMs_out; do
         3dcalc -a Coefficients+orig'[8]' -b rm.noise.all+orig -expr 'a/b' -prefix Stats/CNR_VisAud
 
         # Transform R2 to Fisher Z-score
-        3dcalc -overwrite -a R2+orig'[7]' -b Coefficients+orig'[7]' -expr 'atanh(sqrt(a))*(ispositive(b)-isnegative(b))' -prefix FisherZ_WNW
-        3dcalc -overwrite -a R2+orig'[8]' -b Coefficients+orig'[8]' -expr 'atanh(sqrt(a))*(ispositive(b)-isnegative(b))' -prefix FisherZ_VisAud
+        3dcalc -overwrite -a R2+orig'[7]' -b Coefficients+orig'[7]' -expr 'atanh(sqrt(a))*(ispositive(b)-isnegative(b))' -prefix Stats/FisherZ_WNW
+        3dcalc -overwrite -a R2+orig'[8]' -b Coefficients+orig'[8]' -expr 'atanh(sqrt(a))*(ispositive(b)-isnegative(b))' -prefix Stats/FisherZ_VisAud
 
         # change modifications so you can execute CNR file
         chmod -R g+rwx /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/GLMs/$g/Stats/
@@ -41,8 +37,8 @@ for g in $GLMs_out; do
         # Get the average Fisher Z-score (for the pipeline)
         if [ -f Stats/Mean_FisherZ_WNW.txt ]; then rm Stats/Avg_FisherZ_WNW.txt; fi
         if [ -f Stats/Mean_FisherZ_VisAud.txt ]; then rm Stats/Avg_FisherZ_VisAud.txt; fi
-        3dBrickStat -mean Fisher_Z+orig'[7]' >> Stats/Avg_FisherZ_WNW.txt
-        3dBrickStat -mean Fisher_Z+orig'[8]' >> Stats/Avg_FisherZ_VisAud.txt
+        3dBrickStat -mean FisherZ_WNW+orig >> Stats/Avg_FisherZ_WNW.txt
+        3dBrickStat -mean FisherZ_VisAud+orig >> Stats/Avg_FisherZ_VisAud.txt
 
         # Get average for coefficients (subbrik 2)
         3dBrickStat -mean Coefficients+orig'[7]' >> Stats/Avg_Coeff_WNW.txt
@@ -52,7 +48,8 @@ for g in $GLMs_out; do
         3dBrickStat -mean rm.noise.all+orig >> Stats/Avg_Residual.txt
         
         # Scrape DOF (for the pipeline)
-        3dAttribute BRICK_STATAUX stats.sub-01_REML+orig'[0]' | awk '{print $5}' >> DOF.txt
+        DOF=`3dAttribute BRICK_STATAUX stats.${sub}.${g}_REML+orig'[0]' | awk '{print $5}'`
+        echo $DOF >> Stats/DOF.txt
 
         # TODO:
         # combine all of these into a "structured" file (maybe a pandas dataframe)
