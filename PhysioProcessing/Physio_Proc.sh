@@ -1,6 +1,7 @@
 # Python
 
 # Physio Proc
+# re-run subject 7 & 9 (calc_regressors linearmodel)
 
 # Subj that don't have all required files or something wrong with acquisition: sub-03 & sub-09, sub-04 (CUT!)
 echo "Enter subject: (Ex: sub-01)" 
@@ -10,9 +11,9 @@ echo "${sub} physiological files are being processed"
 scripts="/Users/holnessmn/Desktop/BIDS_conversions/"
 root="/Users/holnessmn/Desktop/BIDS_conversions/${sub}_physios/"
  
-if [ -d ${root}Originals ]; then 
+if [ -d ${root}Originals ]; then
     echo "Originals have been converted. Ready to run."
-else 
+else
     echo "No Originals directory. Convert with 'conversions.sh' script"
 fi
 
@@ -27,11 +28,8 @@ trim_file() {python3 ${scripts}file_trimmer.py \
     --filepath ${root}Originals/${sub}_task-${task}_run-${run}_physio.tsv.gz \
     --outpath ${root}}
 
-down_smple() {python3 ${scripts}downsampler.py \
-    --filepath ${root}${sub}_task-${task}_run-${run}_physio.tsv.gz}
-
 over_lay() {python3 ${scripts}overlay.py \
-    --filepath ${root}${sub}_task-${task}_run-${run}_resp_down.tsv.gz \
+    --filepath ${root}${sub}_task-${task}_run-${run}_physio.tsv.gz \
     --run_ideal ${ideal}}
 
 Niphlm_regressors() {python3 ${scripts}NiPhlem_regressors.py \
@@ -71,11 +69,11 @@ check() {
 
     # Check if Task directory exists
     for task in $tasks; do
+        cd $root;
         # Make directories - check 1st
-        if ! [ -d $root/$task ]; then mkdir $task; else echo "Task '$task' Directory exists"; fi
+        if ! [ -d $root$task ]; then mkdir $task; echo "Directories have been made in $root$task"; else echo "Task '$task' Directory exists"; fi
     done
 }
-
 
 
 trim() {
@@ -87,7 +85,7 @@ trim() {
             # set variables & commands
             runs=(1 2 3); echo "Runs $runs"
             # make sub-directories
-            cd ${root}/${task}; if ! [ -d $root/$task/run1 ]; then mkdir run1 run2 run3; else echo "Wnw Run Directories Exist"; fi
+            cd ${root}${task}; if ! [ -d $root$task/run1 ]; then mkdir run1 run2 run3; else echo "Wnw Run Directories Exist"; fi
             cd $root
             for run in $runs; do
                 if ! [ -f ${root}${sub}_task-${task}_run-${run}_physio.tsv.gz ]; then
@@ -99,8 +97,8 @@ trim() {
         # Movie / Breathing
         if [[ $task == 'breathing' || $task == 'movie' ]]; then
             # make sub-directories
-            cd ${root}/${task}; 
-            if ! [ -d $root/$task/run1 ]; then mkdir run1; runs=(1); fi
+            cd ${root}${task}; 
+            if ! [ -d $root$task/run1 ]; then mkdir run1; runs=(1); fi
             if [ -f ${root}Originals/${sub}_task-${task}_run-2_physio.tsv.gz ]; then mkdir run2; runs=(1 2); else runs=(1); fi
             if [ -f ${root}Originals/${sub}_task-${task}_run-3_physio.tsv.gz ]; then mkdir run3; runs=(1 2 3); else runs=(1 2); fi
             cd $root
@@ -110,20 +108,6 @@ trim() {
                 fi
             done
         fi
-    done
-}
-
-
-downsample() {
-    tasks=('movie' 'breathing')
-    runs=(1 2)
-    # Downsample
-    for task in $tasks; do
-        for run in $runs; do
-            if ! [ -f ${root}${sub}_task-${task}_run-${run}_resp_down.tsv.gz ]; then
-                down_smple
-            fi
-        done
     done
 }
 
@@ -237,7 +221,11 @@ linearmodel() {
             if (($runs_2[(Ie)$sub[-1]])); then runs=(1 2); else runs=(1); fi
         fi
         for run in $runs; do
-            Linear_Model
+            if ! [ -f ${root}${task}/run${run}/${sub}_LinearModel_${task}_run-${run}.tsv ]; then
+                Linear_Model
+            else
+                echo "Linear Model files exist"
+            fi
         done
     done
 }
@@ -255,7 +243,6 @@ $call
 #check
 #trim
 
-#downsample
 #overlay
 
 #calc_regressors
