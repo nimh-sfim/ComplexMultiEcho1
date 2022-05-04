@@ -8,7 +8,7 @@ cp aparc.a2009s+aseg_REN_gmrois.nii.gz ./StudyROIs_clean/
 cd StudyROIs_clean
 
 dset_orig="../aparc.a2009s+aseg_REN_gmrois.nii.gz"
-dset_anatEPI=rois_anat_EPIgrig.nii.gz
+dset_anatEPI=rois_anat_EPIgrid.nii.gz
  
 dset_grid="../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig"
 
@@ -50,7 +50,7 @@ ROIidxlist=(${ROIidxVS[@]} ${ROIidxWNW[@]})
 echo Length ROIidxlist is ${#ROIidxlist[@]}
 # echo Length ROIidxlabels is ${#ROIidxlabels[@]}
 
-3dAllineate \
+3dAllineate -overwrite \
     -1Dmatrix_apply IDENTITY \
     -prefix ${dset_anatEPI}  \
     -final NN \
@@ -68,12 +68,7 @@ echo Length ROIidxlist is ${#ROIidxlist[@]}
 
 # Ugly manually reduce to just expected word-nonword contrast ROIs
 3dcalc -a ${dset_anatEPI} -prefix WNW_${dset_anatEPI} -overwrite -short \
-   -expr 'int(69*equals(a,69) + 144*equals(a,144) + 121*equals(a,121) + 196*equals(a,196) ' \
-         '+ 86*equals(a,86) + 161*equals(a,161) + 60*equals(a,60) + 60*equals(a,62) + 135*equals(a,135) + 135*equals(a,137)' \
-         '+ 75*equals(a,75) + 150*equals(a,150) + 6*equals(a,6) + 26*equals(a,26) ' \
-         '+ 59*equals(a,59) + 134*equals(a,134) + 78*equals(a,78) + 153*equals(a,153) + ' \
-         '+ 14*equals(a,14) + 31*equals(a,31) + 85*equals(a,85) + 160*equals(a,160) + ' \
-         '+ 120*equals(a,120) + 195*equals(a,195) + 67*equals(a,67) + 142*equals(a,142) )'
+   -expr 'int(69*equals(a,69) + 144*equals(a,144) + 121*equals(a,121) + 196*equals(a,196) + 86*equals(a,86) + 161*equals(a,161) + 60*equals(a,60) + 60*equals(a,62) + 135*equals(a,135) + 135*equals(a,137) + 75*equals(a,75) + 150*equals(a,150) + 6*equals(a,6) + 26*equals(a,26) + 59*equals(a,59) + 134*equals(a,134) + 78*equals(a,78) + 153*equals(a,153) + 14*equals(a,14) + 31*equals(a,31) + 85*equals(a,85) + 160*equals(a,160) + 120*equals(a,120) + 195*equals(a,195) + 67*equals(a,67) + 142*equals(a,142) )'
 
 
 
@@ -100,7 +95,7 @@ echo "LOOK TO MAKE SURE SUBBRIK IS vis-aud TSTAT"
 # Since int() always rounds down, the +0.5 makes sure any floating
 #   point errors round to the correct value.
 3dcalc -overwrite -prefix VSfuncROI.${subj_id}.nii.gz \
-   -a VS_${dset_anatEPI} -b VS_Clusters+orig \
+   -a VS_${dset_anatEPI} -b VisAud_Clusters+orig \
    -expr 'int(0.5+ispositive(abs(b)-3.3)*a)' -short
 
 3dcalc -overwrite -prefix WNWfuncROI.${subj_id}.nii.gz \
