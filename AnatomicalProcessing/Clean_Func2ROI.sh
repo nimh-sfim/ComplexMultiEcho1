@@ -15,19 +15,14 @@ dset_grid="../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig
 # List of ROI's to use for each contrast. Not actually needed for the code, but
 #   good to have this list in a semi-clean place
 # ROIs is for Word-Nonword contrasts
-ROIidxWNW=(  69 144 121 196 \
-#              86 161 60 135 \
-#              75 150 6 26 \
-#              59 134 78 153 \
-#              14 31 85 160 \
-#              120 195 67 142)
+ROIidxWNW="69, 144, 121, 196,  86, 161, 60, 135,  75, 150, 6, 26,  59, 134, 78, 153,  14, 31, 85, 160,  120, 195, 67, 142"
 # ROIidxWNWlabels=(ctx_lh_G_oc-temp_lat-fusifor ctx_rh_G_oc-temp_lat-fusifor ctx_lh_S_temporal_sup ctx_rh_S_temporal_sup \
 #               ctx_lh_G_temporal_middle ctx_rh_G_temporal_middle ctx_lh_G_front_inf-OperTri ctx_rh_G_front_inf-OperTri \
 #               ctx_lh_G_parietal_sup ctx_rh_G_parietal_sup Left-Cerebellum-Cortex Right-Cerebellum-Cortex \
 #               ctx_lh_G_cuneus ctx_rh_G_cuneus ctx_lh_G_precuneus ctx_rh_G_precuneus \
 #               Left-Hippocampus Right-Hippocampus ctx_lh_G_temporal_inf ctx_rh_G_temporal_inf \
 #               ctx_lh_S_temporal_inf ctx_rh_S_temporal_inf ctx_lh_G_occipital_middle ctx_rh_G_occipital_middle)
-ROIidxVS=(122 197 92 167)
+ROIidxVS="122, 197, 92, 167"
 # ROIidxVSlabels=(ctx_lh_S_temporal_transverse ctx_rh_S_temporal_transverse ctx_lh_S_calcarine ctx_rh_S_calcarine)
 
 3dAllineate -overwrite \
