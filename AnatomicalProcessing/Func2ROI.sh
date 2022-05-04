@@ -4,109 +4,104 @@ subj_id=$1
 
 cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/Proc_Anat
 mkdir StudyROIs
-cp aparc.a2009s+aseg_REN_gmrois.nii.gz ./StudyROIs/
+ln -s aparc.a2009s+aseg_REN_gmrois.nii.gz ./StudyROIs/
 cd StudyROIs
 
-3dcopy -overwrite ../aparc.a2009s+aseg_REN_gmrois.nii.gz tmp_all_gmROIs.nii.gz
+dset_orig="../aparc.a2009s+aseg_REN_gmrois.nii.gz"
+dset_anatEPI=rois_anat_EPIgrid.nii.gz
+ 
+dset_grid="../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig"
 
-# 60 is ctx_lh_G_front_inf-Opercular &  62 is ctx_lh_G_front_inf-Triangul
-# combining into 1 ROI with the index 60 that we'll call ctx_lh_G_front_inf-OperTri
-3dcalc -a tmp_all_gmROIs.nii.gz -prefix tmp_all_gmROIs.nii.gz -overwrite -expr 'equals(a,62)*60 + not(equals(a,62))*a'
 
-# 135 is ctx_rh_G_front_inf-Opercular &  137 is ctx_rh_G_front_inf-Triangul
-# combining into 1 ROI with the index 60 that we'll call ctx_rh_G_front_inf-OperTri
-3dcalc -a tmp_all_gmROIs.nii.gz -prefix tmp_all_gmROIs.nii.gz -overwrite -expr 'equals(a,137)*135 + not(equals(a,137))*a'
-
-# get ROI indices
+# List of ROI's to use for each contrast.
 # ROIs is for Word-Nonword contrasts
-ROIidxWNW=(  69 144 121 196 \
-             86 161 60 135 \
-             75 150 6 26 \
-             59 134 78 153 \
-             14 31 85 160 \
-             120 195 67 142)
+ROIidxWNW="69,144,121,196,86,161,60,135,75,150,6,26,59,134,78,153,14,31,85,160,120,195,67,142"
+# ROIidxWNWlabels=(ctx_lh_G_oc-temp_lat-fusifor ctx_rh_G_oc-temp_lat-fusifor ctx_lh_S_temporal_sup ctx_rh_S_temporal_sup \
+#               ctx_lh_G_temporal_middle ctx_rh_G_temporal_middle ctx_lh_G_front_inf-OperTri ctx_rh_G_front_inf-OperTri \
+#               ctx_lh_G_parietal_sup ctx_rh_G_parietal_sup Left-Cerebellum-Cortex Right-Cerebellum-Cortex \
+#               ctx_lh_G_cuneus ctx_rh_G_cuneus ctx_lh_G_precuneus ctx_rh_G_precuneus \
+#               Left-Hippocampus Right-Hippocampus ctx_lh_G_temporal_inf ctx_rh_G_temporal_inf \
+#               ctx_lh_S_temporal_inf ctx_rh_S_temporal_inf ctx_lh_G_occipital_middle ctx_rh_G_occipital_middle)
+ROIidxVS="122,197,92,167"
+# ROIidxVSlabels=(ctx_lh_S_temporal_transverse ctx_rh_S_temporal_transverse ctx_lh_S_calcarine ctx_rh_S_calcarine)
 
-ROIidxWNWlabels=(ctx_lh_G_oc-temp_lat-fusifor ctx_rh_G_oc-temp_lat-fusifor ctx_lh_S_temporal_sup ctx_rh_S_temporal_sup \
-              ctx_lh_G_temporal_middle ctx_rh_G_temporal_middle ctx_lh_G_front_inf-OperTri ctx_rh_G_front_inf-OperTri \
-              ctx_lh_G_parietal_sup ctx_rh_G_parietal_sup Left-Cerebellum-Cortex Right-Cerebellum-Cortex \
-              ctx_lh_G_cuneus ctx_rh_G_cuneus ctx_lh_G_precuneus ctx_rh_G_precuneus \
-              Left-Hippocampus Right-Hippocampus ctx_lh_G_temporal_inf ctx_rh_G_temporal_inf \
-              ctx_lh_S_temporal_inf ctx_rh_S_temporal_inf ctx_lh_G_occipital_middle ctx_rh_G_occipital_middle)
+cat << EOF > FuncROI_Labels.lt
+   <VALUE_LABEL_DTABLE
+   ni_type="2*String"
+   ni_dimen="200"
+   pbar_name="ROI_i256">
+   "0" "Unknown"
+   "122" "L A1"
+   "197" "R A1"
+   "92" "L V1"
+   "167" "R V1"
+   "69" "L Vis Wordform Area"
+   "144" "R Vis Wordform Area"
+   "121" "lSTS"
+   "196" "rSTS"
+   "86" "lMTG"
+   "161" "rMTG"
+   "60" "lIFG"
+   "135" "rIFG"
+   "75" "lSPG"
+   "150" "rSPG"
+   "6" "lCerebrellum"
+   "26" "rCerebellum"
+   "59" "lCuneus"
+   "134" "rCuneus"
+   "78" "lPrecuneus"
+   "153" "rPrecuneus"
+   "14" "lHippocampus"
+   "31" "rHippocampus"
+   "85" "lITG"
+   "160" "rITG"
+   "120" "lITS"
+   "195" "rITS"
+   "67" "l Middle Occipital"
+   "142" "r Middle Occipital"
+   </VALUE_LABEL_DTABLE>
+EOF
 
-ROIidxVS=(122 197 92 167)
-ROIidxVSlabels=(ctx_lh_S_temporal_transverse ctx_rh_S_temporal_transverse ctx_lh_S_calcarine ctx_rh_S_calcarine)
+3dAllineate -overwrite \
+    -1Dmatrix_apply IDENTITY \
+    -prefix tmp_WNW_${dset_anatEPI}  \
+    -final NN \
+    -source "${dset_orig}<${ROIidxWNW}>" \
+    -master ${dset_grid}
 
+#   60 is ctx_lh_G_front_inf-Opercular &  62 is ctx_lh_G_front_inf-Triangul
+#     combining into 1 ROI with the index 60 that will still be labelled ctx_lh_G_front_inf-Opercular
+#   135 is ctx_rh_G_front_inf-Opercular &  137 is ctx_rh_G_front_inf-Triangul
+#     combining into 1 ROI with the index 135 that will still be labelled ctx_rh_G_front_inf-Opercular
+3dcalc -a tmp_WNW_${dset_anatEPI}  -prefix WNW_${dset_anatEPI} -overwrite \
+   -expr 'int(60*equals(a,62) + 135*equals(a,137) + a*(  not(equals(a,62)) + not(equals(a,137))))' \
+   -short 
 
-# Put all ROIs and labels in one list
-ROIidxlist=(${ROIidxVS[@]} ${ROIidxWNW[@]})
-ROIidxlabels=(${ROIidxVSlabels[@]} ${ROIidxWNWlabels[@]})
+3dAllineate -overwrite \
+    -1Dmatrix_apply IDENTITY \
+    -prefix VisAud_${dset_anatEPI}  \
+    -final NN \
+    -source "${dset_orig}<${ROIidxVS}>" \
+    -master ${dset_grid}
+ 
+# re-attach labeltable
+3drefit  -copytables "${dset_orig}" WNW_${dset_anatEPI}
+3drefit  -copytables "${dset_orig}" VisAud_${dset_anatEPI}
+# re-attach header property to use int-based colormap in AFNI GUI
+3drefit -cmap INT_CMAP WNW_${dset_anatEPI}
+3drefit -cmap INT_CMAP VisAud_${dset_anatEPI}
 
-echo Length ROIidxlist is ${#ROIidxlist[@]}
-echo Length ROIidxlabels is ${#ROIidxlabels[@]}
+# Ugly way to get subset of ROIs just expected visual-audio contrast ROIs
+# 3dcalc -a ${dset_anatEPI} -prefix VS_${dset_anatEPI} -overwrite -short \
+#    -expr 'int(122*equals(a,122) + 197*equals(a,197) +92*equals(a,92) +167*equals(a,167))'
 
-numROIs=${#ROIidxlist[@]}
+# Ugly way to get subset of ROIs just expected word-nonword contrast ROIs
+# NOTE:
 
-# Make each desired ROI a stand-alone file:
-for ((idx=0; $idx<${numROIs}; idx++)); do
-    echo idx $idx ROIidx  ${ROIidxlist[$idx]} label ${ROIidxlabels[$idx]}
-    3dcalc -overwrite -a tmp_all_gmROIs.nii.gz  \
-    -expr 'equals(a, '${ROIidxlist[$idx]}')' -prefix tmpROI_${ROIidxlabels[$idx]}.nii.gz
-    3drefit -sublabel 0 ${ROIidxlabels[$idx]} tmpROI_${ROIidxlabels[$idx]}.nii.gz
+# 3dcalc -a ${dset_anatEPI} -prefix WNW_${dset_anatEPI} -overwrite -short \
+#    -expr 'int(69*equals(a,69) + 144*equals(a,144) + 121*equals(a,121) + 196*equals(a,196) + 86*equals(a,86) + 161*equals(a,161) + 60*equals(a,60) + 60*equals(a,62) + 135*equals(a,135) + 135*equals(a,137) + 75*equals(a,75) + 150*equals(a,150) + 6*equals(a,6) + 26*equals(a,26) + 59*equals(a,59) + 134*equals(a,134) + 78*equals(a,78) + 153*equals(a,153) + 14*equals(a,14) + 31*equals(a,31) + 85*equals(a,85) + 160*equals(a,160) + 120*equals(a,120) + 195*equals(a,195) + 67*equals(a,67) + 142*equals(a,142) )'
 
-    # downsample to EPI resolution and voxel space
-    3dfractionize -overwrite -clip 0.33 \
-       -template ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig \
-       -input tmpROI_${ROIidxlabels[$idx]}.nii.gz \
-       -prefix tmpROI_EPIres_${ROIidxlabels[$idx]}.nii.gz
-done
-
-# Put all the ROIs as subbriks in one file
-3dTcat -overwrite -prefix tmp_ROIs_EPIres.nii.gz tmpROI_EPIres_*.nii.gz
-
-
-# Identify voxels that are in more than one ROI and remove them from all ROIs
-3dTstat -overwrite -nzcount -prefix tmp_ROIs_EPIres_nzcount.nii.gz tmp_ROIs_EPIres.nii.gz
-3dcalc -overwrite -a tmp_ROIs_EPIres_nzcount.nii.gz \
--prefix ROI_1vox_per_mask.nii.gz -expr '1*equals(a,1)'
-
-# Make separate files with EPI resolution masks for each ROI
-for ((idx=0; $idx<${numROIs}; idx++)); do
-    echo idx $idx ROIidx  ${ROIidxlist[$idx]} label ${ROIidxlabels[$idx]}
-    3dcalc -a tmpROI_EPIres_${ROIidxlabels[$idx]}.nii.gz \
-       -b ROI_1vox_per_mask.nii.gz \
-       -expr 'int(0.5+(ispositive(a)*ispositive(b)*'${ROIidxlist[$idx]}'))' \
-       -prefix tmpROI_nooverlap_EPIres_${ROIidxlabels[$idx]}.nii.gz -short \
-       -overwrite
-done
-
-# Cominbe the EPI resolution anatomical masks into one volume
-if [ -f tmpROI_nooverlap_EPIres_all.nii.gz ]; then
-  rm tmpROI_nooverlap_EPIres_all.nii.gz
-fi
-3dTcat -prefix tmpROI_nooverlap_EPIres_all.nii.gz tmpROI_nooverlap_EPIres_*.nii.gz
-3dTstat -overwrite -datum short -sum -prefix ROIs_EPIres.nii.gz tmpROI_nooverlap_EPIres_all.nii.gz 
-
-# Create Functional ROIs:
-
-
-# Realized with hindsight that 3dROIMaker didn't do everything I thought it would
-# Might be what I need to match numbers to labels, but still not sure
-# cp ../aparc.a2009s+aseg_REN_all.niml.lt ./ROIs_EPIres.niml.lt
-
-# word-nonword T-stat: 23 visual-audio T-stat: 26
-# 3dROIMaker -overwrite  -inset ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[23]' \
-#   -refset ROIs_EPIres.nii.gz -thresh 3.3 -volthr 5 -prefix WordnonWord_FuncROIs
-
-# 3dROIMaker -overwrite  -inset ../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig'[26]' \
-#   -refset ROIs_EPIres.nii.gz -thresh 3.3 -volthr 5 -prefix VisAud_FuncROIs
-
-
-# Making a functional mask with clusters that have at least 5 voxels.
-# Note: Using an uncorrected threshold of p<0.01 because the goal is to get functionally localized
-#  voxels in each ROI. It's better to have things that are slightly below threshold than to exclude
-#  voxels or ROIs that might have more robust responses with other denoising pipelines
-
-# WNW clusters
+# WNW functional clusters
 echo "LOOK TO MAKE SURE SUBBRIK IS word-nonword TSTAT"
 3dinfo -subbrick_info ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig'[31]'
 3dClusterize -inset ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig \
@@ -115,7 +110,7 @@ echo "LOOK TO MAKE SURE SUBBRIK IS word-nonword TSTAT"
    -NN 1 -clust_nvox 5 \
    -pref_map WNW_Clusters -overwrite
 
-# Vis-Aud clusters
+# Vis-Aud functional clusters
 echo "LOOK TO MAKE SURE SUBBRIK IS vis-aud TSTAT"
 3dinfo -subbrick_info ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig'[35]'
 3dClusterize -inset ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig \
@@ -124,28 +119,28 @@ echo "LOOK TO MAKE SURE SUBBRIK IS vis-aud TSTAT"
    -NN 1 -clust_nvox 5 \
    -pref_map VisAud_Clusters  -overwrite
 
+# intersect the anatomical ROIs and the functional contrasts
+# Since int() always rounds down, the +0.5 makes sure any floating
+#   point errors round to the correct value.
+3dcalc -overwrite -prefix VisAud_funcROI.${subj_id}.nii.gz \
+   -a VisAud_${dset_anatEPI} -b VisAud_Clusters+orig \
+   -expr 'int(0.5+ispositive(b)*a)' -short
 
-# make functional masks for Word-nonword contrast
-for ((idx=0; $idx<${#ROIidxWNW[@]}; idx++)); do
-    echo idx $idx ROIidx  ${ROIidxWNW[$idx]} label ${ROIidxWNWlabels[$idx]}
-    3dcalc -overwrite -a WNW_Clusters+orig \
-   -b tmpROI_nooverlap_EPIres_${ROIidxWNWlabels[$idx]}.nii.gz \
-   -expr 'int(0.5+ispositive(abs(a)-3.3)*b)' -short \
-   -prefix tmpfuncROI_${ROIidxWNWlabels[$idx]}.nii.gz
-done
+3dcalc -overwrite -prefix WNWfuncROI.${subj_id}.nii.gz \
+   -a WNW_${dset_anatEPI} -b WNW_Clusters+orig \
+   -expr 'int(0.5+ispositive(b)*a)' -short
 
-# make functional masks for vis-aud contrast
-for ((idx=0; $idx<${#ROIidxVS[@]}; idx++)); do
-    echo idx $idx ROIidx  ${ROIidxVS[$idx]} label ${ROIidxVSlabels[$idx]}
-    3dcalc -overwrite -a VisAud_Clusters+orig \
-   -b tmpROI_nooverlap_EPIres_${ROIidxVSlabels[$idx]}.nii.gz \
-   -expr 'int(0.5+ispositive(abs(a)-3.3)*b)' -short \
-   -prefix tmpfuncROI_${ROIidxVSlabels[$idx]}.nii.gz
-done
+3dcalc -overwrite -prefix ${subj_id}.FuncROIs.nii.gz \
+   -a VisAud_funcROI.${subj_id}.nii.gz \
+   -b WNWfuncROI.${subj_id}.nii.gz \
+   -expr 'int(a+b+0.5)' -short
 
-# Combine all the functional ROIS into one mask
-if [ -f tmpfuncROI_EPIres_all.nii.gz ]; then
-  rm tmpfuncROI_EPIres_all.nii.gz
-fi
-3dTcat -prefix tmpfuncROI_EPIres_all.nii.gz tmpfuncROI_*.nii.gz
-3dTstat -overwrite -datum short -sum -prefix ROIs_FuncLocalized.nii.gz tmpfuncROI_EPIres_all.nii.gz
+
+# attach more descriptive labeltable
+# 3drefit  -copytables "${dset_orig}" ${subj_id}.FuncROIs.nii.gz
+3drefit  -labeltable FuncROI_Labels.lt ${subj_id}.FuncROIs.nii.gz
+
+# reattach header property to use int-based colormap in AFNI GUI
+3drefit -cmap INT_CMAP ${subj_id}.FuncROIs.nii.gz
+
+
