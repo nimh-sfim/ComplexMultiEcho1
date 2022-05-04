@@ -11,90 +11,100 @@ import argparse
 import json
 import sys
 
-"""
-Implements multiple linear modeling & multivariate modeling
+def main():
+    """
+    Implements multiple linear modeling & multivariate modeling
 
-Inputs (multiple):
-Regressor pandas dataframe:
-6 motion params (demeaned), 1st derivatives of 6 motion parameters (deriv), 
-2 cardiac RETROICOR regressors, 2 resp RETROICOR regressors,
-1 HRV regressor, 1 RVT regressor
+    Inputs (multiple):
+    Regressor pandas dataframe:
+    6 motion params (demeaned), 1st derivatives of 6 motion parameters (deriv), 
+    2 cardiac RETROICOR regressors, 2 resp RETROICOR regressors,
+    1 HRV regressor, 1 RVT regressor
 
-Output (1):
-ICA component
+    Output (1):
+    ICA component
 
-Linear Model:
-Y = MX + e
-Y = fit to ICA component time series (CxT) -> 1 dependent variable (prediction of fit to Y-variable)
-M = coefficient matrix you’re solving for (CxN) -> 
-X = all the above regressors and a row of ones for the intercept) (NxT) -> multiple independent variables
-e = error
+    Linear Model:
+    Y = MX + e
+    Y = fit to ICA component time series (CxT) -> 1 dependent variable (prediction of fit to Y-variable)
+    M = coefficient matrix you’re solving for (CxN) -> 
+    X = all the above regressors and a row of ones for the intercept) (NxT) -> multiple independent variables
+    e = error
 
-equation:  y = A+B1x1+B2x2+B3x3+B4x4
+    equation:  y = A+B1x1+B2x2+B3x3+B4x4
 
-C=# of components
-T=Time
-N=number of nuisance regressors
-"""
+    C=# of components
+    T=Time
+    N=number of nuisance regressors
+    """
 
-"""
-sub=sub-01
-task=wnw
-run=1
+    """
+    sub=sub-01
+    task=wnw
+    run=1
 
-Parser call:
-python3 /Users/holnessmn/Desktop/BIDS_conversions/Linear_Model.py \
---regressors /Users/holnessmn/Desktop/BIDS_conversions/${sub}_physios/${task}/run${run}/${sub}_RegressorModels_${task}_run-${run}.tsv \
---ica_mixing /Users/holnessmn/Desktop/BIDS_conversions/${sub}_physios/${task}/run${run}/ica_mixing.tsv \
---prefix /Users/holnessmn/Desktop/BIDS_conversions/${sub}_physios/${task}/run${run}/${sub}_LinearModel_${task}_run-${run}
+    Parser call:
+    python3 /Users/holnessmn/Desktop/BIDS_conversions/Linear_Model.py \
+    --regressors /Users/holnessmn/Desktop/BIDS_conversions/${sub}_physios/${task}/run${run}/${sub}_RegressorModels_${task}_run-${run}.tsv \
+    --ica_mixing /Users/holnessmn/Desktop/BIDS_conversions/${sub}_physios/${task}/run${run}/ica_mixing.tsv \
+    --prefix /Users/holnessmn/Desktop/BIDS_conversions/${sub}_physios/${task}/run${run}/${sub}_LinearModel_${task}_run-${run}
 
-"""
+    """
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--regressors", dest="regressors", help="Regressor Model file", type=str)
-parser.add_argument("--ica_mixing", dest="ica_mixing", help="ICA mixing matrix", type=str)
-parser.add_argument("--prefix", dest="prefix", help="File Prefix & redirected output", type=str)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--regressors", dest="regressors", help="Regressor Model file", type=str)
+    parser.add_argument("--ica_mixing", dest="ica_mixing", help="ICA mixing matrix", type=str)
+    parser.add_argument("--prefix", dest="prefix", help="File Prefix & redirected output", type=str)
 
-ARG = parser.parse_args()
+    ARG = parser.parse_args()
 
-if ARG.regressors and os.path.isfile(ARG.regressors):
-    regress = ARG.regressors
-else:
-    raise Exception(f"This file/filepath {ARG.regressors} does not exist!!!")
+    if ARG.regressors and os.path.isfile(ARG.regressors):
+        regress = ARG.regressors
+    else:
+        raise Exception(f"This file/filepath {ARG.regressors} does not exist!!!")
 
-if ARG.ica_mixing and os.path.isfile(ARG.ica_mixing):
-    ica = ARG.ica_mixing
-else:
-    raise Exception(f"This file/filepath {ARG.ica_mixing} does not exist!!!")
+    if ARG.ica_mixing and os.path.isfile(ARG.ica_mixing):
+        ica = ARG.ica_mixing
+    else:
+        raise Exception(f"This file/filepath {ARG.ica_mixing} does not exist!!!")
 
-if ARG.prefix and type(ARG.prefix) == str:
-    prefix = ARG.prefix
-else:
-    raise Exception(f"Not a string {ARG.prefix} !!!")
+    if ARG.prefix and type(ARG.prefix) == str:
+        prefix = ARG.prefix
+    else:
+        raise Exception(f"Not a string {ARG.prefix} !!!")
 
 
-# General question: How does each X-regressor (noise model) match each Y-comp (ICA component ts)?
+    # General question: How does each X-regressor (noise model) match each Y-comp (ICA component ts)?
 
-# Y-Data #
-# Read in the ICA components
-ica_tsv = pd.read_csv(ica, sep='\t')
-# ['ICA_00','ICA_01',...]
-ica_tsv.columns
-# multi-dimensional list with each component timeseries as sub-list, len = Num of timesteps/volumes
-icamixlist = [ica_tsv[i] for i in ica_tsv.columns]     
+    # Y-Data #
+    # Read in the ICA components
+    ica_tsv = pd.read_csv(ica, sep='\t')
+    # ['ICA_00','ICA_01',...]
+    ica_tsv.columns
+    # multi-dimensional list with each component timeseries as sub-list, len = Num of timesteps/volumes
+    icamixlist = [ica_tsv[i] for i in ica_tsv.columns]     
 
-print("Number of components: ", len(np.array(icamixlist)))
+    print("Number of components: ", len(np.array(icamixlist)))
 
-# X-Data #
-# Read in the Noise Regressors          (24 noise regressors + intercept ts), len = 25
-regres_tsv = pd.read_csv(regress, sep='\t')
-# Regressor models ['cardiac_sin1','cardiac_cos1',...'WM_e','Csf_vent']
-regres_tsv.columns
-# multi-dimensional list with each regressor timeseries as sub-list, len = Num of timesteps/volumes (indexed by TRs...)
-nphlmlist = [regres_tsv[i] for i in regres_tsv.columns[1:26]]     
+    # X-Data #
+    # Read in the Noise Regressors          (24 noise regressors + intercept ts), len = 25
+    regres_tsv = pd.read_csv(regress, sep='\t')
+    # Regressor models ['cardiac_sin1','cardiac_cos1',...'WM_e','Csf_vent']
+    regres_tsv.columns
+    # multi-dimensional list with each regressor timeseries as sub-list, len = Num of timesteps/volumes (indexed by TRs...)
+    nphlmlist = [regres_tsv[i] for i in regres_tsv.columns[1:26]]     
 
-print("Number of noise regressors: ", len(np.array(nphlmlist)))
+    print("Number of noise regressors: ", len(np.array(nphlmlist)))
 
+    #visual_check(icamixlist, nphlmlist)
+    
+    # Fit the models and calculate signficance
+    coefficient_matrix, R_sq, pvals = linear_model(icamixlist, nphlmlist)
+    
+    
+
+    convert(coefficient_matrix, R_sq, pvals, prefix)
+    significant_ICs()
 
 def visual_check(icamixlist, nphlmlist):
     """
@@ -133,7 +143,7 @@ def visual_check(icamixlist, nphlmlist):
             # coefficient of determination -> will tell you how likely an ICA component is noise
             # coefficients -> will tell you which noise regressor model the ICA component matches
 
-#visual_check(icamixlist, nphlmlist)
+
 
 
 def linear_model(icamixlist, nphlmlist):
@@ -158,7 +168,8 @@ def linear_model(icamixlist, nphlmlist):
 
     """
     # initialize
-    R_sq, coefficient_matrix = [], []
+    R_sq = np.zeros(icamixlist.shape[0])
+    coefficient_matrix = np.zeros((icamixlist.shape[0], nphlmlist.shape[0]))
 
     # get scores for each ICA component
     for idx, i in enumerate(icamixlist):
@@ -172,20 +183,49 @@ def linear_model(icamixlist, nphlmlist):
         # x as multiple input regressor array
         linear_model = LinearRegression().fit(x, y)       # fit x-regressor data to y ica data
 
-        # print summary of data
-        # intercept will be 0, bcuz sine wave (x,y modulate around 0)
-        print("Coefficient of determination (R-sq): ", linear_model.score(x, y), "Intercept: ", linear_model.intercept_, "Coefficients (scalar magnitudes): ", linear_model.coef_)
-
         # append to coefficient matrix array (lower coefficient = higher match to model):
-        coefficient_matrix.append(linear_model.coef_)
+        coefficient_matrix[idx,:] = linear_model.coef_
 
         # append to coefficient of determination (R-sq) array:
-        R_sq.append(linear_model.score(x, y))
+        R_sq[idx] = linear_model.score(x, y)
 
-    return coefficient_matrix, R_sq
+        #TODO Add indexing
+        pvals = get_pval(linear_model, x, y)
+
+        # print summary of data
+        # intercept will be 0, bcuz sine wave (x,y modulate around 0)
+        print("Coefficient of determination (R-sq): ", R_sq[idx], "Intercept: ", linear_model.intercept_, "Coefficients (scalar magnitudes): ", coefficient_matrix[idx,:])
 
 
-def sign(icamixlist, nphlmlist):
+
+    print("Coeff mat: ",coefficient_matrix, "R-sq: ",R_sq, "P-val: ",pvals)
+
+    return coefficient_matrix, R_sq, pvals
+
+
+def get_pval(linear_model, X, y):
+    """
+    Calculation p values from linear model using code from:
+    https://stackoverflow.com/questions/27928275/find-p-value-significance-in-scikit-learn-linearregression
+    
+    """
+
+    params = np.append(linear_model.intercept_,linear_model.coef_)
+    predictions = linear_model.predict(X)
+
+    newX = np.append(np.ones((len(X),1)), X, axis=1)
+    MSE = (sum((y-predictions)**2))/(len(newX)-len(newX[0])) # mean squared error
+
+    var_b = MSE*(np.linalg.inv(np.dot(newX.T,newX)).diagonal())
+    sd_b = np.sqrt(var_b)
+    ts_b = params/ sd_b
+
+    p_values =[2*(1-stats.t.cdf(np.abs(i),(len(newX)-len(newX[0])))) for i in ts_b]
+
+    print(p_values)
+    return p_values
+
+def get_signif(icamixlist, nphlmlist):
     """
     Get significance of each regressor fit to ICA component
 
@@ -204,7 +244,7 @@ def sign(icamixlist, nphlmlist):
     return sig_array
 
 
-def convert():
+def convert(coefficient_matrix, R_sq, pvals, prefix):
     """
     Convert Statistics to .Tsv.gz/.json files
 
@@ -217,11 +257,7 @@ def convert():
 
     """
 
-    # Get the DataFrames as variables
-    coefficient_matrix, R_sq = linear_model(icamixlist, nphlmlist)
-    pvals = sign(icamixlist, nphlmlist)
-
-    print("Coeff mat: ",coefficient_matrix, "R-sq: ",R_sq, "P-val: ",pvals)
+ 
 
     # 1. generates stacked columns of statistics arrays (as columns)
     scores = np.column_stack((np.array(R_sq),np.array(coefficient_matrix)))
@@ -249,7 +285,6 @@ def convert():
 
     return df_sigs
 
-convert()
 
 # Get significant ICs
 def significant_ICs():
@@ -285,7 +320,11 @@ def significant_ICs():
         i = np.unique(np.array(i)).tolist()
         subprocess.check_output(f"echo {i} >> {prefix}_SigICs.txt", shell=True)
 
-significant_ICs()
 
-# Note: regressor model forms with smoother lines (e.g., HRV/RVT) won't have as high of a coefficient mag or R-sq as a regressor with more noise...
-# denoising with Nordic (with blurring) might lead to cleaner components with LESS noise/power (leading to higher fits with RVT/HRV regressor forms)
+
+    # Note: regressor model forms with smoother lines (e.g., HRV/RVT) won't have as high of a coefficient mag or R-sq as a regressor with more noise...
+    # denoising with Nordic (with blurring) might lead to cleaner components with LESS noise/power (leading to higher fits with RVT/HRV regressor forms)
+
+
+if __name__ == '__main__':
+    main()
