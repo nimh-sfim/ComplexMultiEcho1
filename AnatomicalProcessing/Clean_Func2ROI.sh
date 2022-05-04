@@ -4,7 +4,7 @@ subj_id=$1
 
 cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/Proc_Anat
 mkdir StudyROIs_clean
-cp aparc.a2009s+aseg_REN_gmrois.nii.gz ./StudyROIs/
+cp aparc.a2009s+aseg_REN_gmrois.nii.gz ./StudyROIs_clean/
 cd StudyROIs_clean
 
 dset_orig="../aparc.a2009s+aseg_REN_gmrois.nii.gz"
