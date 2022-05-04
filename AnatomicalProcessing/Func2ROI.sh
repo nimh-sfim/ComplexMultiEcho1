@@ -4,8 +4,8 @@ subj_id=$1
 
 cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/Proc_Anat
 mkdir StudyROIs
-ln -s aparc.a2009s+aseg_REN_gmrois.nii.gz ./StudyROIs/
 cd StudyROIs
+ln -s ../aparc.a2009s+aseg_REN_gmrois.nii.gz ./
 
 dset_orig="../aparc.a2009s+aseg_REN_gmrois.nii.gz"
 dset_anatEPI=rois_anat_EPIgrid.nii.gz
@@ -73,9 +73,20 @@ EOF
 #     combining into 1 ROI with the index 60 that will still be labelled ctx_lh_G_front_inf-Opercular
 #   135 is ctx_rh_G_front_inf-Opercular &  137 is ctx_rh_G_front_inf-Triangul
 #     combining into 1 ROI with the index 135 that will still be labelled ctx_rh_G_front_inf-Opercular
+3dcalc -a tmp_WNW_${dset_anatEPI}  -prefix tmp2_WNW_${dset_anatEPI} -overwrite \
+   -expr 'int(ifelse(equals(a,62),60,a))' \
+   -short 
+3dcalc -a tmp2_WNW_${dset_anatEPI}  -prefix WNW2_${dset_anatEPI} -overwrite \
+   -expr 'int(ifelse(equals(a,137),135,a))' \
+   -short 
+
 3dcalc -a tmp_WNW_${dset_anatEPI}  -prefix WNW_${dset_anatEPI} -overwrite \
    -expr 'int(60*equals(a,62) + 135*equals(a,137) + a*(  not(equals(a,62)) + not(equals(a,137))))' \
    -short 
+3dcalc -a tmp_WNW_${dset_anatEPI}  -prefix WNW_${dset_anatEPI} -overwrite \
+   -expr 'int(60*equals(a,62) + 135*equals(a,137) + a*(  not(equals(a,62)) + not(equals(a,137))))' \
+   -short 
+
 
 3dAllineate -overwrite \
     -1Dmatrix_apply IDENTITY \
