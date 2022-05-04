@@ -73,7 +73,7 @@ echo Length ROIidxlist is ${#ROIidxlist[@]}
          '+ 75*equals(a,75) + 150*equals(a,150) + 6*equals(a,6) + 26*equals(a,26) ' \
          '+ 59*equals(a,59) + 134*equals(a,134) + 78*equals(a,78) + 153*equals(a,153) + ' \
          '+ 14*equals(a,14) + 31*equals(a,31) + 85*equals(a,85) + 160*equals(a,160) + ' \
-         '+ 120*equals(a,120) + 195*equals(a,195) + 67*equals(a,67) + 142*equals(a,142) ))'
+         '+ 120*equals(a,120) + 195*equals(a,195) + 67*equals(a,67) + 142*equals(a,142) )'
 
 
 
@@ -99,11 +99,11 @@ echo "LOOK TO MAKE SURE SUBBRIK IS vis-aud TSTAT"
 # intersect the anatomical ROIs and the functional contrasts
 # Since int() always rounds down, the +0.5 makes sure any floating
 #   point errors round to the correct value.
-3calc -overwrite -prefix VSfuncROI.${subj_id}.nii.gz \
+3dcalc -overwrite -prefix VSfuncROI.${subj_id}.nii.gz \
    -a VS_${dset_anatEPI} -b VS_Clusters+orig \
    -expr 'int(0.5+ispositive(abs(b)-3.3)*a)' -short
 
-3calc -overwrite -prefix WNWfuncROI.${subj_id}.nii.gz \
+3dcalc -overwrite -prefix WNWfuncROI.${subj_id}.nii.gz \
    -a WNW_${dset_anatEPI} -b WNW_Clusters+orig \
    -expr 'int(0.5+ispositive(abs(b)-3.3)*a)' -short
 
