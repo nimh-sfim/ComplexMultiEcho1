@@ -96,11 +96,11 @@ echo "LOOK TO MAKE SURE SUBBRIK IS vis-aud TSTAT"
 #   point errors round to the correct value.
 3dcalc -overwrite -prefix VSfuncROI.${subj_id}.nii.gz \
    -a VS_${dset_anatEPI} -b VisAud_Clusters+orig \
-   -expr 'int(0.5+ispositive(abs(b)-3.3)*a)' -short
+   -expr 'int(0.5+ispositive(b)*a)' -short
 
 3dcalc -overwrite -prefix WNWfuncROI.${subj_id}.nii.gz \
    -a WNW_${dset_anatEPI} -b WNW_Clusters+orig \
-   -expr 'int(0.5+ispositive(abs(b)-3.3)*a)' -short
+   -expr 'int(0.5+ispositive(b)*a)' -short
 
 3dcalc -overwrite -prefix ${subj_id}.FuncROIs.nii.gz \
    -a VSfuncROI.${subj_id}.nii.gz \
