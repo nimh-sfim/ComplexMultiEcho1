@@ -76,17 +76,11 @@ EOF
 3dcalc -a tmp_WNW_${dset_anatEPI}  -prefix tmp2_WNW_${dset_anatEPI} -overwrite \
    -expr 'int(ifelse(equals(a,62),60,a))' \
    -short 
-3dcalc -a tmp2_WNW_${dset_anatEPI}  -prefix WNW2_${dset_anatEPI} -overwrite \
+3dcalc -a tmp2_WNW_${dset_anatEPI}  -prefix WNW_${dset_anatEPI} -overwrite \
    -expr 'int(ifelse(equals(a,137),135,a))' \
    -short 
 
-3dcalc -a tmp_WNW_${dset_anatEPI}  -prefix WNW_${dset_anatEPI} -overwrite \
-   -expr 'int(60*equals(a,62) + 135*equals(a,137) + a*(  not(equals(a,62)) + not(equals(a,137))))' \
-   -short 
-3dcalc -a tmp_WNW_${dset_anatEPI}  -prefix WNW_${dset_anatEPI} -overwrite \
-   -expr 'int(60*equals(a,62) + 135*equals(a,137) + a*(  not(equals(a,62)) + not(equals(a,137))))' \
-   -short 
-
+rm tmp_WNW* tmp2_WNW*
 
 3dAllineate -overwrite \
     -1Dmatrix_apply IDENTITY \
