@@ -48,13 +48,13 @@ ROIidxlist=(${ROIidxVS[@]} ${ROIidxWNW[@]})
 # ROIidxlabels=(${ROIidxVSlabels[@]} ${ROIidxWNWlabels[@]})
 
 echo Length ROIidxlist is ${#ROIidxlist[@]}
-echo Length ROIidxlabels is ${#ROIidxlabels[@]}
+# echo Length ROIidxlabels is ${#ROIidxlabels[@]}
 
 3dAllineate \
     -1Dmatrix_apply IDENTITY \
     -prefix ${dset_anatEPI}  \
     -final NN \
-    -source "${dset_orig}[${ROIidxlist}]" \
+    -source ${dset_orig} \
     -master ${dst_grid}
  
 # reattach labeltable: shouldn't matter that it is full, and you just have a subset
