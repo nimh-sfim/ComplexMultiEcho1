@@ -26,17 +26,18 @@ for g in $GLMs_out; do
         # 'Word-NonWord' = [7], 'Vis-Aud' = [8]
 
         # change modifications so you can execute files
-        chmod -R g+rwx /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/GLMs/$g/Stats/
 
         # calculate Coef / stdev residual
+        echo "Should be WNW coefficient: " `3dinfo -subbrick_info Coefficients+orig'[7]'`
+        echo "Should be VisAud coefficient: " `3dinfo -subbrick_info Coefficients+orig'[8]'`
         3dcalc -a Coefficients+orig'[7]' -b ../rm.noise.all+orig -expr 'a/b' -prefix CNR_WNW
         3dcalc -a Coefficients+orig'[8]' -b ../rm.noise.all+orig -expr 'a/b' -prefix CNR_VisAud
 
         # Transform R2 to Fisher Z-score
+        echo "Should be WNW R^2: " `3dinfo -subbrick_info R2+orig'[7]'`
+        echo "Should be VisAud R^2: " `3dinfo -subbrick_info R2+orig'[8]'`
         3dcalc -overwrite -a R2+orig'[7]' -b Coefficients+orig'[7]' -expr 'atanh(sqrt(a))*(ispositive(b)-isnegative(b))' -prefix FisherZ_WNW
         3dcalc -overwrite -a R2+orig'[8]' -b Coefficients+orig'[8]' -expr 'atanh(sqrt(a))*(ispositive(b)-isnegative(b))' -prefix FisherZ_VisAud
-
-        chmod -R g+rwx /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/GLMs/$g/Stats/
         
         # Get average Fisher Z-scores (for the ROIs in each condition) (by overlaying entire ROI mask over each Fisher-Z condition dataset)
         3dROIstats -mask ${root}Proc_Anat/StudyROIs/ROIs_FuncLocalized.nii.gz FisherZ_WNW+orig >> Avg_FisherZROIs_WNW.tsv
@@ -67,3 +68,5 @@ for g in $GLMs_out; do
     # if [[ $task == 'breathing' ]]; then
 done
 
+chgrp -R SFIM /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/GLMs
+chmod -R 2770 /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/GLMs
