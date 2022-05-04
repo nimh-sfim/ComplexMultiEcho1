@@ -55,7 +55,7 @@ echo Length ROIidxlist is ${#ROIidxlist[@]}
     -prefix ${dset_anatEPI}  \
     -final NN \
     -source ${dset_orig} \
-    -master ${dst_grid}
+    -master ${dset_grid}
  
 # reattach labeltable: shouldn't matter that it is full, and you just have a subset
 3drefit  -copytables "${dset_orig}" ${dset_anatEPI}
