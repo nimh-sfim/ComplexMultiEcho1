@@ -78,7 +78,7 @@ def main():
            for each group
         
     Example parser call:
-    python  /Users/handwerkerd/code/nimh-sfim/ComplexMultiEcho1/PhysioProcessing/CreateDenoisingRegressorsFromPhysAndTedana.py \
+    python  /Users/handwerkerd/code/nimh-sfim/ComplexMultiEcho1/PhysioProcessing/FitReg2ICA.py \
         --rootdir  /Volumes/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-01 \
         --regressors sub-01_RegressorModels_wnw_run-1.tsv \
         --ica_mixing afniproc_orig/WNW/sub-01.results/tedana_kic_r01/ica_mixing.tsv \
