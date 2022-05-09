@@ -4,40 +4,79 @@ import os
 import matplotlib.pyplot as plt
 from scipy import stats, linalg
 import argparse
+import json
 
 
 def main():
     """
-    Implements multiple linear modeling & multivariate modeling
+    1. Fits noise regressors with defined categories 
+     (Motion, Physiological Rate, Physiologycal Variation, White matter and CSF ROIs)
+     to ICA component time series from tedana
+    2. Identifies components to reject based on those fits
+    3. Makes a combined list of components to reject based on this process and tedana
+    4. Outputs a bunch of files summarizing what happened.
 
-    Inputs (multiple):
-    Regressor pandas dataframe:
-    6 motion params (demeaned), 1st derivatives of 6 motion parameters (deriv), 
-    2 cardiac RETROICOR regressors, 2 resp RETROICOR regressors,
-    1 HRV regressor, 1 RVT regressor
+    Fit equation is:
+    Y = betas*X + error
+    Y = ICA components
+    X = Regressor model
+    betas = fit for regressor model to ICA components
 
-    Output (1):
-    ICA component
+    INPUTS:
+        rootdir: Path to the root directory from which all other paths can be relative
+        regressors: A tsv file with the regressors to fit to the ICA components.
+           The command line input is hard-coded so that the following column labels are
+           expected.
+           Motion regressors will end with _dmn or _drv
+           Physiological frequency regressors will end with _sin or _cos
+           Physiological variability regressors will end with _rvt or _hrv
+           White matter & CSF regressors will be called: WM_e and Csf_vent
+        
+           The code is written so that these pairings can be altered, but it's not
+           currently set up to take an alternative as a command line input
 
-    Linear Model:
-    Y = MX + e
-    Y = fit to ICA component time series (CxT) -> 1 dependent variable (prediction of fit to Y-variable)
-    M = coefficient matrix you’re solving for (CxN) -> 
-    X = all the above regressors and a row of ones for the intercept) (NxT) -> multiple independent variables
-    e = error
+        ica_mixing: The ICA mixing matrix from tedana
+        ica_metrics: The ICA component table from the same execution of tedana
+        outprefix: The output prefix for all files. If there's a new subdirectory in the name, it will create it
 
-    equation:  y = A+B1x1+B2x2+B3x3+B4x4
+        p_thresh: Fits will be significant for p<p_thresh + Bonferroni correction
+        R2_thresh: Can threshold for value above a defined R^2
+        Rejected components will be for p<p_thresh(bonf) AND R^2>R2_thresh
 
-    C=# of components
-    T=Time
-    N=number of nuisance regressors
-    """
+        showplots: If true will save some intermediate plots to help with quality checks
 
-    """
-    sub=sub-01
-    task=wnw
-    run=1
+    OUTPUTS:
+        {outprefix}_Rejected_ICA_Components.csv: Contains the the timeseries of the 
+            rejected components that should be the noise regressors for the GLM
+        {outprefix}_OutputSummary.json: Contains the counts and indices of components
+            classified as rejected with each method and their combination. Also contains
+            the variance explained by rejected components for each combination.
+            These numbers may be useful for generating summary data
+        {outprefix}_betas.csv: Fit magnitudes for regressor model to ICA
+        {outprefix}_Combined_Metrics.csv: The copied component metrics table from tedana with additional rows
+            "tedana classification" is the original classification from tedana
+            "classification" now lists rejected components for both tedana and regressors
+            "Tedana Rejected" True for components rejected by tedana
+            "Regressors Rejected" True for components rejected by regressors
+            Signif [Motion, Phys_Freq, Phys_Variability, WM & CSF]: For components rejected by regressors
+               True for those where one of this categories has a significant F statistic for the model
+            Note: This can be simplified by using the eventual "classification tags" header in tedana
+              but, until that's done, this will be easier to interact with
+        {outprefix}_Fvals.csv
+        {outprefix}_pvals.csv
+        {outprefix}_R2vals.csv
+            Each column is an [F,p,R^2] value for each component. 
+            Columns are for the Full, Motion, Phys_Freq, Phys_Variability, and WM&CSF models
 
+        If showplots is true:
+        {outprefix}_ModelRegressors.eps: Visualization of the 5 categories of model regressors that were
+           given as input
+        {outprefix}_ModelFits_base.eps: The model fits for the Full model (vs detrended baseline) for the
+           first 30 components
+        {outprefix}_ModelFits_no[Motion,Phys_Freq,Phys_Variability,WM_&_CSF].eps: Model fits for the full model
+           vs the full model excluding one class of regressors. These are used to generate the partial-F values
+           for each group
+        
     Example parser call:
     python  /Users/handwerkerd/code/nimh-sfim/ComplexMultiEcho1/PhysioProcessing/CreateDenoisingRegressorsFromPhysAndTedana.py \
         --rootdir  /Volumes/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-01 \
@@ -113,7 +152,7 @@ def main():
 
     #########################################
     # Fit the models, calculate signficance, and, if show_plot, plot results
-    betas_full_model, F_vals, p_vals, R2_vals, regress_dict = fit_ICA_to_regressors(ica_mixing, noise_regress_table, show_plot=show_plot)
+    betas_full_model, F_vals, p_vals, R2_vals, regress_dict = fit_ICA_to_regressors(ica_mixing, noise_regress_table, prefix=justprefix, show_plot=show_plot)
     # In the output below, the first series of subplots is the full model vs the baseline of the polort detrending regressors for the first 20 components
     # The following series of suplots are the full model vs the full model excluding other categories of regressors
     # (which shows the significanc of each category of regressors)
@@ -152,7 +191,7 @@ def main():
     ica_combined_metrics = ica_metrics.copy()
     ica_combined_metrics = ica_combined_metrics.rename(columns={"classification": "tedana classification"})
     ica_combined_metrics["classification"] = ica_combined_metrics["tedana classification"]
-    ica_combined_metrics.loc[reject_just_regressors, 'classification'] = 'reject'
+    ica_combined_metrics.loc[reject_just_regressors, 'classification'] = 'rejected'
 
     # Add new columns to identify which ones were rejected by tedana and/or regressors
     ica_combined_metrics["Tedana Rejected"] = False
@@ -163,29 +202,51 @@ def main():
     # For components rejected by regressors, mark as true those rejected by each
     #  of the classification types
     regress_categories = regress_dict.keys()
+    reject_type_list = []
     reject_type = np.zeros(len(regress_categories), dtype=int)
     for idx, reg_cat in enumerate(regress_categories):
         ica_combined_metrics[f"Signif {reg_cat}"] = False
         tmp_reject = np.logical_and((p_vals[f"{reg_cat} Model"]<p_thresh_Bonf).values, 
                                     (ica_combined_metrics["Regressors Rejected"]).values)
         ica_combined_metrics.loc[tmp_reject, f"Signif {reg_cat}"] = True
-        reject_type[idx] = tmp_reject.sum()
+        reject_type_list.append(np.squeeze(np.argwhere(tmp_reject)))
+        reject_type[idx] = len(reject_type_list[idx])
+
+    #TODO Add variance explained and add to output text
 
     ###############################
     # Saving outputs
 
-    # Create output summary text to both print to the screen and save in {prefix}_OutputSummary.txt
-    #  This could theoretically be a json file, if that might be useful
-    output_text = [f"{num_components} total components"]
-    output_text.append(f"{len(regressors_reject_idx)} rejected based on motion/resp/cardiac regressors")
-    output_text.append(f"{len(tedana_reject_idx)} rejected based on tedana")
-    output_text.append(f"{len(reject_idx)} rejected with combination of regressors and tedana")
+    # Create output summary text to both print to the screen and save in {prefix}_OutputSummary.json
+    output_text = {
+        "component counts": 
+        {
+            "total": int(num_components),
+            "rejected based on motion and phys regressors": int(len(regressors_reject_idx)),
+            "rejected based on tedana": int(len(tedana_reject_idx)),
+            "rejected by both regressors and tedana": int(len(reject_idx)),
+            "reject by regressors with signif fit to": dict()
+        },
+        "variance rejected": {
+            "just regressors": ica_combined_metrics.loc[ica_combined_metrics["Regressors Rejected"]==True, "variance explained"].sum(),
+            "just tedana": ica_combined_metrics.loc[ica_combined_metrics["Tedana Rejected"]==True, "variance explained"].sum(),
+            "both regressors and tedana": ica_combined_metrics.loc[ica_combined_metrics["classification"]=="rejected", "variance explained"].sum(),
+            "by regressors with signif fit to": dict()
+        },
+        "component lists": {
+                        "just regressors": [int(i) for i in reject_just_regressors],
+                        "just tedana": [int(i) for i in reject_just_tedana],
+                        "both regressors and tedana": [int(i) for i in reject_both],
+                        "by regressors with signif fit to": dict()
+                    }
+    }
+
     for idx, reg_cat in enumerate(regress_categories):
-        output_text.append(f"    {reject_type[idx]} of rejected comps based on regressors have signif fit to {reg_cat}")
-    output_text.append(f"Components rejected by just tedana: {reject_just_tedana}")
-    output_text.append(f"Components rejected by just regressors: {reject_just_regressors}")
-    output_text.append(f"Components rejected by both tedana and regressors: {reject_both}")
-    print("\n".join(output_text))
+        output_text["component counts"]["reject by regressors with signif fit to"][f"{reg_cat}"] = int(reject_type[idx])
+        output_text["component lists"]["by regressors with signif fit to"][f"{reg_cat}"] = [int(i) for i in reject_type_list[idx]]
+        output_text["variance rejected"]["by regressors with signif fit to"][f"{reg_cat}"] = float(ica_combined_metrics.loc[ica_combined_metrics[f"Signif {reg_cat}"]==True, "variance explained"].sum())
+
+    print(json.dumps(output_text, indent=4))
 
     # Save all the relevant information into multiple files
     # {justprefix}_Rejected_ICA_Components.csv will be the input for noise regressors into 3dDeconvolve
@@ -195,12 +256,11 @@ def main():
     betas_full_model.to_csv(f"{justprefix}_betas.csv")
     Rejected_Component_Timeseries.to_csv(f"{justprefix}_Rejected_ICA_Components.csv", index=False)
     ica_combined_metrics.to_csv(f"{justprefix}_Combined_Metrics.csv", index=False)
-    with open(f"{justprefix}_OutputSummary.txt", 'w') as f:
-        for item in output_text:
-            f.write("%s\n" % item)
+    with open(f"{justprefix}_OutputSummary.json", 'w') as f:
+        json.dump(output_text, f, indent=4)
 
 
-def fit_ICA_to_regressors(ica_mixing, noise_regress_table, polort=4, regress_dict=None, show_plot=False):
+def fit_ICA_to_regressors(ica_mixing, noise_regress_table, polort=4, regress_dict=None, prefix=None, show_plot=False):
     """
     Compute Linear Model and calculate F statistics and P values for combinations of regressors
 
@@ -214,12 +274,19 @@ def fit_ICA_to_regressors(ica_mixing, noise_regress_table, polort=4, regress_dic
         ica_mixing: A DataFrame with the ICA mixing matrix
         noise_regress_table: A DataFrame with the noise regressor models
         polort: Add polynomial detrending regressors to the linear model
-        TestRegress: A Dictionary that groups parts of regressors names in noise_regress_table with common element
+        regress_dict: A Dictionary that groups parts of regressors names in noise_regress_table with common element
            For example, there can be "Motion": {"_dmn", "_drv"} to say take all columns with _dmn and _drv and
            calculate an F value for them together.
+           Default is None and the function that call this doesn't currently have an 
+           option to define it outside this program
+        prefix: Output file prefix. Used in subfunctions to output some figure in .eps format
+        show_plot: Will create and save figures if true.
 
-    Output: Right now figures, but working on that part
-
+    Output:
+        betas_full_model: Components x regressors matrix for the beta fits
+        F_vals, p_vals, R2_vals: Dataframes for F, p, & R^2 values
+            Columns are for the Full, Motion, Phys_Freq, Phys_Variability, and WM&CSF models
+        regress_dict: If inputted as None, this dictionary is generated based on defaults in build_noise_regressors
     """
 
     Y = ica_mixing.to_numpy()
@@ -234,11 +301,11 @@ def fit_ICA_to_regressors(ica_mixing, noise_regress_table, polort=4, regress_dic
     #  For F statistics, the other models need for tests are those that include everything 
     #  EXCEPT the category of interest. For example, there will also be a field for "no Motion"
     #  which contains all regressors in the full model except those that model motion
-    Regressor_Models, Full_Model_Labels, regress_dict = build_noise_regressors(noise_regress_table, regress_dict=regress_dict, polort=4, show_plot=show_plot)
+    Regressor_Models, Full_Model_Labels, regress_dict = build_noise_regressors(noise_regress_table, regress_dict=regress_dict, polort=4, prefix=prefix, show_plot=show_plot)
 
     # This is the test for the fit of the full model vs the polort detrending baseline
     # The outputs will be what we use to decide which components to reject
-    betas_full, F_vals_tmp, p_vals_tmp, R2_vals_tmp = fit_model_with_stats(Y, Regressor_Models, 'base', show_plot=show_plot)
+    betas_full, F_vals_tmp, p_vals_tmp, R2_vals_tmp = fit_model_with_stats(Y, Regressor_Models, 'base', prefix=prefix, show_plot=show_plot)
 
     betas_full_model = pd.DataFrame(data=betas_full.T, columns=np.array(Full_Model_Labels))
     F_vals = pd.DataFrame(data=F_vals_tmp, columns=['Full Model'])
@@ -247,7 +314,7 @@ def fit_ICA_to_regressors(ica_mixing, noise_regress_table, polort=4, regress_dic
 
     # Test all the fits between the full model and the full model excluding one category of regressor
     for reg_cat in regress_dict.keys():
-        _, F_vals_tmp, p_vals_tmp, R2_vals_tmp = fit_model_with_stats(Y, Regressor_Models, f"no {reg_cat}", show_plot=show_plot)
+        _, F_vals_tmp, p_vals_tmp, R2_vals_tmp = fit_model_with_stats(Y, Regressor_Models, f"no {reg_cat}", prefix=prefix, show_plot=show_plot)
         F_vals[f'{reg_cat} Model'] = F_vals_tmp
         p_vals[f'{reg_cat} Model'] = p_vals_tmp
         R2_vals[f'{reg_cat} Model'] = R2_vals_tmp
@@ -268,6 +335,7 @@ def make_detrend_regressors(n_time, polort=4, show_plot=False):
     detrend_regressors: (n_time,polort) np.array with the regressors.
         x^0 = 1. All other regressors are zscore so that they have
         a mean of 0 and a stdev of 1.
+    detrend_labels: polort0 - polort{polort-1} to use as DataFrame labels
     """
     # create polynomial detrending regressors
     detrend_regressors = np.zeros((n_time, polort))
@@ -286,7 +354,7 @@ def make_detrend_regressors(n_time, polort=4, show_plot=False):
     return detrend_regressors, detrend_labels
         
 
-def build_noise_regressors(noise_regress_table, regress_dict=None, polort=4, show_plot=False):
+def build_noise_regressors(noise_regress_table, regress_dict=None, polort=4, prefix=None, show_plot=False):
     """
     INPUTS:
     noise_regress_table: A Dataframe where each column is a regressor containing
@@ -301,9 +369,19 @@ def build_noise_regressors(noise_regress_table, regress_dict=None, polort=4, sho
                   "Phys_Variability": {"_rvt", "_hrv"},
                   "WM & CSF": {"WM_e", "Csf_vent"}}
     polort: (int) Number of polynomial regressors to include in the baseline noise model. default=4
+    prefix: Output file prefix. Used here to output some figure in .eps format
     show_plot: (bool) Plots each category of regressors, if True. default=False
 
-
+    RETURNS:
+    Regressor_Models
+        A dictionary where each element is a DataFrame for a regressor model. Models are:
+        'full', 'base', 'no Motion', 'no Phys_Freq', 'no Phys_Variability', & 'no WM & CSF'
+        The 'no' models are used to calculate the partial F statistics for each category
+        The dataframes are the time series for each regressor   
+    Full_Model_Labels: A list of all the column labels for all the regressors 
+    regress_dict: Either the same as the input or the defaul is generated in this function
+    
+    if showplot then {prefix}_ModelRegressors.eps has subplots for each category of regressors
     """
 
     print("Running build_noise_regressors")
@@ -374,17 +452,20 @@ def build_noise_regressors(noise_regress_table, regress_dict=None, polort=4, sho
 
     if show_plot:
         fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(3,2,1)
+        ax.plot(detrend_regressors)
+        plt.title("detrend")
         for idx, reg_cat in enumerate(regress_categories):
-            if idx<4:
-                ax = fig.add_subplot(2,2,idx+1)
+            if idx<5:
+                ax = fig.add_subplot(3,2,idx+2)
                 ax.plot(stats.zscore(categorized_regressors[reg_cat].to_numpy(), axis=0))
                 plt.title(reg_cat)
-        plt.show()
+        plt.savefig(f"{prefix}_ModelRegressors.eps", dpi='figure')
 
     return Regressor_Models, Full_Model_Labels, regress_dict
             
 
-def fit_model_with_stats(Y, Regressor_Models, base_label, show_plot=False):
+def fit_model_with_stats(Y, Regressor_Models, base_label, prefix=None, show_plot=False):
     """
     fit_model_with_stats
 
@@ -396,16 +477,24 @@ def fit_model_with_stats(Y, Regressor_Models, base_label, show_plot=False):
     DF = degrees of freedom
     SSE = sum of squares error
 
-    Inputs:
+    INPUTS:
     Y (time, components) numpy array
-    X_full (time, regressors) numpy array for full model
-    X_base (time, regressors) numpy array for base (null) model
+    Regressor_Model: A dictionary with dataframes for each regressor model
+      The value for 'full' is always used
+    base_label: The key in Regressor_Model (i.e. 'base' or 'no Motion')
+     to compare to 'full'
+    prefix: Output file prefix. Used here to output some figure in .eps format
+    show_plot: (bool) Plots each category of regressors, if True. default=False
 
-    Returns:
+
+    RETURNS:
     betas_full: The beta fits for the full model (components, regressors) numpy array
     F_vals: The F statistics for the full vs base model fit to each component (components) numpy array
     p_vals: The p values for the full vs base model fit to each component (components) numpy array
     R2_vals: The R^2 values for the full vs base model fit to each component (components) numpy array
+
+    if showplots then {prefix}_ModelFits_{base_save_label}.eps are the plotted fits for the first 30 components
+      for full model and baseline model
     """
 
     betas_base, SSE_base, DF_base = fit_model(Regressor_Models[base_label],Y)
@@ -417,14 +506,18 @@ def fit_model_with_stats(Y, Regressor_Models, base_label, show_plot=False):
 
     # Plots the fits for the first 20 components
     if show_plot:
-        fig = plt.figure(figsize=(20,20))
-        for idx in range(20):
+        plt.clf()
+        fig = plt.figure(figsize=(20,24))
+        for idx in range(30):
             
             if idx<=Y.shape[1]:
-                ax = fig.add_subplot(5,4,idx+1)
+                ax = fig.add_subplot(5,6,idx+1)
                 plot_fit(ax, Y[:,idx], betas_full[:,idx], Regressor_Models['full'], betas_base=betas_base[:,idx], X_base=Regressor_Models[base_label],
                             F_val=F_vals[idx], p_val=p_vals[idx], R2_val=R2_vals[idx], SSE_base=SSE_base[idx], 
                             SSE_full=SSE_full[idx], base_legend=base_label)
+        base_save_label = base_label.replace(" ", "_")
+        plt.savefig(f"{prefix}_ModelFits_{base_save_label}.eps", dpi='figure')
+
     return betas_full, F_vals, p_vals, R2_vals
 
 def fit_model(X, Y):
@@ -448,18 +541,28 @@ def fit_model(X, Y):
 def plot_fit(ax, Y, betas_full, X_full, betas_base=None, X_base=None, F_val=None, p_val=None, R2_val=None, SSE_base=None, SSE_full=None, base_legend="base fit"):
     """
     plot_fit: Plot the component time series and the fits to the full and base models
-    TODO Add if clauses to be able to print out just the mail plot without the base plot
+
+    INPUTS:
+    ax: axis handle for the figure subplot
+    Y: The ICA component time series to fit to 
+    betas_full: The full model fitting parameters
+    X_full: The time series for the full model
+
+    Optional:
+    betas_base, X_base=None: Model parameters and time series for base model (not plotted if absent)
+    F_val, p_val, R2_val, SSE_base, SSE_full: Fit statistics to include with each plot
+    base_legend: A description of what the base model is to include in the legent
     """
 
     ax.plot(Y, color='black')
     ax.plot(np.matmul(X_full, betas_full.T), color='red')
-    #if (betas_base != None) and (X_base != None):
-    ax.plot(np.matmul(X_base, betas_base.T), color='green')
-    ax.text(250,2, f"F={np.around(F_val, decimals=4)}\np={np.around(p_val, decimals=4)}\nR2={np.around(R2_val, decimals=4)}\nSSE_base={np.around(SSE_base, decimals=4)}\nSSE_full={np.around(SSE_full, decimals=4)}")
-    ax.legend(['ICA Component', 'Full fit', f"{base_legend} fit"], loc='best')
-
-
-
+    if (type(betas_base) != "NoneType" ) and  (type(X_base) != "NoneType"):
+        ax.plot(np.matmul(X_base, betas_base.T), color='green')
+        ax.text(250,2, f"F={np.around(F_val, decimals=4)}\np={np.around(p_val, decimals=4)}\nR2={np.around(R2_val, decimals=4)}\nSSE_base={np.around(SSE_base, decimals=4)}\nSSE_full={np.around(SSE_full, decimals=4)}")
+        ax.legend(['ICA Component', 'Full fit', f"{base_legend} fit"], loc='best')
+    else:
+        ax.text(250,2, f"F={np.around(F_val, decimals=4)}\np={np.around(p_val, decimals=4)}\nR2={np.around(R2_val, decimals=4)}\nSSE_full={np.around(SSE_full, decimals=4)}")
+        ax.legend(['ICA Component', 'Full fit'], loc='best')
 
 if __name__ == '__main__':
     main()
