@@ -25,4 +25,8 @@ This specific study is examining ways to combine:
     - PsychoPy run logs to GLM regressors for AFNI & BIDS (and eventually other relevant reporting)
     - TODO: Biopac traces to BIDS-style cardiac, respiratory time series & TTL pulse times.
 
-2. QA: Initial Processing of data to efficiently notice any issues. [WNW_afniproc.sh](InitialQAProcessing/WNW_afniproc.sh) is currently a bit hacky is a good starting point.
+2. [AnatomicalProcessing.md](AnatomicalProcessing/AnatomicalProcessing.md) is instructions for running freesurfer
+and generating the labelled ROIs-of-interest in EPI space.
+
+3. [FMRI_processing.md](FMRI_processing/FMRI_processing.md) contains instructions for processing the fMRI data
+starting with afni_proc.py

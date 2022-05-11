@@ -12,8 +12,56 @@ dset_anatEPI=rois_anat_EPIgrid.nii.gz
  
 dset_grid="../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig"
 
+# ROIs are based on the findings presented in: 
+# "Dough, tough, cough, rough: A “fast” fMRI localizer of component processes in reading"
+#  Malins et al Neuropsychologia, 2016: https://doi.org/10.1016/j.neuropsychologia.2016.08.027
+#
+# ROIs for audio vs visual contrasts
+# Primary auditory cortex (Roughly Heschl's gyrus) (audio > visual)
+# 122   tiss__gm     ctx_lh_S_temporal_transverse
+# 197   tiss__gm     ctx_rh_S_temporal_transverse
+#
+# Primary visual cortex (visual > audio)
+# 92   tiss__gm     ctx_lh_S_calcarine
+# 167   tiss__gm     ctx_rh_S_calcarine
+#
+# fusiform (visual word form area in left OT/fusiform) (visual words > nonwords)
+# another part of bilateral fusiform showed nonwords>words)... might want to consider breaking up this ROI or creating 2 clusters 1 for positive & one for negative)
+# 69   tiss__gm     ctx_lh_G_oc-temp_lat-fusifor
+# 144   tiss__gm     ctx_rh_G_oc-temp_lat-fusifor
+#
+# visual word>nonword
+# 121   tiss__gm     ctx_lh_S_temporal_sup
+# 196   tiss__gm     ctx_rh_S_temporal_sup
+#
+# visal word>nonword
+# 86   tiss__gm     ctx_lh_G_temporal_middle
+# 161   tiss__gm     ctx_rh_G_temporal_middle
+#
+# visual word>nonword
+# 60 ctx_lh_G_front_inf-Opercular + 62 ctx_lh_G_front_inf-Triangul
+# 135 ctx_rh_G_front_inf-Opercular + 137 ctx_rh_G_front_inf-Triangul
+#
+# Other word vs nonword ROIs (less likely to be central ROIs for the contasts)
+# superior parietal lobule
+# 75   tiss__gm     ctx_lh_G_parietal_sup
+# 150   tiss__gm     ctx_rh_G_parietal_sup
+# 6   tiss__gm     Left-Cerebellum-Cortex
+# 26   tiss__gm     Right-Cerebellum-Cortex
+# 59   tiss__gm     ctx_lh_G_cuneus
+# 134   tiss__gm     ctx_rh_G_cuneus
+# 78   tiss__gm     ctx_lh_G_precuneus
+# 153   tiss__gm     ctx_rh_G_precuneus
+# 14   tiss__gm     Left-Hippocampus
+# 31   tiss__gm     Right-Hippocampus
+# 85   tiss__gm     ctx_lh_G_temporal_inf
+# 160   tiss__gm     ctx_rh_G_temporal_inf
+# 120   tiss__gm     ctx_lh_S_temporal_inf
+# 195   tiss__gm     ctx_rh_S_temporal_inf
+# 67   tiss__gm     ctx_lh_G_occipital_middle
+# 142   tiss__gm     ctx_rh_G_occipital_middle
 
-# List of ROI's to use for each contrast.
+
 # ROIs is for Word-Nonword contrasts
 ROIidxWNW="69,144,121,196,86,161,60,135,75,150,6,26,59,134,78,153,14,31,85,160,120,195,67,142"
 # ROIidxWNWlabels=(ctx_lh_G_oc-temp_lat-fusifor ctx_rh_G_oc-temp_lat-fusifor ctx_lh_S_temporal_sup ctx_rh_S_temporal_sup \
@@ -35,8 +83,8 @@ cat << EOF > FuncROI_Labels.lt
    "197" "R A1"
    "92" "L V1"
    "167" "R V1"
-   "69" "L Vis Wordform Area"
-   "144" "R Vis Wordform Area"
+   "69" "L latFusiform"
+   "144" "R latFusiform"
    "121" "lSTS"
    "196" "rSTS"
    "86" "lMTG"

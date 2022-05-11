@@ -32,9 +32,9 @@ mkdir biopac DICOM psychopy
   - README-Study.txt has PII in the following fields at the top: Subject Name, Subject ID, Study Date, Study ID, Accession Number and the scan date is in the repeated "Organized" field
 
 - On a local computer were the DICOMs with PII are downloaded run something like:
-    `python bespoke_cme.py --ignore 3 4 5 18 19 20 27 28 29 --start 2 ../DataOffScanner/DICOM ./ ${snum} > ${sbj}_dcm2nii_mapping.txt`
-  - The ignored numbers are the mr_00?? directories taht should not be reconstructed.
-  - This script assumed the data are collected in the order: MPRAGE, 3 runs of WNW, movie, breathing, movie, breathing
+    `python bespoke_cme.py --ignore 3 4 5 18 19 20 27 28 29 --start 2 ./DICOM ./tmp ${snum} > ${sbj}_dcm2nii_mapping.txt`
+  - The ignored numbers are the mr_00?? directories that should not be reconstructed.
+  - This script assumes the data are collected in the order: MPRAGE, 3 runs of WNW, movie, breathing, movie, breathing
   - If that's not the order, corrections may be necessary
   - This script requires having an up-to-date version of dcm2niix in the path (dcm2niix_afni is shipped with AFNI)
   - Output is piped to `dcm2nii_mapping.txt` That file should be viewed to make sure the mapping of DICOM to meaningful names was done correctly

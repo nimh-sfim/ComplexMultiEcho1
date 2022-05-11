@@ -9,7 +9,8 @@ touch WNW_tedana_sbatch.txt
 
 rootdir=`pwd`
 
-sublist=(01 02 03 04 05 06 07 08 09 10)
+sublist=(01 02 03 04 05 06 07 08 09 10 11)
+
 runlist=(01 02 03)
 echo_times="13.44 31.7 49.96"
 

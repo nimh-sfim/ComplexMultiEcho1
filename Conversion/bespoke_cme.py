@@ -229,6 +229,22 @@ def generate_series_mapping(offset, ignore, mrn, subid, verbose=True):
         descs = generate_descriptions(subid, s)
         for d in descs:
             mdesc.append(d)
+
+    if int(subid)==13:
+        # A bit hacky, but sub-13 needed to sit up & take a break
+        # between WNW and movie/resp runs. A new localizer
+        # and blip up/down images with a new higher order shim
+        # were collected after the WNW runs.
+        Extra_blipupdown = [
+            f"sub-{subid}_task-EpiTest2_echo-%e_part-_sbref",
+            f"sub-{subid}_task-EpiTest2_echo-%e_part-mag_bold",
+            f"sub-{subid}_task-EpiTest2_echo-%e_part-phase_bold",
+            f"sub-{subid}_task-EpiTestPA2_echo-%e_part-_sbref",
+            f"sub-{subid}_task-EpiTestPA2_echo-%e_part-mag_bold",
+            f"sub-{subid}_task-EpiTestPA2_echo-%e_part-phase_bold"
+        ]
+        mdesc[16:16] = Extra_blipupdown
+
    
     if len(midx) > len(mdesc):
         raise ValueError(
