@@ -7,9 +7,12 @@
 
 from argparse import ArgumentParser
 import os
-from shutil import move
+from shutil import move, rmtree
 from subprocess import run
 import glob
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 
@@ -24,11 +27,17 @@ def main():
     parser.add_argument("INPUTDIR", help="The directory where the optimally combined time series to use in the GLM are located. (full path or relative to OUTDIR)")
     
     parser.add_argument("LABEL", help="Descriptive label for this analysis, and subdirectory of OUTDIR where files will go")
-    parser.add_argument("--noise_regressors", help="Name of tsv file with the noise regressors to use. Include full path or relative path from OUTDIR",
+    parser.add_argument("--noise_regressors", help="Name of csv or tsv file with the noise regressors to use. Include full path or relative path from OUTDIR",
+        default=None)
+    parser.add_argument("--regressors_metric_table", 
+        help=("Name of tsv file with a metric table (similar to tedana) that includes a \'classification\' column "
+            " and, for each row in the noise_regressors files, there's a corresponding row. If included, "
+            "this option will create a new noise_regressors file in the output directory that only contains "
+            "the time series of rejected components"),
         default=None)
     parser.add_argument(
         "--inputfiles", type=str, required=False, default="tedana_r0?/ts_OC.nii.gz",
-        help="The file names, with ? wildcards for the 3 runs of WNW data to input. Default=tedana_r0?/ts_OC.nii.gz"
+        help="The file names, with ? wildcards for the 3 runs of WNW data to input. Relative to INPUTDIR. Default=tedana_r0?/ts_OC.nii.gz"
     )
     parser.add_argument(
         "--scale_ts", action="store_true",
@@ -54,6 +63,7 @@ def main():
     input_dir = args.INPUTDIR
     out_dir = args.OUTDIR
     regressors = args.noise_regressors
+    regressors_metric_table = args.regressors_metric_table
     GLMlabel = args.LABEL
     inputfiles = args.inputfiles
     scale_ts = args.scale_ts
@@ -67,8 +77,10 @@ def main():
         raise OSError(f"OUTDIR {out_dir} not found")
     else:
         os.chdir(out_dir)
-        if not os.path.exists(GLMlabel):
-            os.mkdir(GLMlabel)
+        if os.path.exists(GLMlabel):
+            print(f"{GLMlabel} subdirectory exists. Deleting directory and contents")
+            rmtree(GLMlabel)
+        os.mkdir(GLMlabel)
 
     # Check if orig_dir exists
     if not os.path.exists(input_dir):
@@ -89,10 +101,25 @@ def main():
 
 
     if regressors:
-        if not os.path.isfile(regressors):
-            raise OSError(f"NOISE_REGRESSORS {regressors} not found")
+        regressor_targets = os.path.join(input_dir, regressors)
+        regressor_files = sorted(glob.glob(regressor_targets))
+        if not regressor_files:
+            raise OSError(f"{regressor_targets} not found")
+        elif len(input_files) != 3:
+            raise OSError(f"{regressor_files} found. Should be 3 files")
+        if regressors_metric_table:
+            regressors_metric_targets = os.path.join(input_dir, regressors_metric_table)
+            regressors_metric_table_files = sorted(glob.glob(regressors_metric_targets))
+            if not regressors_metric_table_files:
+                raise OSError(f"{regressors_metric_targets} not found")
+            elif len(input_files) != 3:
+                raise OSError(f"{regressors_metric_table_files} found. Should be 3 files")   
+            print(f"Using inputted regressor files: {regressor_files}")
+            print(f"Using inputted component metric table files: {regressors_metric_table_files}")
+            combined_regressors = parse_metric_table(GLMlabel, regressor_files, metric_table_files=regressors_metric_table_files)
         else:
-            regressors = os.path.abspath(regressors)
+            print(f"Using inputted regressor files: {regressor_files}")
+            combined_regressors = parse_metric_table(GLMlabel, regressor_files)
 
     os.chdir(GLMlabel)
 
@@ -134,6 +161,77 @@ def main():
     create_and_run_glm(subj, GLMlabel, FullStatement, dontrunscript=dontrunscript)
 
 
+def parse_metric_table(GLMlabel, regressor_files, metric_table_files=None):
+    """
+    INPUT:
+    GLMlabel: The string that labels the subdirectory where the file should be written out
+    regressor_files: List of 3 tsv files containing all a time series for each component for each run (i.e. the ICA mixing matrix)
+    regressors_metric_table: List of 3 tsv files containing a row for each component in regressors
+       Must include a column labeled 'classification'.
+
+    OUTPUT:
+    regressors: The absolute path to one regressor file containin the noise regressor time series for each run
+    If regressors_metric_table=None, then this is just the combination of the 3 files in regressor_files
+    If regressors_metrics_table lists 3 files then:
+        Create a new noise regressors tsv file for components where 'classification'=='rejected' in the 
+        regressors_metric_table. This file will be saved in the GLMs outputted subdirectory.
+        regressors: An absolute path to the new noise_regressors file name.
+           If no components are classified as rejected, then regressors=None
+    """
+
+    ica_mixing = []
+    ica_metrics = []
+    reject_idx = []
+    n_vols = np.zeros(3, dtype=int)
+    n_rej_comps = np.zeros(3, dtype=int)
+
+    for idx in range(3):
+        ica_mixing.append(pd.read_csv(regressor_files[idx], sep='\t'))
+        print(f"Run {idx+1} Size of ICA mixing matrix: {(ica_mixing[idx]).shape}")
+
+        ica_metrics.append(pd.read_csv(metric_table_files[idx], sep='\t'))
+        print(f"Run {idx+1} Size of ICA metrics table: {(ica_metrics[idx]).shape}")
+
+        if (ica_mixing[idx]).shape[1] != (ica_metrics[idx]).shape[0]:
+            raise ValueError(f"Different number of components in the mixing matrics ({(ica_mixing[idx]).shape[1]}) vs the metrics table ({(ica_metrics[idx]).shape[0]})")
+
+        n_vols[idx] = (ica_mixing[idx]).shape[0]
+
+        reject_idx.append(list(np.squeeze(np.argwhere(((ica_metrics[idx])['classification']=='rejected').values))))
+        n_rej_comps[idx] = len(reject_idx[idx])
+
+    Rejected_Timeseries = np.zeros((n_vols.sum(), n_rej_comps.sum()))
+
+
+    column_labels = []
+    print(f"Number of volumes per run {n_vols}")
+    print(f"Number of rejected components per run {n_rej_comps}")
+    # Run 1
+    print(f"1: 0:{n_vols[0]}, 0:{n_rej_comps[0]}")
+    tmp_DF = (ica_mixing[0]).iloc[:,reject_idx[0]]
+    tmp_cols = tmp_DF.columns
+    column_labels.extend(["r01-" + s for s in tmp_cols])
+    Rejected_Timeseries[0:n_vols[0], 0:n_rej_comps[0]] = tmp_DF.to_numpy()
+
+    # Run 2
+    print(f"2: {n_vols[0]}:{(n_vols[:2].sum())}, {n_rej_comps[0]}:{(n_rej_comps[:2].sum())}")
+    tmp_DF = (ica_mixing[1]).iloc[:,reject_idx[1]]
+    tmp_cols = tmp_DF.columns
+    column_labels.extend(["r02-" + s for s in tmp_cols])
+    Rejected_Timeseries[n_vols[0]:(n_vols[:2].sum()), n_rej_comps[0]:(n_rej_comps[:2].sum())] = tmp_DF.to_numpy()
+    # Run 3
+    print(f"3: {(n_vols[:2].sum())}:{(n_vols.sum())}, {(n_rej_comps[:2].sum())}:{(n_rej_comps.sum())}")
+    tmp_DF = (ica_mixing[2]).iloc[:,reject_idx[2]]
+    tmp_cols = tmp_DF.columns
+    column_labels.extend(["r03-" + s for s in tmp_cols])
+    Rejected_Timeseries[(n_vols[:2].sum()):(n_vols.sum()), (n_rej_comps[:2].sum()):(n_rej_comps.sum())] = tmp_DF.to_numpy()
+
+    Rejected_Component_Timeseries = pd.DataFrame(data=Rejected_Timeseries, columns=column_labels)
+    outfilename = os.path.join(GLMlabel, "Rejected_ICA_Components.csv")
+    Rejected_Component_Timeseries.to_csv(outfilename, index=False)
+    regressors = os.path.abspath(outfilename)
+    
+    return regressors
 
 def scale_time_series(subj, GLMlabel, input_files, maskfile):
     """

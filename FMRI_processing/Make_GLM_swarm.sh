@@ -22,32 +22,40 @@ cat << EOF > ${sbj}_WNW_GLM_sbatch.txt
     cd ${rootdir}; module load afni; \
       python /data/handwerkerd/nimh-sfim/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
         $sbj ./ ../afniproc_orig/WNW/${sbj}.results/ OC_mot_CSF \
-        --inputfiles tedana_r0?/ts_OC.nii.gz \
+        --inputfiles tedana_c75_r0?/ts_OC.nii.gz \
         --include_motion --include_CSF --scale_ts
     source /home/handwerkerd/InitConda.sh; \
     cd ${rootdir}; module load afni; \
       python /data/handwerkerd/nimh-sfim/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
         $sbj ./ ../afniproc_orig/WNW/${sbj}.results/ OC_mot \
-        --inputfiles tedana_r0?/ts_OC.nii.gz \
+        --inputfiles tedana_c75_r0?/ts_OC.nii.gz \
         --include_motion --scale_ts
     source /home/handwerkerd/InitConda.sh; \
     cd ${rootdir}; module load afni; \
       python /data/handwerkerd/nimh-sfim/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
         $sbj ./ ../afniproc_orig/WNW/${sbj}.results/ e2_mot \
-        --inputfiles pb03.${sbj}.r0?.e02.volreg+orig.HEAD \
+        --inputfiles pb0?.${sbj}.r0?.e02.volreg+orig.HEAD \
         --include_motion --scale_ts
     source /home/handwerkerd/InitConda.sh; \
     cd ${rootdir}; module load afni; \
       python /data/handwerkerd/nimh-sfim/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
         $sbj ./ ../afniproc_orig/WNW/${sbj}.results/ origtedana_mot \
-        --inputfiles pb05.${sbj}.r0?.scale+orig.HEAD \
+        --inputfiles pb0?.${sbj}.r0?.scale+orig.HEAD \
         --include_motion
     source /home/handwerkerd/InitConda.sh; \
     cd ${rootdir}; module load afni; \
       python /data/handwerkerd/nimh-sfim/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
         $sbj ./ ../afniproc_orig/WNW/${sbj}.results/ origtedana_mot_csf \
-        --inputfiles pb05.${sbj}.r0?.scale+orig.HEAD \
+        --inputfiles pb0?.${sbj}.r0?.scale+orig.HEAD \
         --include_motion  --include_CSF
+    cd ${rootdir}; module load afni; \
+      python /data/handwerkerd/nimh-sfim/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
+        $sbj ./ ../afniproc_orig/WNW/${sbj}.results/ orthtedana_mot_csf \
+        --inputfiles tedana_c75_r0?/ts_OC.nii.gz \
+        --include_motion  --include_CSF --scale_ts \
+        --noise_regressors tedana_c75_r0?/ica_mixing.tsv \
+        --regressors_metric_table tedana_c75_r0?/ica_metrics.tsv
+
 
 
 EOF

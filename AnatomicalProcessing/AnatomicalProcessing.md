@@ -1,3 +1,5 @@
+# Different steps for processing anatomical images
+
 ## Running Freesurfer
 
 Before processing the functional data, run freesurfer using `freesurfer_to_vols.sh` to run a default freesurfer segmentation ( `recon-all -all` )
