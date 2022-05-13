@@ -56,34 +56,34 @@ cat << EOF >> WNW_tedana_sbatch.txt
 EOF
  done
 done
-# for subidx in ${sublist[@]}; do
-#   subj=sub-${subidx}
-#   for run in ${runlist[@]}; do
-# cat << EOF >> WNW_tedana_sbatch.txt
-#  source ~/InitConda.sh; \
-#   cd ${rootdir}/${subj}/afniproc_orig/WNW/${subj}.results/; \
-#   tedana -d pb0?.$subj.r$run.e*.volreg+orig.HEAD \
-#   -e $echo_times \
-#   --mask full_mask.$subj+orig.HEAD \
-#   --tedpca 0.71 \
-#   --out-dir tedana_v71_r$run --convention orig
-# EOF
-#  done
-# done
-# for subidx in ${sublist[@]}; do
-#   subj=sub-${subidx}
-#   for run in ${runlist[@]}; do
-# cat << EOF >> WNW_tedana_sbatch.txt
-#  source ~/InitConda.sh; \
-#   cd ${rootdir}/${subj}/afniproc_orig/WNW/${subj}.results/; \
-#   tedana -d pb0?.$subj.r$run.e*.volreg+orig.HEAD \
-#   -e $echo_times \
-#   --mask full_mask.$subj+orig.HEAD \
-#   --tedpca 0.88 \
-#   --out-dir tedana_v88_r$run --convention orig
-# EOF
-#  done
-# done
+for subidx in ${sublist[@]}; do
+  subj=sub-${subidx}
+  for run in ${runlist[@]}; do
+cat << EOF >> WNW_tedana_sbatch.txt
+ source ~/InitConda.sh; \
+  cd ${rootdir}/${subj}/afniproc_orig/WNW/${subj}.results/; \
+  tedana -d pb0?.$subj.r$run.e*.volreg+orig.HEAD \
+  -e $echo_times \
+  --mask full_mask.$subj+orig.HEAD \
+  --tedpca 0.71 \
+  --out-dir tedana_v71_r$run --convention orig
+EOF
+ done
+done
+for subidx in ${sublist[@]}; do
+  subj=sub-${subidx}
+  for run in ${runlist[@]}; do
+cat << EOF >> WNW_tedana_sbatch.txt
+ source ~/InitConda.sh; \
+  cd ${rootdir}/${subj}/afniproc_orig/WNW/${subj}.results/; \
+  tedana -d pb0?.$subj.r$run.e*.volreg+orig.HEAD \
+  -e $echo_times \
+  --mask full_mask.$subj+orig.HEAD \
+  --tedpca 0.88 \
+  --out-dir tedana_v88_r$run --convention orig
+EOF
+ done
+done
 for subidx in ${sublist[@]}; do
   subj=sub-${subidx}
   for run in ${runlist[@]}; do
@@ -98,20 +98,20 @@ cat << EOF >> WNW_tedana_sbatch.txt
 EOF
  done
 done
-# for subidx in ${sublist[@]}; do
-#   subj=sub-${subidx}
-#   for run in ${runlist[@]}; do
-# cat << EOF >> WNW_tedana_sbatch.txt
-#  source ~/InitConda.sh; \
-#   cd ${rootdir}/${subj}/afniproc_orig/WNW/${subj}.results/; \
-#   tedana -d pb0?.$subj.r$run.e*.volreg+orig.HEAD \
-#   -e $echo_times \
-#   --mask full_mask.$subj+orig.HEAD \
-#   --tedpca 0.9 \
-#   --out-dir tedana_v90_r$run --convention orig
-# EOF
-#  done
-# done
+for subidx in ${sublist[@]}; do
+  subj=sub-${subidx}
+  for run in ${runlist[@]}; do
+cat << EOF >> WNW_tedana_sbatch.txt
+ source ~/InitConda.sh; \
+  cd ${rootdir}/${subj}/afniproc_orig/WNW/${subj}.results/; \
+  tedana -d pb0?.$subj.r$run.e*.volreg+orig.HEAD \
+  -e $echo_times \
+  --mask full_mask.$subj+orig.HEAD \
+  --tedpca 0.9 \
+  --out-dir tedana_v90_r$run --convention orig
+EOF
+ done
+done
 for subidx in ${sublist[@]}; do
   subj=sub-${subidx}
   for run in ${runlist[@]}; do

@@ -123,7 +123,7 @@ def main():
         raise ValueError(f"ICA mixing matrix file {ica_mixing_file} does not exist")
     
 
-    # Read in the ICA component table which incluced which components tedana rejected
+    # Read in the ICA component table which includes which components tedana rejected
     if os.path.isfile(ica_metrics_file):
         ica_metrics = pd.read_csv(ica_metrics_file, sep='\t')
         print("Size of ICA metrics table: ", ica_metrics.shape)

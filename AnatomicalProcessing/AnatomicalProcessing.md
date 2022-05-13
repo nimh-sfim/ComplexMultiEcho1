@@ -17,8 +17,8 @@ After `freesurfer_to_vols.sh` is completed, run `QwarpAlign.sh ${subj}` to run A
 
 ## Creating functionally localized ROIs
 
-Functionally localized ROIs need to be creates after the fMRI data are preprocessed and statistical maps
-are generated. This will involved using `run_afniproc.sh` and `Make_GLM_swarm.sh` as described in
+Functionally localized ROIs need to be created after the fMRI data are preprocessed and statistical maps
+are generated. This will involve using `run_afniproc.sh` and `Make_GLM_swarm.sh` as described in
 [FMRI_processing.md](../FMRI_processing/FMRI_processing.md).
 Run `Func2ROI.sh ${subj}` This program will:
 

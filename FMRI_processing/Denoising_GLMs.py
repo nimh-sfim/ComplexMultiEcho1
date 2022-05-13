@@ -146,11 +146,11 @@ def scale_time_series(subj, GLMlabel, input_files, maskfile):
     for idx, fname in enumerate(input_files):
         outfile = f"scaled_{subj}_{GLMlabel}_r{idx+1}"
         scale_statement.extend([
-            f"3dTstat -prefix rm.mean_r{idx+1} {fname}",
+            f"3dTstat -overwrite -prefix rm.mean_r{idx+1} {fname}",
             f"if ( -f rm.mean_r{idx+1}+tlrc.HEAD ) then",
             f"   3drefit -view orig -space ORIG rm.mean_r{idx+1}+tlrc",
             f"endif",
-            f"3dcalc -a {fname} \\",
+            f"3dcalc -overwrite -a {fname} \\",
             f"  -b rm.mean_r{idx+1}+orig \\",
             f"  -c {maskfile} \\",
             f"  -expr 'c * min(200, a/b*100)*step(a)*step(b)' \\",
@@ -172,7 +172,7 @@ def generate_GLM_statement(subj, GLMlabel, input_files, censorfile, regressors=N
 
     input_dir = os.path.dirname(censorfile)
 
-    GLMstatement = ["3dDeconvolve -input \\"]    
+    GLMstatement = ["3dDeconvolve -overwrite -input \\"]    
 
     for i in input_files:
         GLMstatement.append(i + " \\")
@@ -265,9 +265,9 @@ def generate_post_GLM_statements(subj, GLMlabel, censorfile):
         "# create a temporal signal to noise ratio dataset",
         "#    signal: if 'scale' block, mean should be 100",
         "#    noise : compute standard deviation of errts",
-        f"3dTstat -mean -prefix rm.signal.all {allrunsfile}\"[$ktrs]\"",
-        f"3dTstat -stdev -prefix rm.noise.all errts.{subj}.{GLMlabel}_REML+orig\"[$ktrs]\"",
-        "3dcalc -a rm.signal.all+orig                                              \\",
+        f"3dTstat -overwrite -mean -prefix rm.signal.all {allrunsfile}\"[$ktrs]\"",
+        f"3dTstat -overwrite -stdev -prefix rm.noise.all errts.{subj}.{GLMlabel}_REML+orig\"[$ktrs]\"",
+        "3dcalc -overwrite  -a rm.signal.all+orig                                              \\",
         "    -b rm.noise.all+orig                                               \\",
         f"    -expr 'a/b' -prefix TSNR.{subj}.{GLMlabel}",
         ""
@@ -277,10 +277,10 @@ def generate_post_GLM_statements(subj, GLMlabel, censorfile):
         "# ---------------------------------------------------",
         "# compute and store GCOR (global correlation average)",
         "# (sum of squares of global mean of unit errts)",
-        f"3dTnorm -norm2 -prefix rm.errts.unit errts.{subj}.{GLMlabel}_REML+orig",
+        f"3dTnorm -overwrite -norm2 -prefix rm.errts.unit errts.{subj}.{GLMlabel}_REML+orig",
         f"3dmaskave -quiet -mask {maskfile} rm.errts.unit+orig            \\",
         "        > mean.errts.unit.1D",
-        "3dTstat -sos -prefix - mean.errts.unit.1D\\\' > out.gcor.1D",
+        "3dTstat -overwrite -sos -prefix - mean.errts.unit.1D\\\' > out.gcor.1D",
         "echo \"-- GCOR = `cat out.gcor.1D`\"",
         "",
         "# ---------------------------------------------------",
@@ -288,7 +288,7 @@ def generate_post_GLM_statements(subj, GLMlabel, censorfile):
         "# (per voxel: correlation with masked brain average)",
         f"3dmaskave -quiet -mask {maskfile} errts.{subj}.{GLMlabel}_REML+orig       \\",
         "        > mean.errts.1D",
-        f"3dTcorr1D -prefix corr_brain errts.{subj}.{GLMlabel}_REML+orig mean.errts.1D",
+        f"3dTcorr1D -overwrite -prefix corr_brain errts.{subj}.{GLMlabel}_REML+orig mean.errts.1D",
         ""
     ])
 
@@ -378,7 +378,7 @@ def generate_post_GLM_statements(subj, GLMlabel, censorfile):
         "",
         "# run Monte Carlo simulations using method 'ACF'",
         f"set params = ( `grep ACF blur_est.{subj}.{GLMlabel}.1D | tail -n 1` )",
-        f"3dClustSim -both -mask {maskfile} -acf $params[1-3]             \\",
+        f"3dClustSim -overwrite -both -mask {maskfile} -acf $params[1-3]             \\",
         "        -cmd 3dClustSim.ACF.cmd -prefix files_ClustSim/ClustSim.ACF",
         "",
         "# run 3drefit to attach 3dClustSim results to stats",
