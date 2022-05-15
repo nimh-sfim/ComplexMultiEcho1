@@ -120,6 +120,8 @@ def main():
         else:
             print(f"Using inputted regressor files: {regressor_files}")
             combined_regressors = parse_metric_table(GLMlabel, regressor_files)
+    else:
+        combined_regressors = None
 
     os.chdir(GLMlabel)
 
@@ -138,6 +140,18 @@ def main():
         ""
     ]
 
+    # if combined_regressors:
+    #     tmp1D = f"{combined_regressors.split(sep='.')[0]}.1D"
+    #     FullStatement.extend([
+    #         "# Hacky use of 1dcat to turn a tsv to a 1D file.",
+    #         "# Not sure why 3dDeconvolve isn't reading the tsv correctly",
+    #         "# Likely an issue with scientific notation or the number of digits",
+    #         f"1dcat {combined_regressors} > {tmp1D}",
+    #         ""
+    #     ]
+    #     )
+    #     combined_regressors = tmp1D
+
     # Save the scaled time series in the directory with the GLM output
     #  and point input_files to the new file names
     if scale_ts:
@@ -151,7 +165,7 @@ def main():
 
 
     # One function to generate the GLM, which includes all of the conditional logic based on inputs
-    FullStatement.extend(generate_GLM_statement(subj, GLMlabel, input_files, censorfile, regressors=regressors, 
+    FullStatement.extend(generate_GLM_statement(subj, GLMlabel, input_files, censorfile, regressors=combined_regressors, 
                     include_motion=include_motion, include_CSF=include_CSF))
     
     # Generate fixed commands for everything after the GLM
@@ -227,9 +241,9 @@ def parse_metric_table(GLMlabel, regressor_files, metric_table_files=None):
     Rejected_Timeseries[(n_vols[:2].sum()):(n_vols.sum()), (n_rej_comps[:2].sum()):(n_rej_comps.sum())] = tmp_DF.to_numpy()
 
     Rejected_Component_Timeseries = pd.DataFrame(data=Rejected_Timeseries, columns=column_labels)
-    outfilename = os.path.join(GLMlabel, "Rejected_ICA_Components.csv")
-    Rejected_Component_Timeseries.to_csv(outfilename, index=False)
-    regressors = os.path.abspath(outfilename)
+    outfilename = os.path.join(GLMlabel, "Rejected_ICA_Components")
+    Rejected_Component_Timeseries.to_csv(f"{outfilename}.tsv", header=True, index=False, sep='\t')
+    regressors = os.path.abspath(f"{outfilename}.tsv")
     
     return regressors
 
@@ -274,17 +288,28 @@ def generate_GLM_statement(subj, GLMlabel, input_files, censorfile, regressors=N
 
     for i in input_files:
         GLMstatement.append(i + " \\")
+    
     GLMstatement.append(
         f"   -censor {censorfile} \\"
     )
 
     if (include_CSF):
+        print("Including default CSF regressors")
         GLMstatement.extend([
             f"  -ortvec {input_dir}/ROIPC.FSvent.r01.1D ROIPC.FSvent.r01  \\",
             f"  -ortvec {input_dir}/ROIPC.FSvent.r02.1D ROIPC.FSvent.r02  \\",
             f"  -ortvec {input_dir}/ROIPC.FSvent.r03.1D ROIPC.FSvent.r03  \\"
         ])
+    
+    # TODO: Currently no WM option, but might want to consider adding
+    # if (include_WM):
+    #     print("Including default White matter regressor")
+    #     GLMstatement.append(
+    #         f"  -ortvec {input_dir}/mean.ROI.FSWe.1D ROI.We[would need to make for the 3 runs separately].r01  \\",
+    #     )
+
     if (include_motion):
+        print("Including default motion regressors")
         GLMstatement.extend([
             f"  -ortvec {input_dir}/mot_demean.r01.1D mot_demean_r01  \\",
             f"  -ortvec {input_dir}/mot_demean.r02.1D mot_demean_r02  \\",
@@ -294,8 +319,9 @@ def generate_GLM_statement(subj, GLMlabel, input_files, censorfile, regressors=N
             f"  -ortvec {input_dir}/mot_deriv.r03.1D mot_deriv_r03  \\"
         ])
     if(regressors):
-        GLMstatement.extend(
-            f"  -ortvec {regressors} \\"
+        print(f"Including custom regressors in {regressors}")
+        GLMstatement.append(
+            f"  -ortvec {regressors} combined_ort_vec \\"
         )
 
     GLMstatement.extend([
