@@ -2,7 +2,7 @@
 
 subj_id=$1
 
-cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/Proc_Anat
+cd /Volumes/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/Proc_Anat
 mkdir StudyROIs
 cd StudyROIs
 ln -s ../aparc.a2009s+aseg_REN_gmrois.nii.gz ./
@@ -156,8 +156,9 @@ rm tmp_WNW* tmp2_WNW*
 
 # WNW functional clusters
 echo "LOOK TO MAKE SURE SUBBRIK IS word-nonword TSTAT"
-3dinfo -subbrick_info ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig'[31]'
-3dClusterize -inset ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig \
+# 3dinfo -subbrick_info ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig'[31]'
+3dinfo -subbrick_info ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig'[31]'
+3dClusterize -inset ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig \
    -mask_from_hdr -ithr 31 \
    -bisided p=0.01 \
    -NN 1 -clust_nvox 5 \
@@ -165,8 +166,8 @@ echo "LOOK TO MAKE SURE SUBBRIK IS word-nonword TSTAT"
 
 # Vis-Aud functional clusters
 echo "LOOK TO MAKE SURE SUBBRIK IS vis-aud TSTAT"
-3dinfo -subbrick_info ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig'[35]'
-3dClusterize -inset ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig \
+3dinfo -subbrick_info ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig'[35]'
+3dClusterize -inset ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig \
    -mask_from_hdr -ithr 35 \
    -bisided p=0.01 \
    -NN 1 -clust_nvox 5 \

@@ -26,6 +26,6 @@ Run `Func2ROI.sh ${subj}` This program will:
 
 - Take the pre-defined ROIs that were generated in `freesurfer_to_vols.sh`
 - Intersect them with a clusterized word-nonword or visual-audio contrast (depending on the anatomical ROI)
-  as calculated in `${subj}/GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig` This is the optimally combined
-  time series with just motion as noise nuissance regressors.
+  as calculated in `${subj}/GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig` This is the optimally combined
+  time series with motion and CSF noise nuissance regressors.
 - Assign slightly more descriptive labels to these ROIs (vs freesurfer labels)

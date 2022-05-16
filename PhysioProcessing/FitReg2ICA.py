@@ -112,6 +112,7 @@ def main():
     # Go to root directory
     if os.path.isdir(rootdir):
         os.chdir(rootdir)
+        print(f"Running in ${rootdir}")
     else:
         raise ValueError(f"rootdir {rootdir} does not exist")
 
@@ -208,10 +209,15 @@ def main():
         ica_combined_metrics[f"Signif {reg_cat}"] = False
         tmp_reject = np.logical_and((p_vals[f"{reg_cat} Model"]<p_thresh_Bonf).values, 
                                     (ica_combined_metrics["Regressors Rejected"]).values)
+        print(f"{reg_cat} {tmp_reject}")
         ica_combined_metrics.loc[tmp_reject, f"Signif {reg_cat}"] = True
-        reject_type_list.append(np.squeeze(np.argwhere(tmp_reject)))
-        reject_type[idx] = len(reject_type_list[idx])
-
+        
+        tmp_true_idx = np.squeeze(np.argwhere(tmp_reject))
+        print(f"tmp_true_idx={tmp_true_idx}")
+        print(f"tmp_true_idx type = {type(tmp_true_idx)}, size={tmp_true_idx.size}")
+        reject_type[idx] = tmp_true_idx.size
+        reject_type_list.append(tmp_true_idx)
+        
     #TODO Add variance explained and add to output text
 
     ###############################
@@ -243,7 +249,13 @@ def main():
 
     for idx, reg_cat in enumerate(regress_categories):
         output_text["component counts"]["reject by regressors with signif fit to"][f"{reg_cat}"] = int(reject_type[idx])
-        output_text["component lists"]["by regressors with signif fit to"][f"{reg_cat}"] = [int(i) for i in reject_type_list[idx]]
+        if reject_type_list[idx].size >1:
+            output_text["component lists"]["by regressors with signif fit to"][f"{reg_cat}"] = [int(i) for i in reject_type_list[idx]]
+        elif reject_type_list[idx].size == 1:
+            output_text["component lists"]["by regressors with signif fit to"][f"{reg_cat}"] = [int(reject_type_list[idx])]
+        else: # reject_type_list[idx] is empty
+            output_text["component lists"]["by regressors with signif fit to"][f"{reg_cat}"] = []
+ 
         output_text["variance rejected"]["by regressors with signif fit to"][f"{reg_cat}"] = float(ica_combined_metrics.loc[ica_combined_metrics[f"Signif {reg_cat}"]==True, "variance explained"].sum())
 
     print(json.dumps(output_text, indent=4))
