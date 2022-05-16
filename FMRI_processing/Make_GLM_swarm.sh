@@ -70,8 +70,7 @@ cat << EOF > ${sbj}_WNW_GLM_sbatch.txt
         $sbj ./ ../afniproc_orig/WNW/${sbj}.results/ combined_regressors \
         --inputfiles tedana_c75_r0?/ts_OC.nii.gz \
         --scale_ts \
-        --noise_regressors tedana_c75_r0?/ica_mixing.tsv \
-        --regressors_metric_table tedana_c75_r0?/ica_metrics.tsv
+        --noise_regressors ../../../Regressors/RejectedComps/sub-??_r0?_CombinedRejected_Rejected_ICA_Components.csv
 
 
 EOF

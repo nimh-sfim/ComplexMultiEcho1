@@ -200,19 +200,36 @@ def parse_metric_table(GLMlabel, regressor_files, metric_table_files=None):
     n_rej_comps = np.zeros(3, dtype=int)
 
     for idx in range(3):
-        ica_mixing.append(pd.read_csv(regressor_files[idx], sep='\t'))
+        tmpsfx = regressor_files[idx].split('.')[-1]
+        if tmpsfx == 'csv':
+            sep=','
+        elif tmpsfx == 'tsv':
+            sep='\t'
+        else:
+            raise ValueError(f"Suffix of {regressor_files[idx]} is {tmpsfx}. Should be csv or tsv")
+        ica_mixing.append(pd.read_csv(regressor_files[idx], sep=sep))
         print(f"Run {idx+1} Size of ICA mixing matrix: {(ica_mixing[idx]).shape}")
-
-        ica_metrics.append(pd.read_csv(metric_table_files[idx], sep='\t'))
-        print(f"Run {idx+1} Size of ICA metrics table: {(ica_metrics[idx]).shape}")
-
-        if (ica_mixing[idx]).shape[1] != (ica_metrics[idx]).shape[0]:
-            raise ValueError(f"Different number of components in the mixing matrics ({(ica_mixing[idx]).shape[1]}) vs the metrics table ({(ica_metrics[idx]).shape[0]})")
-
         n_vols[idx] = (ica_mixing[idx]).shape[0]
 
-        reject_idx.append(list(np.squeeze(np.argwhere(((ica_metrics[idx])['classification']=='rejected').values))))
-        n_rej_comps[idx] = len(reject_idx[idx])
+        if not isinstance(metric_table_files, type(None)):
+            tmpsfx = metric_table_files[idx].split('.')[-1]
+            if tmpsfx == 'csv':
+                sep=','
+            elif tmpsfx == 'tsv':
+                sep='\t'
+            else:
+                raise ValueError(f"Suffix of {metric_table_files[idx]} is {tmpsfx}. Should be csv or tsv")
+            ica_metrics.append(pd.read_csv(metric_table_files[idx], sep=sep))
+            print(f"Run {idx+1} Size of ICA metrics table: {(ica_metrics[idx]).shape}")
+
+            if (ica_mixing[idx]).shape[1] != (ica_metrics[idx]).shape[0]:
+                raise ValueError(f"Different number of components in the mixing matrics ({(ica_mixing[idx]).shape[1]}) vs the metrics table ({(ica_metrics[idx]).shape[0]})")
+
+            reject_idx.append(list(np.squeeze(np.argwhere(((ica_metrics[idx])['classification']=='rejected').values))))
+            n_rej_comps[idx] = len(reject_idx[idx])
+        else:
+            print(f"ica_metrics is none {ica_metrics}")
+            n_rej_comps[idx] = (ica_mixing[idx]).shape[1]
 
     Rejected_Timeseries = np.zeros((n_vols.sum(), n_rej_comps.sum()))
 
@@ -222,20 +239,29 @@ def parse_metric_table(GLMlabel, regressor_files, metric_table_files=None):
     print(f"Number of rejected components per run {n_rej_comps}")
     # Run 1
     print(f"1: 0:{n_vols[0]}, 0:{n_rej_comps[0]}")
-    tmp_DF = (ica_mixing[0]).iloc[:,reject_idx[0]]
+    if not isinstance(metric_table_files, type(None)):
+        tmp_DF = (ica_mixing[0]).iloc[:,reject_idx[0]]
+    else:
+        tmp_DF = ica_mixing[0]
     tmp_cols = tmp_DF.columns
     column_labels.extend(["r01-" + s for s in tmp_cols])
-    Rejected_Timeseries[0:n_vols[0], 0:n_rej_comps[0]] = tmp_DF.to_numpy()
+    Rejected_Timeseries[0:n_vols[0], 0:n_rej_comps[0]] = tmp_DF.to_numpy(dtype=float)
 
     # Run 2
     print(f"2: {n_vols[0]}:{(n_vols[:2].sum())}, {n_rej_comps[0]}:{(n_rej_comps[:2].sum())}")
-    tmp_DF = (ica_mixing[1]).iloc[:,reject_idx[1]]
+    if not isinstance(metric_table_files, type(None)):
+        tmp_DF = (ica_mixing[1]).iloc[:,reject_idx[1]]
+    else:
+        tmp_DF = ica_mixing[1]
     tmp_cols = tmp_DF.columns
     column_labels.extend(["r02-" + s for s in tmp_cols])
     Rejected_Timeseries[n_vols[0]:(n_vols[:2].sum()), n_rej_comps[0]:(n_rej_comps[:2].sum())] = tmp_DF.to_numpy()
     # Run 3
     print(f"3: {(n_vols[:2].sum())}:{(n_vols.sum())}, {(n_rej_comps[:2].sum())}:{(n_rej_comps.sum())}")
-    tmp_DF = (ica_mixing[2]).iloc[:,reject_idx[2]]
+    if not isinstance(metric_table_files, type(None)):
+        tmp_DF = (ica_mixing[2]).iloc[:,reject_idx[2]]
+    else:
+        tmp_DF = ica_mixing[2]
     tmp_cols = tmp_DF.columns
     column_labels.extend(["r03-" + s for s in tmp_cols])
     Rejected_Timeseries[(n_vols[:2].sum()):(n_vols.sum()), (n_rej_comps[:2].sum()):(n_rej_comps.sum())] = tmp_DF.to_numpy()
@@ -389,10 +415,10 @@ def generate_post_GLM_statements(subj, GLMlabel, censorfile):
         "# create a temporal signal to noise ratio dataset",
         "#    signal: if 'scale' block, mean should be 100",
         "#    noise : compute standard deviation of errts",
-        f"3dTstat -overwrite -mean -prefix rm.signal.all {allrunsfile}\"[$ktrs]\"",
-        f"3dTstat -overwrite -stdev -prefix rm.noise.all errts.{subj}.{GLMlabel}_REML+orig\"[$ktrs]\"",
-        "3dcalc -overwrite  -a rm.signal.all+orig                                              \\",
-        "    -b rm.noise.all+orig                                               \\",
+        f"3dTstat -overwrite -mean -prefix signal.all {allrunsfile}\"[$ktrs]\"",
+        f"3dTstat -overwrite -stdev -prefix noise.all errts.{subj}.{GLMlabel}_REML+orig\"[$ktrs]\"",
+        "3dcalc -overwrite  -a signal.all+orig                                              \\",
+        "    -b noise.all+orig                                               \\",
         f"    -expr 'a/b' -prefix TSNR.{subj}.{GLMlabel}",
         ""
     ]
@@ -507,7 +533,13 @@ def generate_post_GLM_statements(subj, GLMlabel, censorfile):
         "",
         "# run 3drefit to attach 3dClustSim results to stats",
         "set cmd = ( `cat 3dClustSim.ACF.cmd` )",
-        f"$cmd stats.{subj}.{GLMlabel}_REML+orig"
+        f"$cmd stats.{subj}.{GLMlabel}_REML+orig",
+        "",
+        "echo Removing intermediate files",
+        "rm rm.*",
+        "",
+        "echo Compress the scaled time series",
+        "gzip scaled*BRIK"
     ])
 
     return(post_GLMstatements)
