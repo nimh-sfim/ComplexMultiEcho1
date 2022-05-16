@@ -140,18 +140,6 @@ def main():
         ""
     ]
 
-    # if combined_regressors:
-    #     tmp1D = f"{combined_regressors.split(sep='.')[0]}.1D"
-    #     FullStatement.extend([
-    #         "# Hacky use of 1dcat to turn a tsv to a 1D file.",
-    #         "# Not sure why 3dDeconvolve isn't reading the tsv correctly",
-    #         "# Likely an issue with scientific notation or the number of digits",
-    #         f"1dcat {combined_regressors} > {tmp1D}",
-    #         ""
-    #     ]
-    #     )
-    #     combined_regressors = tmp1D
-
     # Save the scaled time series in the directory with the GLM output
     #  and point input_files to the new file names
     if scale_ts:
