@@ -22,7 +22,7 @@ for subidx in ${sublist[@]}; do
         --regressors ${subj}_RegressorModels_wnw_run-${run}.tsv \
         --ica_mixing ../afniproc_orig/WNW/${subj}.results/tedana_c75_r0${run}/ica_mixing.tsv \
         --ica_metrics ../afniproc_orig/WNW/${subj}.results/tedana_c75_r0${run}/ica_metrics.tsv \
-        --outprefix RejectedComps/${subj}_r0${run}_CombinedRejected_c75 \
+        --outprefix RejectedComps_c75/${subj}_r0${run}_CombinedRejected_c75 \
         --p_thresh 0.05 --R2_thresh 0.5 --showplots
 
     done
