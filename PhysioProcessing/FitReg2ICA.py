@@ -153,7 +153,7 @@ def main():
 
     #########################################
     # Fit the models, calculate signficance, and, if show_plot, plot results
-    betas_full_model, F_vals, p_vals, R2_vals, regress_dict = fit_ICA_to_regressors(ica_mixing, noise_regress_table, prefix=justprefix, show_plot=show_plot)
+    betas_full_model, F_vals, p_vals, R2_vals, regress_dict, full_Regressor_model = fit_ICA_to_regressors(ica_mixing, noise_regress_table, prefix=justprefix, show_plot=show_plot)
     # In the output below, the first series of subplots is the full model vs the baseline of the polort detrending regressors for the first 20 components
     # The following series of suplots are the full model vs the full model excluding other categories of regressors
     # (which shows the significanc of each category of regressors)
@@ -262,6 +262,7 @@ def main():
 
     # Save all the relevant information into multiple files
     # {justprefix}_Rejected_ICA_Components.csv will be the input for noise regressors into 3dDeconvolve
+    full_Regressor_model.to_csv(f"{justprefix}_FullRegressorModel.csv")
     F_vals.to_csv(f"{justprefix}_Fvals.csv")
     p_vals.to_csv(f"{justprefix}_pvals.csv")
     R2_vals.to_csv(f"{justprefix}_R2vals.csv")
@@ -317,7 +318,7 @@ def fit_ICA_to_regressors(ica_mixing, noise_regress_table, polort=4, regress_dic
 
     # This is the test for the fit of the full model vs the polort detrending baseline
     # The outputs will be what we use to decide which components to reject
-    betas_full, F_vals_tmp, p_vals_tmp, R2_vals_tmp = fit_model_with_stats(Y, Regressor_Models, 'base', prefix=prefix, show_plot=show_plot)
+    betas_full, F_vals_tmp, p_vals_tmp, R2_vals_tmp, full_Regressor_Model = fit_model_with_stats(Y, Regressor_Models, 'base', prefix=prefix, show_plot=show_plot)
 
     betas_full_model = pd.DataFrame(data=betas_full.T, columns=np.array(Full_Model_Labels))
     F_vals = pd.DataFrame(data=F_vals_tmp, columns=['Full Model'])
@@ -326,12 +327,12 @@ def fit_ICA_to_regressors(ica_mixing, noise_regress_table, polort=4, regress_dic
 
     # Test all the fits between the full model and the full model excluding one category of regressor
     for reg_cat in regress_dict.keys():
-        _, F_vals_tmp, p_vals_tmp, R2_vals_tmp = fit_model_with_stats(Y, Regressor_Models, f"no {reg_cat}", prefix=prefix, show_plot=show_plot)
+        _, F_vals_tmp, p_vals_tmp, R2_vals_tmp, _ = fit_model_with_stats(Y, Regressor_Models, f"no {reg_cat}", prefix=prefix, show_plot=show_plot)
         F_vals[f'{reg_cat} Model'] = F_vals_tmp
         p_vals[f'{reg_cat} Model'] = p_vals_tmp
         R2_vals[f'{reg_cat} Model'] = R2_vals_tmp
 
-    return betas_full_model, F_vals, p_vals, R2_vals, regress_dict
+    return betas_full_model, F_vals, p_vals, R2_vals, regress_dict, full_Regressor_Model
 
 def make_detrend_regressors(n_time, polort=4, show_plot=False):
     """ 
@@ -530,7 +531,7 @@ def fit_model_with_stats(Y, Regressor_Models, base_label, prefix=None, show_plot
         base_save_label = base_label.replace(" ", "_")
         plt.savefig(f"{prefix}_ModelFits_{base_save_label}.eps", dpi='figure')
 
-    return betas_full, F_vals, p_vals, R2_vals
+    return betas_full, F_vals, p_vals, R2_vals, Regressor_Models
 
 def fit_model(X, Y):
     """
