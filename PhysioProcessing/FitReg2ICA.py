@@ -262,7 +262,8 @@ def main():
 
     # Save all the relevant information into multiple files
     # {justprefix}_Rejected_ICA_Components.csv will be the input for noise regressors into 3dDeconvolve
-    Regressor_Models['full'].to_csv(f"{justprefix}_FullRegressorModel.csv")
+    Full_Regressor_Model = pd.DataFrame(Regressor_Models['full'])
+    Full_Regressor_Model.to_csv(f"{justprefix}_FullRegressorModel.csv")
     F_vals.to_csv(f"{justprefix}_Fvals.csv")
     p_vals.to_csv(f"{justprefix}_pvals.csv")
     R2_vals.to_csv(f"{justprefix}_R2vals.csv")
