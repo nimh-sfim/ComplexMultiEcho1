@@ -63,14 +63,21 @@ dset_grid="../../afniproc_orig/WNW/${subj_id}.results/stats.${subj_id}_REML+orig
 
 
 # ROIs is for Word-Nonword contrasts
-ROIidxWNW="69,144,121,196,86,161,60,135,75,150,6,26,59,134,78,153,14,31,85,160,120,195,67,142"
+# ROIidxWNW="69,144,121,196,86,161,60,135,75,150,6,26,59,134,78,153,14,31,85,160,120,195,67,142"
+ROIidxWNW="121,196,60,135,86,161,60,135,78,153"
+ROIidxWNWlist=(121 196 60 135 86 161 60 135 78 153)
 # ROIidxWNWlabels=(ctx_lh_G_oc-temp_lat-fusifor ctx_rh_G_oc-temp_lat-fusifor ctx_lh_S_temporal_sup ctx_rh_S_temporal_sup \
 #               ctx_lh_G_temporal_middle ctx_rh_G_temporal_middle ctx_lh_G_front_inf-OperTri ctx_rh_G_front_inf-OperTri \
 #               ctx_lh_G_parietal_sup ctx_rh_G_parietal_sup Left-Cerebellum-Cortex Right-Cerebellum-Cortex \
 #               ctx_lh_G_cuneus ctx_rh_G_cuneus ctx_lh_G_precuneus ctx_rh_G_precuneus \
 #               Left-Hippocampus Right-Hippocampus ctx_lh_G_temporal_inf ctx_rh_G_temporal_inf \
 #               ctx_lh_S_temporal_inf ctx_rh_S_temporal_inf ctx_lh_G_occipital_middle ctx_rh_G_occipital_middle)
-ROIidxVS="122,197,92,167"
+ROIidxVis="92,167"
+ROIidxVislist=(92 167)
+
+ROIidxAud="122,197"
+ROIidxAudlist=(122 197 )
+
 # ROIidxVSlabels=(ctx_lh_S_temporal_transverse ctx_rh_S_temporal_transverse ctx_lh_S_calcarine ctx_rh_S_calcarine)
 
 cat << EOF > FuncROI_Labels.lt
@@ -132,17 +139,93 @@ rm tmp_WNW* tmp2_WNW*
 
 3dAllineate -overwrite \
     -1Dmatrix_apply IDENTITY \
-    -prefix VisAud_${dset_anatEPI}  \
+    -prefix Vis_${dset_anatEPI}  \
     -final NN \
-    -source "${dset_orig}<${ROIidxVS}>" \
+    -source "${dset_orig}<${ROIidxVis}>" \
     -master ${dset_grid}
  
+3dAllineate -overwrite \
+    -1Dmatrix_apply IDENTITY \
+    -prefix Aud_${dset_anatEPI}  \
+    -final NN \
+    -source "${dset_orig}<${ROIidxAud}>" \
+    -master ${dset_grid}
+
+
 # re-attach labeltable
 3drefit  -copytables "${dset_orig}" WNW_${dset_anatEPI}
-3drefit  -copytables "${dset_orig}" VisAud_${dset_anatEPI}
+3drefit  -copytables "${dset_orig}" Vis_${dset_anatEPI}
+3drefit  -copytables "${dset_orig}" Aud_${dset_anatEPI}
 # re-attach header property to use int-based colormap in AFNI GUI
 3drefit -cmap INT_CMAP WNW_${dset_anatEPI}
-3drefit -cmap INT_CMAP VisAud_${dset_anatEPI}
+3drefit -cmap INT_CMAP Vis_${dset_anatEPI}
+3drefit -cmap INT_CMAP Aud_${dset_anatEPI}
+
+
+# Dilate all ROIs and then recombine them with no overlapping voxels
+for ROIidx in ${ROIidxVislist[@]}; do
+   3dcalc -a Vis_${dset_anatEPI} -expr "equals(a,${ROIidx})*${ROIidx}" \
+      -prefix  tmp_Vis_${ROIidx}_${dset_anatEPI} -overwrite
+   3dmask_tool -input tmp_Vis_${ROIidx}_${dset_anatEPI} \
+      -dilate_input 2 -prefix tmp_Vis_${ROIidx}d2_${dset_anatEPI} \
+      -overwrite 
+   3dcalc -a tmp_Vis_${ROIidx}d2_${dset_anatEPI} -expr "ispositive(a)*${ROIidx}" \
+       -prefix tmp_Vis_${ROIidx}d2val_${dset_anatEPI} -overwrite
+done
+
+for ROIidx in ${ROIidxAudlist[@]}; do
+   3dcalc -a Aud_${dset_anatEPI} -expr "equals(a,${ROIidx})*${ROIidx}" \
+      -prefix  tmp_Aud_${ROIidx}_${dset_anatEPI} -overwrite
+   3dmask_tool -input tmp_Aud_${ROIidx}_${dset_anatEPI} \
+      -dilate_input 2 -prefix tmp_Aud_${ROIidx}d2_${dset_anatEPI} \
+      -overwrite 
+   3dcalc -a tmp_Aud_${ROIidx}d2_${dset_anatEPI} -expr "ispositive(a)*${ROIidx}" \
+       -prefix tmp_Aud_${ROIidx}d2val_${dset_anatEPI} -overwrite
+done
+
+for ROIidx in ${ROIidxWNWlist[@]}; do
+   3dcalc -a WNW_${dset_anatEPI} -expr "equals(a,${ROIidx})*${ROIidx}" \
+      -prefix  tmp_WNW_${ROIidx}_${dset_anatEPI} -overwrite
+   3dmask_tool -input tmp_WNW_${ROIidx}_${dset_anatEPI} \
+      -dilate_input 2 -prefix tmp_WNW_${ROIidx}d2_${dset_anatEPI} \
+      -overwrite 
+   3dcalc -a tmp_WNW_${ROIidx}d2_${dset_anatEPI} -expr "ispositive(a)*${ROIidx}" \
+       -prefix tmp_WNW_${ROIidx}d2val_${dset_anatEPI} -overwrite
+done
+
+
+# Identify all voxels that overlap
+3dMean -overwrite -count -prefix ROI_overlap_${dset_anatEPI} tmp_Vis_*d2_${dset_anatEPI} tmp_Aud_*d2_${dset_anatEPI} tmp_WNW_*d2_${dset_anatEPI}
+
+# Recombine all the ROIs for each group, and remove voxels in more than one ROI unless they were in the un-dilated ROI
+3dMean -overwrite -sum -datum short -prefix tmp_Vis_d2recombined_${dset_anatEPI} tmp_Vis_*d2val_${dset_anatEPI}
+3dcalc -short -a tmp_Vis_d2recombined_${dset_anatEPI} -b ROI_overlap_${dset_anatEPI} \
+   -c Vis_${dset_anatEPI} \
+   -overwrite -prefix Vis_d2_${dset_anatEPI} -expr "a*ispositive(1.1-b) + c*isnegative(1.1-b)"
+
+3dMean -overwrite -sum -datum short -prefix tmp_Aud_d2recombined_${dset_anatEPI} tmp_Aud_*d2val_${dset_anatEPI}
+3dcalc -short -a tmp_Aud_d2recombined_${dset_anatEPI} -b ROI_overlap_${dset_anatEPI} \
+   -c Aud_${dset_anatEPI} \
+   -overwrite -prefix Aud_d2_${dset_anatEPI} -expr "a*ispositive(1.1-b) + c*isnegative(1.1-b)"
+
+3dMean -overwrite -sum -datum short -prefix tmp_WNW_d2recombined_${dset_anatEPI} tmp_WNW_*d2val_${dset_anatEPI}
+3dcalc -short -a tmp_WNW_d2recombined_${dset_anatEPI} -b ROI_overlap_${dset_anatEPI} \
+   -c WNW_${dset_anatEPI} \
+   -overwrite -prefix WNW_d2_${dset_anatEPI} -expr "a*ispositive(1.1-b) + c*isnegative(1.1-b)"
+
+
+# 3dMean -overwrite -sum -datum short -prefix tmp_WNW_d2recombined_${dset_anatEPI} tmp_WNW_*d2val_${dset_anatEPI}
+# 3dcalc -short -a tmp_WNW_d2recombined_${dset_anatEPI} -b ROI_overlap_${dset_anatEPI} \
+#    -overwrite -prefix WNW_d2_${dset_anatEPI} -expr "a*ispositive(1.1-b)"
+
+# re-attach labeltable
+3drefit  -copytables "${dset_orig}" WNW_d2_${dset_anatEPI}
+3drefit  -copytables "${dset_orig}" Vis_d2_${dset_anatEPI}
+3drefit  -copytables "${dset_orig}" Aud_d2_${dset_anatEPI}
+# re-attach header property to use int-based colormap in AFNI GUI
+3drefit -cmap INT_CMAP WNW_d2_${dset_anatEPI}
+3drefit -cmap INT_CMAP Vis_d2_${dset_anatEPI}
+3drefit -cmap INT_CMAP Aud_d2_${dset_anatEPI}
 
 # Ugly way to get subset of ROIs just expected visual-audio contrast ROIs
 # 3dcalc -a ${dset_anatEPI} -prefix VS_${dset_anatEPI} -overwrite -short \
@@ -176,18 +259,32 @@ echo "LOOK TO MAKE SURE SUBBRIK IS vis-aud TSTAT"
 # intersect the anatomical ROIs and the functional contrasts
 # Since int() always rounds down, the +0.5 makes sure any floating
 #   point errors round to the correct value.
-3dcalc -overwrite -prefix VisAud_funcROI.${subj_id}.nii.gz \
-   -a VisAud_${dset_anatEPI} -b VisAud_Clusters+orig \
-   -expr 'int(0.5+ispositive(b)*a)' -short
 
+# Audio contrast should be negative for vis-audio
+3dcalc -overwrite -prefix Aud_funcROI.${subj_id}.nii.gz \
+   -a Aud_d2_${dset_anatEPI} -b VisAud_Clusters+orig \
+   -c ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig'[35]' \
+   -expr 'int(0.5+a*ispositive(b)*isnegative(c))' -short
+
+# visual constrast should be positive for vis-audio
+3dcalc -overwrite -prefix Vis_funcROI.${subj_id}.nii.gz \
+   -a Vis_d2_${dset_anatEPI} -b VisAud_Clusters+orig \
+   -c ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig'[35]' \
+   -expr 'int(0.5+a*ispositive(b)*ispositive(c))' -short
+
+
+# Only for word>nonword voxels
 3dcalc -overwrite -prefix WNWfuncROI.${subj_id}.nii.gz \
-   -a WNW_${dset_anatEPI} -b WNW_Clusters+orig \
-   -expr 'int(0.5+ispositive(b)*a)' -short
+   -a WNW_d2_${dset_anatEPI} -b WNW_Clusters+orig \
+   -c ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig'[31]' \
+   -expr 'int(0.5+a*ispositive(b)*ispositive(c))' -short
+
 
 3dcalc -overwrite -prefix ${subj_id}.FuncROIs.nii.gz \
-   -a VisAud_funcROI.${subj_id}.nii.gz \
-   -b WNWfuncROI.${subj_id}.nii.gz \
-   -expr 'int(a+b+0.5)' -short
+   -a Vis_funcROI.${subj_id}.nii.gz \
+   -b Aud_funcROI.${subj_id}.nii.gz \
+   -c WNWfuncROI.${subj_id}.nii.gz \
+   -expr 'int(a+b+c+0.5)' -short
 
 
 # attach more descriptive labeltable
@@ -198,3 +295,4 @@ echo "LOOK TO MAKE SURE SUBBRIK IS vis-aud TSTAT"
 3drefit -cmap INT_CMAP ${subj_id}.FuncROIs.nii.gz
 
 
+rm tmp_*.nii.gz
