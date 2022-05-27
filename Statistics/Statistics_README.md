@@ -1,6 +1,6 @@
 # Statistics documentation
 
-### Run command:
+### Calculating subject-level statistics:
 ```
 zsh Stats.sh sub-01 wnw
 ```
@@ -44,3 +44,14 @@ echo $DOF >> Stats/DOF.txt
 3dROIstats -nzvoxels -nobriklab -mask ${root}Proc_Anat/StudyROIs/${sub}.FuncROIs.nii.gz CNR_WNW+orig >> CNR_ROIs_WNW.1D
 3dROIstats -nzvoxels -nobriklab -mask ${root}Proc_Anat/StudyROIs/${sub}.FuncROIs.nii.gz CNR_VisAud+orig >> CNR_ROIs_VisAud.1D
 ```
+
+### Creating group statistics:
+
+Run ``` python3 groupstats.py wnw ```
+
+This will create group statistics .csv files necessary for creating the graphs.
+
+The following output is combined into a pandas dataframe with subjects (indices) and ROIs (columns):
+    - Voxel counts for each GLM (f"{out}{g}_Voxels_group.tsv")
+    - Fisher Z ROI means (per condition) for each GLM (f"{out}{g}_FisherZ_WNW_group.tsv",f"{out}{g}_FisherZ_VisAud_group.tsv")
+    - Degrees of Freedom counts for each GLM (f"{out}DOF_GLMs_All_group.tsv")
