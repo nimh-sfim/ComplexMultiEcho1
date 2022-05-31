@@ -1,27 +1,41 @@
 # Instructions for fMRI preprocessing and statistical model creation
 
-First run freesurfer to generate the skull-stripped anatomical. This is described in
-[AnatomicalProcessing.md](../AnatomicalProcessings/AnatomicalProcessing.md).
-The run `run_afniproc.sh sub-XX` That script will run afni_proc on the
-word-nonword runs and generate statistical maps and then preprocess the Movie+Respiration
-runs. It is designed to be run on [biowulf](https://hpc.nih.gov/) and it submits a series
-of jobs to the cluster. This runs tedana with the AIC criterion for PCA component selection
+1. Run freesurfer to generate the skull-stripped anatomical. 
 
-The following scripts (That are still slightly works-in-process) are run in order.
-`Create_tedana_swarm.sh` runs variations of tedana with different PCA selection criteria.
-This is primarily to better understand how various criteria affect the number of components
-generated.
+    - This is described in
+    [AnatomicalProcessing.md](../AnatomicalProcessings/AnatomicalProcessing.md).
 
-The nii.gz files that tedana writes out are read as in tlrc by AFNI even though they are in
-ORIG space. `tedana_to_orig.sh` converts these files for all subjects
+2. Run afni_proc on the word-nonword runs and generate statistical maps and then preprocess the Movie+Respiration runs.
 
-Once the respiratory and cardiac regressors are calculated with NiPhlem_regressors.py, run
-`../PhysioProcessing/run_FitReg2ICA.sh`. This calls FitReg2ICA.py for all subjects and runs.
-It takes motion, physiology, CSF, and white matter regressors and fits them
-the ICA components from tedana and to createsa combined regressor file of the components
-that should be rejected
+    - Use `run_afniproc.sh sub-XX`
+    
+    Note: It is designed to be run on [biowulf](https://hpc.nih.gov/) and it submits a series
+    of jobs to the cluster. This runs tedana with the AIC criterion for PCA component selection
 
-`Make_GLM_swarm.sh` creates submits multiple jobs to biowulf that call `Denoising_GLMs.py`.
-`Denoising_GLMs.py` is a way to select various inputs to the GLM (i.e. 2nd echo, optimally combined)
-and various options for the nuissance noise regressors to include for processing the Word-Nonword task,.
-There is an option to include a custom csv file with nuissance regressors.
+3. Run variations of tedana with different PCA selection criteria.
+
+    - `Create_tedana_swarm.sh`
+
+    Note: This is primarily to better understand how various criteria affect the number of components
+    generated.
+
+    - `tedana_to_orig.sh` converts .nii.gz files from TLRC to ORIG space for all subjects
+
+    Note: The nii.gz files that tedana writes out are read as in tlrc by AFNI even though they are in
+    ORIG space.
+
+After calculating the respiratory and cardiac regressors:
+
+4. Fit the motion, physiology, CSF, and white matter regressors to the ICA components from tedana and create a combined regressor file of the rejected components.
+
+    - `../PhysioProcessing/run_FitReg2ICA.sh`
+
+    Note: This calls FitReg2ICA.py for all subjects and runs.
+
+5. Run various GLMs
+
+    - `Make_GLM_swarm.sh` 
+        - creates submits multiple jobs to biowulf that call `Denoising_GLMs.py`.
+
+    Note: `Denoising_GLMs.py` is a way to select various inputs to the GLM (i.e. 2nd echo, optimally combined) and various options for the nuisance noise regressors to include for processing the Word-Nonword task.
+    ***There is an option to include a custom csv file with nuisance regressors.
