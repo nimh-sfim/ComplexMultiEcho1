@@ -2,28 +2,26 @@
 
 ## Running Freesurfer (should be done prior to processing functional data)
 
-1. Run freesurfer using `freesurfer_to_vols.sh`
+1. Run freesurfer using [freesurfer_to_vols.sh](freesurfer_to_vols.sh)
 
-Alternatives: 
-
-Run a default freesurfer segmentation:
-( `recon-all -all` )
-followed by AFNI's `@SUMA_Make_Spec_FS` to generate ROI volumes. This will finally link the relevant volumes
-to `/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}/Proc_Anat`
-One additional volume will be calculated, `${subj}_T1_masked.nii.gz`, which is a freesurfer skull-stripped
-version of the intensity normalized T1 volume. This will be used as the reference anatomical
-when afni_proc is called.
-
-Run on biowulf:
-Go to the base directory for the subject & run with a sbatch command:
+To run this on biowulf, go to the base directory for the subject & run with a sbatch command (replace sub-XX with the subject ID):
 
 `sbatch --time=24:00:00 --cpus-per-task=8 --mem=16G --output=freesurfer.out --error=freesurfer.err --wrap="/data/handwerkerd/nimh-sfim/ComplexMultiEcho1/AnatomicalProcessing/freesurfer_to_vols.sh sub-XX"`
+
+Steps in this script:
+
+- Run a default freesurfer segmentation ( `recon-all -all` )
+- Run AFNI's `@SUMA_Make_Spec_FS` to generate ROI volumes.
+- Add links the key anatomical and ROI files to `/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj}/Proc_Anat`
+- Calculate `${subj}_T1_masked.nii.gz`, which is a freesurfer skull-stripped
+version of the intensity normalized T1 volume. This will be used as the reference anatomical
+when afni_proc is called.
 
 ## Qwarp non-linear alignment
 
 After `freesurfer_to_vols.sh` is completed:
 
-2. Run `QwarpAlign.sh ${subj}` to run AFNI's `auto_warp.py`. 
+2. Run `QwarpAlign.sh ${subj}` to run AFNI's `auto_warp.py`.
 This function is a wrapper to submit the command to the biowulf cluster.
 
 ## Creating functionally localized ROIs
