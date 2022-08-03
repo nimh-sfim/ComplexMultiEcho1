@@ -223,6 +223,7 @@ def generate_series_mapping(offset, ignore, mrn, subid, verbose=True):
         ("movie", 2),
         ("breathing", 2),
         ("movie", 3),
+        ("breathing", 3),
     ]
 
     for s in series_sets:
