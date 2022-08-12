@@ -47,7 +47,9 @@ elif [ ${subj_id} == 'sub-13' ];
 then
    # sub-13 left and returned to the scanner between WNW and movie/resp runs.
    # Needed new localizer & new higher order shim. This should do blip up/down with the correct ones for
-   # the movie/resp runs, but then align everything to the same image used for the WNW runs
+   # the movie/resp runs, and then use that image to align to the same anatomical as the WNW runs.
+   # The movie/resp anatomical alignment will not be identical to the WNW alignment so this should
+   # be looked at carefully
    volregstateWNW="  -blip_forward_dset ${origdir}func/${subj_id}_task-EpiTest_echo-1_part-mag_bold.nii'[0..4]'  \
                        -blip_reverse_dset ${origdir}func/${subj_id}_task-EpiTestPA_echo-1_part-mag_bold.nii'[0..4]'  \
                        -volreg_post_vr_allin yes  \
@@ -57,7 +59,7 @@ then
                        -blip_reverse_dset ${origdir}func/${subj_id}_task-EpiTestPA2_echo-1_part-mag_bold.nii'[0..4]'  \
                        -volreg_post_vr_allin yes  \
                        -volreg_pvra_base_index MIN_OUTLIER  \
-                       -volreg_align_to ./WNW/${subj_id}.results/vr_base_blip+orig"
+                       -volreg_align_to MEDIAN_BLIP"
 
 else
    volregstateWNW="  -blip_forward_dset ${origdir}func/${subj_id}_task-EpiTest_echo-1_part-mag_bold.nii'[0..4]'  \
