@@ -10,7 +10,7 @@ git clone https://github.com/cbinyu/bidsphysio.git
 ```
 
 <br>Convert the .acq files to BIDS format (BIDSPhysio) with [Physio_Proc.sh](Physio_Proc.sh).
-This call will extract the acquisition times from 1st echo functionals, which you can use to enter the corresponding date and time of acquisition for the .acq files.
+This call will extract the acquisition times from 1st echo functionals, which you can use to enter the corresponding date and time of acquisition for the .acq files. <bold>Enter 'module load jq' first.</bold>
 ```
 zsh Physio_Proc.sh
 Enter subject:
