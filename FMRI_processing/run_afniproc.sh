@@ -84,6 +84,7 @@ echo \
  "  -anat_follower_ROI FSvent epi ../../Proc_Anat/fs_ap_latvent.nii.gz" \\$'\n' \
  "  -anat_follower_ROI FSWe epi ../../Proc_Anat/fs_ap_wm.nii.gz" \\$'\n' \
  "  -anat_follower_erode FSvent FSWe" \\$'\n' \
+ "  -align_unifize_epi local" \\$'\n' \
  "  -dsets_me_echo ${origdir}func/${subj_id}_task-wnw_run-1_echo-1_part-mag_bold.nii" \\$'\n' \
  "      ${origdir}func/${subj_id}_task-wnw_run-2_echo-1_part-mag_bold.nii" \\$'\n' \
  "      ${origdir}func/${subj_id}_task-wnw_run-3_echo-1_part-mag_bold.nii" \\$'\n' \
@@ -148,6 +149,7 @@ for runid in  movie_run-1 movie_run-2 movie_run-3 breathing_run-1 breathing_run-
         "  -anat_follower_ROI FSWe epi ../../Proc_Anat/fs_ap_wm.nii.gz" \\$'\n' \
         "  -anat_follower_erode FSvent FSWe" \\$'\n' \
         "  -anat_has_skull no" \\$'\n' \
+        "  -align_unifize_epi local" \\$'\n' \
         "  -dsets_me_echo ${origdir}func/${subj_id}_task-${runid}_echo-1_part-mag_bold.nii" \\$'\n' \
         "  -dsets_me_echo ${origdir}func/${subj_id}_task-${runid}_echo-2_part-mag_bold.nii" \\$'\n' \
         "  -dsets_me_echo ${origdir}func/${subj_id}_task-${runid}_echo-3_part-mag_bold.nii" \\$'\n' \
