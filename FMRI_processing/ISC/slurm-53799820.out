@@ -1,0 +1,517 @@
+++ 3dttest++: AFNI version=AFNI_22.3.07 (Dec  2 2022) [64-bit]
+++ Authored by: Zhark++
+++ Number of -Clustsim threads set to 128
+++ option -setA :: processing as SHORT form (all values are datasets)
+++ have 84 volumes corresponding to option '-setA'
+++ -zskip: require at least 5 (out of 84) nonzero values for setA
+++ no mask ==> processing all 614125 voxels
+++ loading -setA datasets
+[7m*+ WARNING:[0m 3dttest++ -setA :: 278555 vectors are constant
+++ t-testing:0123456789.0123456789.0123456789.0123456789.0123456789.!
+ + skipped 278555 voxels completely for having constant data
+ + -zskip: 229506 voxels had some values skipped in their t-tests
+ + -zskip: skipped 31336 voxels completely for having too few nonzero values
+++ ---------- End of analyses -- freeing workspaces ----------
+++ Creating FDR curves in output dataset
+++ Smallest FDR q [1 SetA_Zscr] = 1.30777e-08
+ + Added 1 FDR curve to dataset
+++ Output dataset Group_Ttest/Group_Ttest_Within_2nd_echo.nii
+++ Output dataset Group_Ttest/ClustSim_Group_2nd_echo.resid.nii
+++ ================ Starting -Clustsim calculations ================
+ + === temporary files will have prefix Group_Ttest/ClustSim_Group_2nd_echo ===
+ + === running 128 -randomsign jobs (79 iterations per job) ===
+++ 3dttest++: AFNI version=AFNI_22.3.07 (Dec  2 2022) [64-bit]
+++ Authored by: Zhark++
+++ option -setA :: processing as SHORT form (all values are datasets)
+++ have 84 volumes corresponding to option '-setA'
+++ -zskip: require at least 5 (out of 84) nonzero values for setA
+++ random seeds are 880434110 1194593375
+++ no mask ==> processing all 614125 voxels
+++ loading -setA datasets
+sh: line 3: 95918 Killed                  3dttest++ -DAFNI_AUTOMATIC_FDR=NO -DAFNI_DONT_LOGFILE=YES -randomsign 79 -nomeans -toz -seed 881545261 1195704526 -nopermute -zskip 5 -setA Group_Ttest/ClustSim_Group_2nd_echo.resid.nii -prefix ./Group_Ttest/ClustSim_Group_2nd_echo.0001.nii &>/dev/null
+sh: line 3: 96047 Killed                  3dttest++ -DAFNI_AUTOMATIC_FDR=NO -DAFNI_DONT_LOGFILE=YES -randomsign 79 -nomeans -toz -seed 924880150 1239039415 -nopermute -zskip 5 -setA Group_Ttest/ClustSim_Group_2nd_echo.resid.nii -prefix ./Group_Ttest/ClustSim_Group_2nd_echo.0040.nii &>/dev/null
+sh: line 3: 95926 Killed                  3dttest++ -DAFNI_AUTOMATIC_FDR=NO -DAFNI_DONT_LOGFILE=YES -randomsign 79 -nomeans -toz -seed 883767563 1197926828 -nopermute -zskip 5 -setA Group_Ttest/ClustSim_Group_2nd_echo.resid.nii -prefix ./Group_Ttest/ClustSim_Group_2nd_echo.0003.nii &>/dev/null
+sh: line 3: 95942 Killed                  3dttest++ -DAFNI_AUTOMATIC_FDR=NO -DAFNI_DONT_LOGFILE=YES -randomsign 79 -nomeans -toz -seed 889323318 1203482583 -nopermute -zskip 5 -setA Group_Ttest/ClustSim_Group_2nd_echo.resid.nii -prefix ./Group_Ttest/ClustSim_Group_2nd_echo.0008.nii &>/dev/null
+sh: line 3: 95992 Killed                  3dttest++ -DAFNI_AUTOMATIC_FDR=NO -DAFNI_DONT_LOGFILE=YES -randomsign 79 -nomeans -toz -seed 905990583 1220149848 -nopermute -zskip 5 -setA Group_Ttest/ClustSim_Group_2nd_echo.resid.nii -prefix ./Group_Ttest/ClustSim_Group_2nd_echo.0023.nii &>/dev/null
+ + 3dttest++ ===== simulation jobs have finished (468.9 s elapsed)
+ + 3dttest++ ===== starting 3dClustSim A: elapsed = 473.4 s
+++ 3dClustSim: AFNI version=AFNI_22.3.07 (Dec  2 2022) [64-bit]
+++ Authored by: RW Cox and BD Ward
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0000.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0001.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0003.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0004.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0005.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0007.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0008.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0009.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0010.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0011.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0012.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0013.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0014.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0015.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0017.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0018.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0019.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0020.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0021.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0022.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0023.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0024.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0025.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0026.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0027.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0028.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0030.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0031.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0032.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0033.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0034.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0035.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0036.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0037.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0038.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0039.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0040.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0041.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0042.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0045.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0046.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0048.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0049.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0050.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0051.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0052.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0053.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0054.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0055.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0056.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0058.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0059.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0060.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0061.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0062.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0063.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0064.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0065.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0066.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0067.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0068.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0069.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0070.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0071.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0072.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0073.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0074.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0075.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0076.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0077.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0079.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0080.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0081.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0083.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0084.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0085.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0086.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0087.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0088.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0089.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0090.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0091.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0092.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0093.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0094.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0095.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0096.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0097.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0098.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0099.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0100.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0101.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0102.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0103.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0104.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0105.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0106.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0107.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0108.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0109.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0110.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0111.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0112.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0113.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0114.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0115.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0116.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0117.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0118.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0119.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0120.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0121.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0122.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0123.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0124.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0125.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0126.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_2nd_echo.0127.nii': failure to open dataset
+[7m** FATAL ERROR:[0m can't continue after above -inset problems
+** Program compile date = Dec  2 2022
+[7m** ERROR:[0m ===== 3dClustSim command failed to output 3drefit stub :-((( =====
+++ 3dttest++ ----- Cleaning up intermediate files:
+removed ‘Group_Ttest/ClustSim_Group_2nd_echo.resid.nii’
+removed ‘./Group_Ttest/ClustSim_Group_2nd_echo.0002.nii’
+removed ‘./Group_Ttest/ClustSim_Group_2nd_echo.0006.nii’
+removed ‘./Group_Ttest/ClustSim_Group_2nd_echo.0016.nii’
+removed ‘./Group_Ttest/ClustSim_Group_2nd_echo.0029.nii’
+removed ‘./Group_Ttest/ClustSim_Group_2nd_echo.0043.nii’
+removed ‘./Group_Ttest/ClustSim_Group_2nd_echo.0044.nii’
+removed ‘./Group_Ttest/ClustSim_Group_2nd_echo.0047.nii’
+removed ‘./Group_Ttest/ClustSim_Group_2nd_echo.0057.nii’
+removed ‘./Group_Ttest/ClustSim_Group_2nd_echo.0078.nii’
+removed ‘./Group_Ttest/ClustSim_Group_2nd_echo.0082.nii’
+ + 3dttest++ =============== -Clustsim work is finished :) ===============
+++ ----- 3dttest++ says so long, farewell, and happy trails to you :) -----
+++ 3dttest++: AFNI version=AFNI_22.3.07 (Dec  2 2022) [64-bit]
+++ Authored by: Zhark++
+++ Number of -Clustsim threads set to 128
+++ option -setA :: processing as SHORT form (all values are datasets)
+++ have 84 volumes corresponding to option '-setA'
+++ -zskip: require at least 5 (out of 84) nonzero values for setA
+++ no mask ==> processing all 614125 voxels
+++ loading -setA datasets
+[7m*+ WARNING:[0m 3dttest++ -setA :: 506158 vectors are constant
+++ t-testing:0123456789.0123456789.0123456789.0123456789.0123456789.!
+ + skipped 506158 voxels completely for having constant data
+ + -zskip: 80812 voxels had some values skipped in their t-tests
+ + -zskip: skipped 18611 voxels completely for having too few nonzero values
+++ ---------- End of analyses -- freeing workspaces ----------
+++ Creating FDR curves in output dataset
+++ Smallest FDR q [1 SetA_Zscr] = 1.46687e-07
+ + Added 1 FDR curve to dataset
+++ Output dataset Group_Ttest/Group_Ttest_Within_OC.nii
+++ Output dataset Group_Ttest/ClustSim_Group_OC.resid.nii
+++ ================ Starting -Clustsim calculations ================
+ + === temporary files will have prefix Group_Ttest/ClustSim_Group_OC ===
+ + === running 128 -randomsign jobs (79 iterations per job) ===
+++ 3dttest++: AFNI version=AFNI_22.3.07 (Dec  2 2022) [64-bit]
+++ Authored by: Zhark++
+++ option -setA :: processing as SHORT form (all values are datasets)
+++ have 84 volumes corresponding to option '-setA'
+++ -zskip: require at least 5 (out of 84) nonzero values for setA
+++ random seeds are 907906359 1222065624
+++ no mask ==> processing all 614125 voxels
+++ loading -setA datasets
+sh: line 3: 101222 Killed                  3dttest++ -DAFNI_AUTOMATIC_FDR=NO -DAFNI_DONT_LOGFILE=YES -randomsign 79 -nomeans -toz -seed 909017510 1223176775 -nopermute -zskip 5 -setA Group_Ttest/ClustSim_Group_OC.resid.nii -prefix ./Group_Ttest/ClustSim_Group_OC.0001.nii &>/dev/null
+sh: line 3: 101225 Killed                  3dttest++ -DAFNI_AUTOMATIC_FDR=NO -DAFNI_DONT_LOGFILE=YES -randomsign 79 -nomeans -toz -seed 910128661 1224287926 -nopermute -zskip 5 -setA Group_Ttest/ClustSim_Group_OC.resid.nii -prefix ./Group_Ttest/ClustSim_Group_OC.0002.nii &>/dev/null
+sh: line 3: 101405 Killed                  3dttest++ -DAFNI_AUTOMATIC_FDR=NO -DAFNI_DONT_LOGFILE=YES -randomsign 79 -nomeans -toz -seed 971241966 1285401231 -nopermute -zskip 5 -setA Group_Ttest/ClustSim_Group_OC.resid.nii -prefix ./Group_Ttest/ClustSim_Group_OC.0057.nii &>/dev/null
+ + 3dttest++ ===== simulation jobs have finished (197.4 s elapsed)
+ + 3dttest++ ===== starting 3dClustSim A: elapsed = 201.5 s
+++ 3dClustSim: AFNI version=AFNI_22.3.07 (Dec  2 2022) [64-bit]
+++ Authored by: RW Cox and BD Ward
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0000.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0001.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0002.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0003.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0004.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0005.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0008.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0009.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0010.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0011.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0012.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0013.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0014.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0016.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0018.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0019.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0020.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0021.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0022.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0023.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0024.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0025.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0026.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0027.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0028.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0029.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0031.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0034.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0035.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0036.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0037.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0038.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0039.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0040.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0041.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0042.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0043.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0044.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0045.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0046.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0047.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0048.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0049.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0050.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0051.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0052.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0053.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0054.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0055.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0056.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0057.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0058.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0059.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0060.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0061.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0062.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0063.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0064.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0065.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0066.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0067.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0068.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0069.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0070.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0071.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0072.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0073.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0074.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0075.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0076.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0077.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0078.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0079.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0082.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0083.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0084.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0085.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0086.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0087.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0088.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0089.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0091.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0092.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0093.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0094.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0095.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0096.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0097.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0098.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0099.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0100.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0101.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0102.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0103.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0104.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0105.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0106.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0107.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0108.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0109.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0110.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0111.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0112.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0113.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0114.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0115.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0116.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0117.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0118.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0119.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0120.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0121.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0122.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0123.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0124.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0125.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0126.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_OC.0127.nii': failure to open dataset
+[7m** FATAL ERROR:[0m can't continue after above -inset problems
+** Program compile date = Dec  2 2022
+[7m** ERROR:[0m ===== 3dClustSim command failed to output 3drefit stub :-((( =====
+++ 3dttest++ ----- Cleaning up intermediate files:
+removed ‘Group_Ttest/ClustSim_Group_OC.resid.nii’
+removed ‘./Group_Ttest/ClustSim_Group_OC.0006.nii’
+removed ‘./Group_Ttest/ClustSim_Group_OC.0007.nii’
+removed ‘./Group_Ttest/ClustSim_Group_OC.0015.nii’
+removed ‘./Group_Ttest/ClustSim_Group_OC.0017.nii’
+removed ‘./Group_Ttest/ClustSim_Group_OC.0030.nii’
+removed ‘./Group_Ttest/ClustSim_Group_OC.0032.nii’
+removed ‘./Group_Ttest/ClustSim_Group_OC.0033.nii’
+removed ‘./Group_Ttest/ClustSim_Group_OC.0080.nii’
+removed ‘./Group_Ttest/ClustSim_Group_OC.0081.nii’
+removed ‘./Group_Ttest/ClustSim_Group_OC.0090.nii’
+ + 3dttest++ =============== -Clustsim work is finished :) ===============
+++ ----- 3dttest++ says so long, farewell, and happy trails to you :) -----
+++ 3dttest++: AFNI version=AFNI_22.3.07 (Dec  2 2022) [64-bit]
+++ Authored by: Zhark++
+++ Number of -Clustsim threads set to 128
+++ option -setA :: processing as SHORT form (all values are datasets)
+++ have 84 volumes corresponding to option '-setA'
+++ -zskip: require at least 5 (out of 84) nonzero values for setA
+++ no mask ==> processing all 614125 voxels
+++ loading -setA datasets
+[7m*+ WARNING:[0m 3dttest++ -setA :: 506158 vectors are constant
+++ t-testing:0123456789.0123456789.0123456789.0123456789.0123456789.!
+ + skipped 506158 voxels completely for having constant data
+ + -zskip: 80812 voxels had some values skipped in their t-tests
+ + -zskip: skipped 18611 voxels completely for having too few nonzero values
+++ ---------- End of analyses -- freeing workspaces ----------
+++ Creating FDR curves in output dataset
+++ Smallest FDR q [1 SetA_Zscr] = 1.46687e-07
+ + Added 1 FDR curve to dataset
+++ Output dataset Group_Ttest/Group_Ttest_Within_ted_DN.nii
+++ Output dataset Group_Ttest/ClustSim_Group_ted_DN.resid.nii
+++ ================ Starting -Clustsim calculations ================
+ + === temporary files will have prefix Group_Ttest/ClustSim_Group_ted_DN ===
+ + === running 128 -randomsign jobs (79 iterations per job) ===
+++ 3dttest++: AFNI version=AFNI_22.3.07 (Dec  2 2022) [64-bit]
+++ Authored by: Zhark++
+++ option -setA :: processing as SHORT form (all values are datasets)
+++ have 84 volumes corresponding to option '-setA'
+++ -zskip: require at least 5 (out of 84) nonzero values for setA
+++ random seeds are 1873434740 2187594005
+++ no mask ==> processing all 614125 voxels
+++ loading -setA datasets
+sh: line 3: 103719 Killed                  3dttest++ -DAFNI_AUTOMATIC_FDR=NO -DAFNI_DONT_LOGFILE=YES -randomsign 79 -nomeans -toz -seed 1874545891 2188705156 -nopermute -zskip 5 -setA Group_Ttest/ClustSim_Group_ted_DN.resid.nii -prefix ./Group_Ttest/ClustSim_Group_ted_DN.0001.nii &>/dev/null
+sh: line 3: 103855 Killed                  3dttest++ -DAFNI_AUTOMATIC_FDR=NO -DAFNI_DONT_LOGFILE=YES -randomsign 79 -nomeans -toz -seed 1920103082 2234262347 -nopermute -zskip 5 -setA Group_Ttest/ClustSim_Group_ted_DN.resid.nii -prefix ./Group_Ttest/ClustSim_Group_ted_DN.0042.nii &>/dev/null
+ + 3dttest++ ===== simulation jobs have finished (179.4 s elapsed)
+ + 3dttest++ ===== starting 3dClustSim A: elapsed = 183.4 s
+++ 3dClustSim: AFNI version=AFNI_22.3.07 (Dec  2 2022) [64-bit]
+++ Authored by: RW Cox and BD Ward
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0000.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0001.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0002.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0003.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0004.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0005.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0006.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0007.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0008.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0009.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0010.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0012.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0013.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0014.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0015.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0016.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0017.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0018.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0019.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0020.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0021.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0023.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0024.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0025.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0026.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0027.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0028.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0029.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0030.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0031.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0033.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0034.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0035.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0036.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0037.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0038.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0039.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0040.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0041.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0042.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0043.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0044.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0045.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0046.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0047.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0048.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0049.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0050.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0051.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0052.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0053.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0054.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0055.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0056.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0057.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0058.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0059.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0061.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0062.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0063.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0064.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0065.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0066.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0067.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0068.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0069.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0070.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0071.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0072.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0073.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0074.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0075.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0076.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0077.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0078.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0079.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0080.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0081.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0082.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0083.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0084.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0086.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0087.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0088.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0090.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0091.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0092.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0093.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0094.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0095.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0096.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0097.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0098.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0099.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0100.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0101.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0102.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0103.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0104.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0105.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0106.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0107.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0108.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0109.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0110.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0111.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0112.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0113.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0114.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0115.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0117.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0118.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0119.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0121.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0122.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0123.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0124.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0125.nii': failure to open dataset
+[7m** ERROR:[0m -inset './Group_Ttest/ClustSim_Group_ted_DN.0127.nii': failure to open dataset
+[7m** FATAL ERROR:[0m can't continue after above -inset problems
+** Program compile date = Dec  2 2022
+[7m** ERROR:[0m ===== 3dClustSim command failed to output 3drefit stub :-((( =====
+++ 3dttest++ ----- Cleaning up intermediate files:
+removed ‘Group_Ttest/ClustSim_Group_ted_DN.resid.nii’
+removed ‘./Group_Ttest/ClustSim_Group_ted_DN.0011.nii’
+removed ‘./Group_Ttest/ClustSim_Group_ted_DN.0022.nii’
+removed ‘./Group_Ttest/ClustSim_Group_ted_DN.0032.nii’
+removed ‘./Group_Ttest/ClustSim_Group_ted_DN.0060.nii’
+removed ‘./Group_Ttest/ClustSim_Group_ted_DN.0085.nii’
+removed ‘./Group_Ttest/ClustSim_Group_ted_DN.0089.nii’
+removed ‘./Group_Ttest/ClustSim_Group_ted_DN.0116.nii’
+removed ‘./Group_Ttest/ClustSim_Group_ted_DN.0120.nii’
+removed ‘./Group_Ttest/ClustSim_Group_ted_DN.0126.nii’
+ + 3dttest++ =============== -Clustsim work is finished :) ===============
+++ ----- 3dttest++ says so long, farewell, and happy trails to you :) -----

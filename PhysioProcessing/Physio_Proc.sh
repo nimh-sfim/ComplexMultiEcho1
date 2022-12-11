@@ -10,7 +10,7 @@ if ! [ -d ${tmp_root} ]; then
     mkdir $tmp_root
 fi
 
-scripts=/data/holnessmn/ComplexMultiEcho1/PhysioProcessing/
+scripts=/data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/PhysioProcessing/
 data_root=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/
 func_root=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/Unprocessed/func/
 afni_wnw=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/afniproc_orig/WNW/${sub}.results/
@@ -113,8 +113,8 @@ trim() {
     done
 
     # check TRIMMED vs ORIG physio files and change the .JSON headers to match
-    python3 check_physios.py sub
-    python3 check_headers.py sub
+    python3 ${scripts}Physio_QC/check_physios.py sub
+    python3 ${scripts}Physio_QC/check_headers.py sub
 }
 
 # don't forget to remove files in 'tmp'!!!

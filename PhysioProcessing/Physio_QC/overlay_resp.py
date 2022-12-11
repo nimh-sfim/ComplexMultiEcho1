@@ -59,7 +59,7 @@ for tidx, task in enumerate(['breathing','movie']):
             # center ideal ts on zero
             ideal_ts = ideal_ts - np.mean(ideal_ts)
 
-            # compute the session time interval in seconds (number of datapoints * 1 / 0.1Hz)
+            # compute the session time interval in seconds (number of datapoints)
             x_plane_real = np.arange(real_ts.shape[0])
             x_plane_ideal = np.arange(ideal_ts.shape[0])
             x_plane_rvt = np.arange(rvt_ts.shape[0])

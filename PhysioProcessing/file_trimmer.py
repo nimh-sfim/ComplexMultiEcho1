@@ -18,6 +18,7 @@ for i in {14..18}; do
 """
 parser = argparse.ArgumentParser()
 parser.add_argument("--filepath", dest="filepath", help="file path for input .tsv file to be trimmed", type=str)
+parser.add_argument("--jsonpath", dest="jsonpath", help="file path for accompanied .json file", type=str)
 parser.add_argument("--outpath", dest="outpath", help="output path for trimmed .tsv file", type=str)
 ARG = parser.parse_args()
 
@@ -30,7 +31,6 @@ if ARG.outpath and os.path.isdir(ARG.outpath):
     out = ARG.outpath
 else:
     raise Exception("This dir does not exist!!! Can't put file anywhere!")
-
 
 
 """

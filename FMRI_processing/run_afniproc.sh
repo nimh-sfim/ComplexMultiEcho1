@@ -71,6 +71,15 @@ else
 
 fi
 
+# Raise the censoring threshold for subjects 03 & 09: 
+# the 1st option is a threshold of a Euclidean Norm: the derivative of the motion parameters / sqrt (sum squares) for the TR
+# the 2nd option is a threshold of the percentage of voxels that were flagged as motion outliers by 3dToutcount, with a range of 0-1
+if ${subj_id} in 'sub-03' 'sub-09'; then
+  censor_motion=0.4;
+  censor_outliers=0.10;
+else
+  censor_motion=0.2;
+  censor_outliers=0.05;
 
 echo '#!/bin/sh' > ${subj_id}_WNW_sbatch.txt
 echo "module load afni" >> ${subj_id}_WNW_sbatch.txt
