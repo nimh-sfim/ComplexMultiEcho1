@@ -56,12 +56,12 @@ ARG = parser.parse_args()
 if ARG.tsv and os.path.isfile(ARG.tsv):
     tsv = ARG.tsv
 else:
-    raise Exception(f"This file/filepath {ARG.tsv} does not exist!!!")
+    print(f"Skipping: This file/filepath {ARG.tsv} does not exist.")
 
 if ARG.json and os.path.isfile(ARG.json):
     json = ARG.json
 else:
-    raise Exception(f"This file/filepath {ARG.json} does not exist!!!")
+    print(f"Skipping: This file/filepath {ARG.json} does not exist.")
 
 if ARG.motion_demean and os.path.isfile(ARG.motion_demean):
     motion_demean = ARG.motion_demean
@@ -487,5 +487,8 @@ def convert():
 
     # Note: Index is by Frame Times
     dm_regressors.to_csv(f"{prefix}.tsv", sep="\t")
+
+    print("Wrote dataset: ", f"{prefix}.tsv")
+
 convert()
 

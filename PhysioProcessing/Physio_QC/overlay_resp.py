@@ -101,3 +101,7 @@ plt.show()
 
 # ideal vs rvt length
 # (4553,) and (299,)
+
+
+
+    

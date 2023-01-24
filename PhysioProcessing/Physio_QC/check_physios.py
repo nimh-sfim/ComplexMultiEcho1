@@ -32,4 +32,4 @@ for idx, (t, o) in enumerate(zip(trimmed,originals)):
     axs[1].set_xlabel('Cardiac')
     fig_2.suptitle("Original")
 
-plt.show()
+    plt.show()

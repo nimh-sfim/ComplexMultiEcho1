@@ -112,9 +112,12 @@ trim() {
         fi
     done
 
-    # check TRIMMED vs ORIG physio files and change the .JSON headers to match
-    python3 ${scripts}Physio_QC/check_physios.py sub
-    python3 ${scripts}Physio_QC/check_headers.py sub
+}
+
+check_physios() {
+    # check TRIMMED vs ORIG physio files that they match in cardiac/resp trace and change the .JSON headers to match current tsv headers
+    python3 ${scripts}Physio_QC/check_headers.py $sub
+    python3 ${scripts}Physio_QC/check_physios.py $sub
 }
 
 # don't forget to remove files in 'tmp'!!!
@@ -123,6 +126,12 @@ trim() {
 
 # Calculate NiPhlem Regressors and drop into Regressors/ dir
 calc_regressors() {
+
+    #check if 'Regressors' directory exists
+    if ! [ -d ${data_root}Regressors/ ]; then
+        mkdir ${data_root}Regressors/
+    fi
+
     runs=(1 2 3)
     for task in $tasks; do
         echo "Task is ${task}. Subj is ${sub}."
@@ -174,6 +183,6 @@ calc_regressors() {
 }
 
 ######
-#calls: convert, trim, calc_regressors
+#calls: convert, trim, check_physios, calc_regressors
 ######
 $call

@@ -72,14 +72,19 @@ else
 fi
 
 # Raise the censoring threshold for subjects 03 & 09: 
+difficult_subj_array=('sub-03' 'sub-09')
+
 # the 1st option is a threshold of a Euclidean Norm: the derivative of the motion parameters / sqrt (sum squares) for the TR
 # the 2nd option is a threshold of the percentage of voxels that were flagged as motion outliers by 3dToutcount, with a range of 0-1
-if ${subj_id} in 'sub-03' 'sub-09'; then
+if [[ ${difficult_subj_array[*]} =~ $subj_id ]]; then
   censor_motion=0.4;
   censor_outliers=0.10;
 else
   censor_motion=0.2;
   censor_outliers=0.05;
+fi
+
+echo "Censoring thresholds: " $censor_motion, $censor_outliers
 
 echo '#!/bin/sh' > ${subj_id}_WNW_sbatch.txt
 echo "module load afni" >> ${subj_id}_WNW_sbatch.txt
@@ -111,7 +116,7 @@ echo \
  "  -align_opts_aea -cost lpc+ZZ -check_flip" \\$'\n' \
  "  -combine_method m_tedana" \\$'\n' \
  "  -combine_opts_tedana --tedpca aic" \\$'\n' \
- "  -regress_censor_motion 0.2 -regress_censor_outliers 0.05" \\$'\n' \
+ "  -regress_censor_motion ${censor_motion} -regress_censor_outliers ${censor_outliers}" \\$'\n' \
  "  -regress_stim_times ./stimfiles/${subj_id}_VisProc_Times.1D" \\$'\n' \
  "                     ./stimfiles/${subj_id}_FalVisProc_Times.1D" \\$'\n'  \
  "                     ./stimfiles/${subj_id}_AudProc_Times.1D" \\$'\n' \
@@ -170,7 +175,7 @@ for runid in  movie_run-1 movie_run-2 movie_run-3 breathing_run-1 breathing_run-
         "  -volreg_align_e2a"  \\$'\n' \
         "  -combine_method m_tedana" \\$'\n' \
         "  -combine_opts_tedana --tedpca aic" \\$'\n' \
-        "  -regress_censor_motion 0.2 -regress_censor_outliers 0.05" \\$'\n' \
+        "  -regress_censor_motion ${censor_motion} -regress_censor_outliers ${censor_outliers}" \\$'\n' \
         "  -regress_opts_3dD -jobs 8" \\$'\n' \
         "  -regress_est_blur_epits -regress_est_blur_errts" \\$'\n' \
         "  -regress_apply_mot_types demean deriv" \\$'\n' \
@@ -189,22 +194,57 @@ done
 
 # Note: This assignment of a jobid from sbatch works on biowulf, but not elsewhere.
 #   See: https://hpc.nih.gov/docs/job_dependencies.html
-if [ $RunJobs -eq 1 ]; then
-  WNWjobID=$(sbatch --time 6:00:00 --cpus-per-task=8 --mem=24G --error=slurm_${subj_id}_WNW.e --output=slurm_${subj_id}_WNW.o ${subj_id}_WNW_sbatch.txt)
-  moviebreath_jobID=$(swarm --time 6:00:00 --dependency=afterok:${WNWjobID} -g 24 -t 8 -m afni --merge-output --job-name moviebreath ${subj_id}_moviebreath_swarm.txt)
 
-  cd $rootdir
-  if [ -f ${subj_id}_jobhist_sbatch.txt ]; then
-      echo Deleting and recreating ${subj_id}_jobhist_sbatch.txt
-      rm ${subj_id}_jobhist_sbatch.txt
+# separate processes for hard to process subjects (high motion censoring)
+if [[ ${difficult_subj_array[*]} =~ $subj_id ]]; then
+
+  # require second file argument for task (i.e., WNW or moviebreath)
+  task=$2
+
+  if [ $RunJobs -eq 1 ]; then
+
+    cd $rootdir
+    if [ -f ${subj_id}_jobhist_sbatch.txt ]; then
+        echo Deleting and recreating ${subj_id}_jobhist_sbatch.txt
+        rm ${subj_id}_jobhist_sbatch.txt
+    fi
+    touch ${subj_id}_jobhist_sbatch.txt
+
+    echo '#!/bin/sh' >> ${subj_id}_jobhist_sbatch.txt
+
+    if [ $task == 'WNW' ]; then
+      WNWjobID=$(sbatch --time 6:00:00 --cpus-per-task=8 --mem=24G --error=slurm_${subj_id}_WNW.e --output=slurm_${subj_id}_WNW.o ${subj_id}_WNW_sbatch.txt)
+      echo "jobhist ${WNWjobID} > ${subj_id}_jobhist_results.txt " >> ${subj_id}_jobhist_sbatch.txt
+    elif [ $task == 'moviebreath' ]; then
+      moviebreath_jobID=$(swarm --time 06:00:00 -g 24 -t 8 -m afni --merge-output --job-name moviebreath ${subj_id}_moviebreath_swarm.txt)
+      echo "jobhist ${moviebreath_jobID} >> ${subj_id}_jobhist_results.txt " >> ${subj_id}_jobhist_sbatch.txt
+      sbatch --time 00:30:00 --cpus-per-task=1 --partition=norm,quick ${subj_id}_jobhist_sbatch.txt
+    fi
+
   fi
-  touch ${subj_id}_jobhist_sbatch.txt
 
-  echo '#!/bin/sh' >> ${subj_id}_jobhist_sbatch.txt
-  echo "jobhist ${WNWjobID} > ${subj_id}_jobhist_results.txt " >> ${subj_id}_jobhist_sbatch.txt
-  echo "jobhist ${moviebreath_jobID} >> ${subj_id}_jobhist_results.txt " >> ${subj_id}_jobhist_sbatch.txt
+# run dependency processes for all other subjects
+else
+  if [ $RunJobs -eq 1 ]; then
+    WNWjobID=$(sbatch --time 6:00:00 --cpus-per-task=8 --mem=24G --error=slurm_${subj_id}_WNW.e --output=slurm_${subj_id}_WNW.o ${subj_id}_WNW_sbatch.txt)
+    moviebreath_jobID=$(swarm --time 6:00:00 --dependency=afterok:${WNWjobID} -g 24 -t 8 -m afni --merge-output --job-name moviebreath ${subj_id}_moviebreath_swarm.txt)
 
+    cd $rootdir
+    if [ -f ${subj_id}_jobhist_sbatch.txt ]; then
+        echo Deleting and recreating ${subj_id}_jobhist_sbatch.txt
+        rm ${subj_id}_jobhist_sbatch.txt
+    fi
+    touch ${subj_id}_jobhist_sbatch.txt
 
-  sbatch --dependency=afterany:${moviebreath_jobID} --time 00:30:00 --cpus-per-task=1 --partition=norm,quick ${subj_id}_jobhist_sbatch.txt
+    echo '#!/bin/sh' >> ${subj_id}_jobhist_sbatch.txt
+    echo "jobhist ${WNWjobID} > ${subj_id}_jobhist_results.txt " >> ${subj_id}_jobhist_sbatch.txt
+    echo "jobhist ${moviebreath_jobID} >> ${subj_id}_jobhist_results.txt " >> ${subj_id}_jobhist_sbatch.txt
+
+    sbatch --dependency=afterany:${moviebreath_jobID} --time 00:30:00 --cpus-per-task=1 --partition=norm,quick ${subj_id}_jobhist_sbatch.txt
+
+  fi
 
 fi
+
+
+
