@@ -193,7 +193,7 @@ def group_plotting_ts_averaged():
 ideal_plotting()
 
 # individual subject time series plots
-# group_plotting_ts_nonaveraged()
+group_plotting_ts_nonaveraged()
 
 # group data - averaged/median across subject time series
 group_plotting_ts_averaged()

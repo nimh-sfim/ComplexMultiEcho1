@@ -1,7 +1,11 @@
 """ A script to see whether the participants were following the breathing task
 Real = participant's breathing pattern
-RVT = respiration variation over time (Regressor calculated by NiPhlem)
-Ideal = PsychoPy's frequency/"breathing" pattern for that run
+RVT = respiration volume over time (Regressor calculated by NiPhlem's algorithm which uses Birn function)
+Ideal = PsychoPy's frequency/"breathing" pattern for that run (A/B)
+
+This script:
+1) plots the peak detection of the real timeseries
+2) overlays the real breathing/RVT patterns over the ideal patterns (A/B)
 """
 
 import subprocess
@@ -32,7 +36,7 @@ for tidx, task in enumerate(['breathing','movie']):
 
             print(f"{sub}, {task}, run {run}")
             real_file = pd.read_csv(real_file, sep="\t")
-            ideal = input("Breathing Pattern (check acquisition notes .txt): ")
+            ideal = input("Breathing Pattern (check ScanningNotes.txt): ")
             ideal_file = pd.read_csv(f"/data/holnessmn/ComplexMultiEcho1/PsychoPy/MovieRespiration/IdealBreathingPattern_Run{ideal}.tsv", sep="\t")
             rvt_file = pd.read_csv(f"/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/{sub}/Regressors/{sub}_RegressorModels_{task}_run-{run}.tsv", sep="\t")
             real_ts = real_file['Respiratory']
