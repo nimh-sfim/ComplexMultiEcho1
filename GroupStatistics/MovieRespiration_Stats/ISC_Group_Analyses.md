@@ -3,24 +3,25 @@
 <br>
 
 ### Pipeline to complete group analysis
-* Maximum time to complete the processing as well as what type of job to run is included
+* Maximum time to complete the processing (per subprocess) as well as what type of job to run is included
+* These times might increase depending on how many subjects you are analyzing
 
-<br>Mask the second echoes: sbatch (~1 min)
+<br>Mask the second echoes: sbatch (1 min)
 ```
 bash GroupMask_MH.sh masking_second_echoes
 ```
 
-<br>Warp the original files to the 1st subject's template: swarm (< 6 hrs)
+<br>Warp the original files to the 1st subject's template: swarm (1 hr)
 ```
 bash warping_group_template.sh orig_warped sub-??
 ```
 
-<br>Mask the warped originals: sbatch (~10 mins)
+<br>Mask the warped originals: sbatch (10 mins)
 ```
 bash GroupMask_MH.sh masking_warped_files
 ```
 
-<br>Within-Subject Correlations: swarm ( < 24 hrs)
+<br>Within-Subject Correlations: swarm (2 hrs)
 <br>Correlates all of the subject runs within each subject by datatype (2nd echo, OC, TedDN)
 ```
 bash ISC_correlations.sh movie_A_x_movie_B
@@ -29,7 +30,7 @@ bash ISC_correlations.sh movie_B_x_resp_A1
 bash ISC_correlations.sh resp_A1_x_resp_A2
 ```
 
-<br>Between-Subject Correlations: swarm ( < 48 hrs)
+<br>Between-Subject Correlations: swarm (4 hrs)
 <br>Correlates all of the runs across subjects by datatype (2nd echo, OC, TedDN)
 ```
 bash ISC_correlations.sh movie_A_x_movie_B_between
@@ -38,33 +39,34 @@ bash ISC_correlations.sh resp_A1_x_resp_A1_between
 bash ISC_correlations.sh resp_A2_x_resp_A2_between
 ```
 
-<br>Group T-test for Within-Subject Correlations: swarm (~10 mins)
-```
-bash GroupStats_Corrs.sh Ttest_movie_A_x_movie_B
-bash GroupStats_Corrs.sh Ttest_movie_A_x_resp_A1
-bash GroupStats_Corrs.sh Ttest_movie_B_x_resp_A1
-bash GroupStats_Corrs.sh Ttest_resp_A1_x_resp_A2
-```
-
 <br>Create the .txt files that contain the table for between-subject correlations (< 1 min)
 ```
-bash quick_script.sh all_subjects
+bash quick_script.sh isc_dataframe all
+bash quick_script.sh isc_dataframe motion
+bash quick_script.sh isc_dataframe task_compliant
 ```
 
-<br>Group ISC for Between-Subject Correlations: swarm (< 12 hrs)
+<br>Group T-test for Within-Subject Correlations: swarm (10 mins)
 ```
-bash GroupStats_Corrs.sh ISC_movie_A_x_movie_B
-bash GroupStats_Corrs.sh ISC_movie_B_x_movie_A
-bash GroupStats_Corrs.sh ISC_resp_A1_x_resp_A1
-bash GroupStats_Corrs.sh ISC_resp_A2_x_resp_A2
+bash GroupStats_Corrs.sh Ttest movie_A_x_movie_B all
+bash GroupStats_Corrs.sh Ttest movie_A_x_resp_A1 all
+bash GroupStats_Corrs.sh Ttest movie_B_x_resp_A1 all
+bash GroupStats_Corrs.sh Ttest resp_A1_x_resp_A2 all
 ```
 
-<br>(Optional): If you'd like to compare performance across certain groups of subjects (i.e., good task performance or low motion), you can call the following commands instead
+<br>Group ISC for Between-Subject Correlations: swarm (3 hrs)
+```
+bash GroupStats_Corrs.sh ISC movie_A_x_movie_B all
+bash GroupStats_Corrs.sh ISC movie_B_x_movie_A all
+bash GroupStats_Corrs.sh ISC resp_A1_x_resp_A1 all
+bash GroupStats_Corrs.sh ISC resp_A2_x_resp_A2 all
+```
+
+<br>(Optional): If you'd like to compare performance across certain groups of subjects (i.e., good task performance or low motion), you can call "motion" or "task_compliant"
 <br>(Example)
 ```
-Ttest_movie_B_x_resp_A1_good()
-Ttest_movie_B_x_resp_A1_low_motion()
-bash quick_script.sh good_subjects_only
-bash quick_script.sh low_motion_only
-ISC_movie_A_x_movie_B_good()
+Ttest movie_A_x_movie_B task_compliant
+Ttest movie_A_x_movie_B motion
+ISC movie_A_x_movie_B motion
+ISC movie_A_x_movie_B task_compliant
 ```
