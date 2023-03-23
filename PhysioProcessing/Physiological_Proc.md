@@ -37,7 +37,7 @@ calc_regressors
 
 ### <br>Fit the ICA components to the regressors with a Linear Model
 <br>Call [run_FitReg2ICA.sh](run_FitReg2ICA.sh)
-<br><font size="1">This file will run [FitReg2ICA.py](FitReg2ICA.py). Runs on a group of subjects listed in the file.</font>
 ```
 bash run_FitReg2ICA.sh
 ```
+<font size="2">This file will run [FitReg2ICA.py](FitReg2ICA.py), which runs on a group of subjects listed in the file.<br> To see the methods used in the FitReg2ICA class obj, view [FitReg2ICAClass.py](FitReg2ICAClass.py).</font>
