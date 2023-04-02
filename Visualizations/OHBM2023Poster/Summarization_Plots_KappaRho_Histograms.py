@@ -144,7 +144,7 @@ class extract_data:
         Enter: conditions (MUST be >1 condition)
         Returns a boolean dataframe that matches ALL those conditions with the accompanying indices
         """
-        bool_df = np.logical_and(*conds).fillna(False)
+        bool_df = np.logical_and(*conds).fillna(value=bool(0), inplace=False)
         return bool_df
 
     def extract_metrics(self, df, *metrics):
@@ -166,15 +166,31 @@ class extract_data:
         bool_df_idx = bool_df.index[bool_df == True].tolist()
         return bool_df_idx
     
-    def return_sig_only(self, model, class_df, pval_df, pval_conditional, classt:str):
+    def exclude_component_indices(self, class_df, opp_df):
+        """
+        excludes the component indices from the opposite condition (opp_df)
+        i.e.,  for Tedana-only vs Regressor-Only conditions, which are mutually exclusive
+        """
+        # get indices of opposite condition
+        opp_indices = self.return_component_indices(opp_df)
+        # exclude those 'opp' indices by transforming those indices to 'False' in the class_df
+        class_df[opp_indices] = False
+        # return original df with excluded indices
+        return class_df
+    
+    def return_sig_only(self, model, class_df, pval_df, pval_conditional, classt:str, opp_cond):
         """
         Returns the significant components (pval_conditional) by the model type & classification:
         1) boolean dataframe (entire one), 2) indices, and 3) values
         """
-        signif_bools = self.parse_df(pval_conditional, class_df)
+        # if clause for separating tedonly vs regonly; each df should be exclusive of the other (hence, 'only')
+        if classt == "Rej Reg-Only" or classt == "Rej Ted-Only":
+            class_df_excl = self.exclude_component_indices(class_df, opp_cond)
+            signif_bools = self.parse_df(pval_conditional, class_df_excl)
+        else:
+            signif_bools = self.parse_df(pval_conditional, class_df)
         sig_indices = self.return_component_indices(signif_bools)
         sig_values = pval_df.loc[sig_indices, model].values
-        print(f"\n{classt} {model} Sig idxs: ", sig_indices, "\nSig values: ", sig_values)
         return signif_bools, sig_indices, sig_values
     
     def return_metrics_by_selected_components(self, main_df, *bool_dfs, **metrics):
@@ -297,14 +313,10 @@ class calculations:
         # extract the classification categories - boolean categories
         rej_both, rej_tedonly, rej_regonly, acc_all = self.get_classification_categories(class_df, kappas, None)
         
-        print("classified component boolean dfs: ", rej_both, rej_tedonly, rej_regonly, acc_all)
-        
         rej_both_idx = extr.return_component_indices(rej_both)
         rej_tedonly_idx = extr.return_component_indices(rej_tedonly)
         rej_regonly_idx = extr.return_component_indices(rej_regonly)
         acc_all_idx = extr.return_component_indices(acc_all)
-        
-        print("classified component indices: ", rej_both_idx, rej_tedonly_idx, rej_regonly_idx, acc_all_idx)
         
         rej_both_signif = pd.DataFrame(columns=['Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model'], index=np.arange(0,max(rej_both.index)+1,1), dtype=object)
         rej_tedonly_signif = pd.DataFrame(columns=['Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model'], index=np.arange(0,max(rej_tedonly.index)+1,1), dtype=object)
@@ -315,8 +327,6 @@ class calculations:
         numcomp=len(pval_df)
         # base full model p-vals
         base_signif = pval_df['Full Model']<(0.05/numcomp)
-        
-        print("Pval df: ", pval_df)
 
         # partial models for p-vals
         for model in ['Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model']:
@@ -324,22 +334,24 @@ class calculations:
                 pval_conditional = base_signif
             else:   # partial model conditionals (based on Full Model booleans)
                 pval_conditional = ((pval_df[model]<(0.05/numcomp)) * base_signif)
-            rb_signif_bools, rb_sig_indices, rb_sig_values = extr.return_sig_only(model, rej_both, pval_df, pval_conditional, "Rej Both")
+            rb_signif_bools, rb_sig_indices, rb_sig_values = extr.return_sig_only(model, rej_both, pval_df, pval_conditional, "Rej Both", None)
             rej_both_signif[model] = rb_signif_bools
-            rjt_signif_bools, rjt_sig_indices, rjt_sig_values = extr.return_sig_only(model, rej_tedonly, pval_df, pval_conditional, "Rej Ted-Only")
+            rjt_signif_bools, rjt_sig_indices, rjt_sig_values = extr.return_sig_only(model, rej_tedonly, pval_df, pval_conditional, "Rej Ted-Only", rej_regonly)
             rej_tedonly_signif[model] = rjt_signif_bools
-            rjr_signif_bools, rjr_sig_indices, rjr_sig_values = extr.return_sig_only(model, rej_regonly, pval_df, pval_conditional, "Rej Reg-Only")
+            rjr_signif_bools, rjr_sig_indices, rjr_sig_values = extr.return_sig_only(model, rej_regonly, pval_df, pval_conditional, "Rej Reg-Only", rej_tedonly)
             rej_regonly_signif[model] = rjr_signif_bools
-            aa_signif_bools, aa_sig_indices, aa_sig_values = extr.return_sig_only(model, acc_all, pval_df, pval_conditional, "Acc All")
+            aa_signif_bools, aa_sig_indices, aa_sig_values = extr.return_sig_only(model, acc_all, pval_df, pval_conditional, "Acc All", None)
             acc_all_signif[model] = aa_signif_bools
 
-        print("REJ BOTH: INDICES: (SIG): ", rb_sig_indices, "(ORIG): ", rej_both_idx, "VALUES (SIG):", rb_sig_values)
-        print("REJ TED-ONLY: INDICES (SIG): ", rjt_sig_indices, "(ORIG): ", rej_tedonly_idx, "VALUES (SIG):", rjt_sig_values)
-        print("REJ REG-ONLY: INDICES (SIG): ", rjr_sig_indices, "(ORIG): ", rej_regonly_idx, "VALUES (SIG):", rjr_sig_values)
-        print("ACC ALL: INDICES (SIG): ", aa_sig_indices, "(ORIG): ", acc_all_idx, "VALUES (SIG):", aa_sig_values)
+        print("\n\nREJ BOTH:\n INDICES (SIG): ", rb_sig_indices, "\n(ORIG): ", rej_both_idx, "\nVALUES (SIG):", rb_sig_values)
+        print("\n\nREJ TED-ONLY:\n INDICES (SIG): ", rjt_sig_indices, "\n(ORIG): ", rej_tedonly_idx, "\nVALUES (SIG):", rjt_sig_values)
+        print("\n\nREJ REG-ONLY:\n INDICES (SIG): ", rjr_sig_indices, "\n(ORIG): ", rej_regonly_idx, "\nVALUES (SIG):", rjr_sig_values)
+        print("\n\nACC ALL:\n INDICES (SIG): ", aa_sig_indices, "\n(ORIG): ", acc_all_idx, "\nVALUES (SIG):", aa_sig_values)
 
         return rej_both_signif.fillna(False), rej_tedonly_signif.fillna(False), rej_regonly_signif.fillna(False), acc_all_signif.fillna(False)
-    
+        # return rb_sig_indices, rjt_sig_indices, rjr_sig_indices, aa_sig_indices
+
+
     def extract_signif_components(self, obj, df, reg_cat, row_idx, dtype:str):
         """
         Extract a percentage or number of signif components per model across the subj/runs WITHIN the Full Model of signif components
@@ -411,8 +423,6 @@ class calculations:
         """
         returns dataframes of classified signif components per run (signif comps ONLY in those categories)
         """
-        # df = pd.DataFrame(columns=['Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model'],
-        #                             index = np.arange(end*3))
         columns=['Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model']
         accum_counts_rb = pd.DataFrame(columns=columns,index = np.arange(end*3))
         accum_counts_rt = pd.DataFrame(columns=columns,index = np.arange(end*3))
@@ -434,7 +444,14 @@ class calculations:
                     pval_df = pd.read_csv(pval_df)
                     kappas = class_df['kappa']
                     rej_both_signif, rej_tedonly_signif, rej_regonly_signif, acc_all_signif = calc.get_classification_categories_per_model(class_df, pval_df, kappas)
+
+                    # sums for each of the classifications: [146, 39, 108, 708] = [rej both, rej ted-only, rej reg-only, acc all]
                     
+                    print("\nRejected Both: ", rej_both_signif)
+                    print("\nRejected Ted-Only: ", rej_tedonly_signif)
+                    print("\nRejected Regressors-Only: ", rej_regonly_signif)
+                    print("\nAccepted All: ", acc_all_signif)
+
                     summary_stats = calc.return_summary_stats_significant_fits(rej_both_signif, rej_tedonly_signif, rej_regonly_signif, acc_all_signif, dtype='count')
 
                     print(summary_stats)
@@ -444,6 +461,7 @@ class calculations:
                         accum_counts_rt.loc[ridx, model] = summary_stats["Rej Ted-Only Sig"][model]['count']
                         accum_counts_rr.loc[ridx, model] = summary_stats["Rej Reg-Only Sig"][model]['count']
                         accum_counts_aa.loc[ridx, model] = summary_stats["Acc All Sig"][model]['count']
+        
         return accum_counts_rb.dropna(axis=0), accum_counts_rt.dropna(axis=0), accum_counts_rr.dropna(axis=0), accum_counts_aa.dropna(axis=0)
     
 calc = calculations()
@@ -572,9 +590,9 @@ class plot_production:
         # plot the scatterplot
         sme = ax.scatter(kappas, rhos, s=size, c=colors)
         
-    def multi_subplot_base_plot_parameters(self, title:str, xlabel:str, ylabel:str, x_range, y_range, task:str):
+    def multi_subplot_base_plot_parameters(self, title:str, xlabel:str, ylabel:str, x_range:np.ndarray, y_range:np.ndarray, type:str):
         """
-        4-subplot space for "Accepted", "Rejected", etc. categories
+        4 or 5-subplot space for categories (ie. "Accepted"...) or models (ie. "Full Model"...)
         """
         
         # figure basis
@@ -586,13 +604,22 @@ class plot_production:
         ax.spines['left'].set_color('none')
         ax.spines['right'].set_color('none')
         ax.tick_params(labelcolor='w', top=False, bottom=False, left=False, right=False)
-        if x_range != None and y_range != None:
-            ax.set_xticks(x_range), ax.set_yticks(y_range)
 
-        # subplot titles & other parameters
-        subplots = [fig.add_subplot(2, 2, i + 1) for i in range(4)]
-        titles = ("Accepted All", "Rejected Both", "Non-Bold Only", "Motion/Phys Only")
-        top = [False for i in range(4)]
+        # set the X/Y ranges
+        if x_range != None and y_range != None:
+            ax.set_xticks(x_range)
+            ax.set_yticks(y_range)
+
+        if type == 'classification':
+            # subplot titles & other parameters
+            subplots = [fig.add_subplot(2, 2, i + 1) for i in range(4)]
+            titles = ("Accepted All", "Rejected Both", "Non-Bold Only", "Motion/Phys Only")
+            top = [False for i in range(4)]
+        elif type == 'models':
+            # subplot titles & other parameters
+            subplots = [fig.add_subplot(2, 3, i + 1) for i in range(5)]
+            titles = ('Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model')
+            top = [False for i in range(5)]
         title_size = 24
         label_size = 12
         tick_size = 6
@@ -616,7 +643,7 @@ class plot_production:
         ylabel='rho'
         x_range=np.arange(0,200,20)
         y_range=np.arange(0,200,20)
-        subplots, tick_size, top, titles, title_size = self.multi_subplot_base_plot_parameters(title, xlabel, ylabel, x_range, y_range, task)
+        subplots, tick_size, top, titles, title_size = self.multi_subplot_base_plot_parameters(title, xlabel, ylabel, x_range, y_range, 'classification')
         
         # initialize the datafinder obj
         obj = extr.obj(1, 'wnw', 1)
@@ -735,72 +762,117 @@ class plot_production:
             plt.show()
             
     # a function for creating a boxplot of the counts of signif components per model
-    def fit_whisker_box_n_barplot(self, start:int, end:int, task:str, mode:str):
+    def fit_whisker_box_n_barplot(self, start:int, end:int, task:str, plot:str, mode:str):
         """
         Returns number of signif components per model with mean [point] & stdev error bars
         """
 
         # calculate the accumulated counts just once
         accum_counts_rb, accum_counts_rt, accum_counts_rr, accum_counts_aa = calc.return_counts_of_signif_comps_classified(start, end, task)
-        print(accum_counts_rb, accum_counts_rt, accum_counts_rr, accum_counts_aa)
-        
-        for plottype in ['barplot', 'boxplot']:
-            # Create base plot
-            xlabel='Model'
-            if plottype == 'barplot':
-                ylabel='Count with average and standard deviation'
-                subtitle='Averaged counts across runs'
-            elif plottype == 'boxplot':
-                ylabel='Tukey Boxplot Distribution (1.5*(Q3-Q1)) with median'
-                subtitle='Median count across runs'
-            title=f"Significant components fit per model by run - {task} \n {subtitle}"    # subtitle
-            subplots, tick_size, top, titles, title_size = self.multi_subplot_base_plot_parameters(title, xlabel, ylabel, None, None, task)
+        print(np.sum(accum_counts_rb), "\n\n", np.sum(accum_counts_rt), "\n\n", np.sum(accum_counts_rr), "\n\n", np.sum(accum_counts_aa))
 
-            classes = ["Rejected by Both", "Rejected by Tedana", "Rejected by Combined Regressors", "Accepted by Both"]
-            class_list = [accum_counts_rb, accum_counts_rt, accum_counts_rr, accum_counts_aa]
-            print("COUNTS OF SIGNIFICANT COMPONENTS: \n")
+        # for plottype in ['barplot_total', 'barplot_avg', 'boxplot']:
+        #     # Create base plot & parameters
+        #     xlabel='Model'
+        #     if plottype == 'barplot_total':
+        #         ylabel='Total count with standard deviation'
+        #         subtitle='Summed counts across runs'
+        #     elif plottype == 'barplot_avg':
+        #         ylabel='Average count with standard deviation'
+        #         subtitle='Averaged counts across runs'
+        #     elif plottype == 'boxplot':
+        #         ylabel='Tukey Boxplot Distribution (1.5*(Q3-Q1)) with median'
+        #         subtitle='Median count across runs'
+        #     title=f"Significant components fit per model by run - {task} \n {subtitle}"    # subtitle
 
-            df = {}
-            for pidx, p in enumerate(class_list):
-                subplots[pidx].set_xticks(np.arange(1,len(p.columns)+1))
-                subplots[pidx].set_xticklabels(p.columns, fontsize=8, rotation=20)
-                plt.subplots_adjust(hspace=0.5)
+        #     classes = ["Rejected by Both", "Rejected by Tedana-Only", "Rejected by Combined Regressors-Only", "Accepted by Both"]
+        #     models = ["Full Model", "Motion Model", "Phys_Freq Model", "Phys_Variability Model", "WM & CSF Model"]
+        #     class_list = [accum_counts_rb, accum_counts_rt, accum_counts_rr, accum_counts_aa]
+        #     print("COUNTS OF SIGNIFICANT COMPONENTS: \n")
+            
+        #     # Concatenate data into a dataframe
+        #     df = {}
+        #     for cidx, c in enumerate(class_list):
+        #         # append to dataframe
+        #         # get class parameters & dataframe - for classification plots
+        #         class_name = classes[cidx]
+        #         print(f"{class_name}: \n")
+        #         df[class_name] = {}
+        #         # remove the nans from the dataframe before doing any calculations
+        #         print("Count: \n", np.sum(class_list[cidx]))
+        #         print("Stdev: \n", round(np.std(class_list[cidx]),1))
+        #         print("Average: \n", round(np.mean(class_list[cidx]),1))
+        #         print("Median: \n", np.median(class_list[cidx]))
 
-                class_name = classes[pidx]
-                subplots[pidx].set_title(class_name)
-                print(f"{class_name}: \n")
-                df[class_name] = {}
+        #         for c in class_list[cidx].columns:
+        #             df[class_name]['count'] = np.sum(class_list[cidx][c]).tolist()
+        #             df[class_name]['standard deviation'] = round(np.std(class_list[cidx][c]),1).tolist()
+        #             df[class_name]['average'] = round(np.mean(class_list[cidx][c]),1).tolist()
+        #             df[class_name]['median'] = np.median(class_list[cidx][c]).tolist()
+        #         print(df)
 
-                # remove the nans from the dataframe before doing any calculations
+        #     if plot == 'classification':
+        #         subplots, tick_size, top, titles, title_size = self.multi_subplot_base_plot_parameters(title, xlabel, ylabel, None, None, 'classification')
+        #         subplot_dim = classes
+        #         x_dim = models
+        #         colors = ['red','green','blue','purple','orange']
+        #     elif plot == 'models':
+        #         subplots, tick_size, top, titles, title_size = self.multi_subplot_base_plot_parameters(title, xlabel, ylabel, None, None, 'models')
+        #         subplot_dim = models
+        #         x_dim = classes
+        #         colors = ['red','green','blue','purple','orange','purple']
 
+        #     for pidx, p in enumerate(subplot_dim):
+        #         print(pidx)
+        #         if plot == 'classification':
+        #             subplots[pidx].set_title(class_name)
+        #         elif plot == 'models':
+        #             model_name = models[pidx]
+        #             subplots[pidx].set_title(model_name)
 
-                print("Count: \n", np.sum(p))
-                print("Stdev: \n", round(np.std(p),1))
-                print("Average: \n", round(np.mean(p),1))
-                print("Median: \n", np.median(p))
+        #         # more plot parameters
+        #         subplots[pidx].set_xticks(np.arange(1,len(x_dim)+1))
+        #         subplots[pidx].set_xticklabels(x_dim, fontsize=8, rotation=20)
+        #         subplots[pidx].set_ylim(0,40)
+        #         plt.subplots_adjust(hspace=0.5)
 
-                for c in p.columns:
-                    df[class_name]['count'] = np.sum(p[c]).tolist()
-                    df[class_name]['standard deviation'] = round(np.std(p[c]),1).tolist()
-                    df[class_name]['average'] = round(np.mean(p[c]),1).tolist()
-                    df[class_name]['median'] = np.median(p[c]).tolist()
+        #         # sum the data along the classification OR model axis
+        #         if plot == 'classification':
+        #             sum_axis = class_list[pidx]     # sum along models [x-ticks] x classification dfs [subplot]
+        #             labels = models
+        #         elif plot == 'models':
+        #             sum_axis = np.array([[c.iloc[:,pidx]] for c in class_list]).T      # sum along classification dfs [x-ticks] x model [subplot]
+        #             labels = classes
+        #         sum_axis = np.squeeze(sum_axis).astype(int)
+        #         print("TYPE: ", plot)
+        #         print("SHAPE OF ARRAY: ", sum_axis.shape)
+        #         print("ARRAY VALUES: ", sum_axis)
+        #         print("SUM: ", np.sum(sum_axis, axis=0))
+        #         print("TYPE: ", type(np.sum(sum_axis, axis=0)[0]))
+        #         print("LABELS: ", labels, len(labels))
 
-                if plottype == 'barplot':
-                    subplots[pidx].bar(np.arange(1,len(p.columns)+1), height=round(np.mean(p),1), yerr=np.std(p), ecolor='black', bottom=0, color=['red','green','blue','purple','orange'])
-                elif plottype == 'boxplot':
-                    # whis = 1.5 -> Tukey's boxplot: whiskers = whis*(Q3-Q1) = 1.5*(Q3-Q1)
-                    subplots[pidx].boxplot(p, whis=1.5, labels=p.columns, manage_ticks=True)
+        #         # iterate through 3 different plot-types
+        #         if plottype == 'barplot_total':
+        #             subplots[pidx].set_ylim(0,2100)
+        #             subplots[pidx].bar(np.arange(1,len(x_dim)+1), height=np.sum(sum_axis, axis=0), ecolor='black', bottom=0, color=colors)
+        #         elif plottype == 'barplot_avg':
+        #             avg = np.round(np.mean(sum_axis, axis=0),1)
+        #             stdev = np.round(np.std(sum_axis, axis=0),1)
+        #             subplots[pidx].bar(np.arange(1,len(x_dim)+1), height=avg, yerr=stdev, ecolor='black', bottom=0, color=colors)
+        #         elif plottype == 'boxplot':
+        #             # whis = 1.5 -> Tukey's boxplot: whiskers = whis*(Q3-Q1) = 1.5*(Q3-Q1)
+        #             subplots[pidx].boxplot(sum_axis, whis=1.5, labels=labels, manage_ticks=True)
 
-            print(df)
+        #     outdir = DataFinder(None,None,None).set_outdir()
+        #     # depending on the mode, save a .SVG file or show the plot
+        #     if mode == 'save':
+        #         plt.savefig(f"{outdir}Classified_signif_comps_per_model_{task}_{plottype}_{plot}.svg")
+        #     else:
+        #         plt.show()
 
-            if mode == 'save':
-                outdir = DataFinder(None,None,None).set_outdir()
-                plt.savefig(f"{outdir}Classified_signif_comps_per_model_{task}_{plottype}.svg")
-
-                with open(f"{outdir}Classified_signif_comps_per_model_{task}_summary_stats.json", "w") as open_file:
-                    json.dump(df, open_file, indent=4)
-            else:
-                plt.show()
+        # # save the summary statistics as a .JSON file
+        # with open(f"{outdir}Classified_signif_comps_per_model_{task}_summary_stats.json", "w") as open_file:
+        #     json.dump(df, open_file, indent=4)
 
 if __name__ == '__main__':
     # Run the plots
@@ -818,10 +890,12 @@ if __name__ == '__main__':
     # pp.kde_density_plot(1,25,'movie','show')
     # pp.kde_density_plot(1,25,'breathing','show')
 
-    # pp.fit_whisker_box_n_barplot(1,25,'wnw','show')        # a boxplot and barplot to show summary statistics for the significant & classified components per model
-    # pp.fit_whisker_box_n_barplot(1,25,'movie','show')
-    # pp.fit_whisker_box_n_barplot(1,25,'breathing','show')
-
+    pp.fit_whisker_box_n_barplot(1,25,'wnw','classification','show')        # a boxplot and barplot to show summary statistics for the significant & classified components per model
+    # pp.fit_whisker_box_n_barplot(1,25,'wnw','models','show')
+    # pp.fit_whisker_box_n_barplot(1,25,'movie','classification','show')
+    # pp.fit_whisker_box_n_barplot(1,25,'movie','models','show')
+    # pp.fit_whisker_box_n_barplot(1,25,'breathing','classification','show')
+    # pp.fit_whisker_box_n_barplot(1,25,'breathing','models','show')
     
 # #### A list of subjects, runs, component numbers, and kappa values for regressor only rejected components with high kappa values
 # #### These were identified by eye using the output from the above cell

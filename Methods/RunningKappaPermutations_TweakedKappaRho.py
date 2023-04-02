@@ -38,198 +38,82 @@ subj = sys.argv[1]
 task = sys.argv[2]
 run = sys.argv[3]
 
-# Functions
-def run_perturb(epsi, mmix_orig, nc, ICAmap=None):
-    """
-    Running perturbations + adding noise
-    - with a random matrix exponential function
-    """
-    # Make a matrix where the upper triangle has gaussian random noise
-    starting_triu = np.random.randn(nc, nc)[np.triu_indices(nc)]
-    # full matrix
-    starting_m = np.zeros((nc, nc))
-    # inputting triangle values in upper triangle
-    starting_m[np.triu_indices(nc)] = starting_triu
-    # Make the random matrix symmetric and scale by epsilon
-    skew_sym = (starting_m - starting_m.T) * epsi
-    # The perturbation is the matrix exponential
-    # exponentiate the matrix
-    perturb = expm(skew_sym)    
-    # dot product of mixing matrix & perturbation (noise) matrix
-    mmix_perturb = np.dot(mmix_orig, perturb).T
-    # calculate z-score of perturbation matrix
-    mmix_perturb_zsc = zscore(mmix_perturb, axis=-1).T
-    # if ICA Map is provided
-    if ICAmap is not None:
-        # compute least squares fit solution (minimized-error fit) betw ICA voxel map and perturbed matrix
-        fica_out_perturb, tmpResidFit = lstsq(mmix_perturb_zsc.T, ICAmap.T)
-        # transform the perturbation axises
-        fica_out_perturb = fica_out_perturb.T
-        # absolute sum of residuals must be less than this small 0 value, if not: the fit is too big
-        if(np.absolute(tmpResidFit).sum() > 1e-15):
-            print("+   WARNING in run_perturbs: The fit for the perturbed components to the original data is greater than expected: %30.30f" % np.absolute(tmpResidFit).sum())
-        # return the standardized perturbed mixing matrix & the least squares solution (fit that minimizes the error between ICAmap and standardized perturbed mixing matrix)
-        return mmix_perturb_zsc, fica_out_perturb
-    # if no ICA Map
-    else:
-        # return the z-scored perturbation matrix
-        return mmix_perturb_zsc
+class sim_annealing_methods():
+    def __init__():
+        super.__init__()
 
-def get_KappaRhoVar_score(fica_feats):
-    """
-    Calculating Kappa/Rho variance score
-    - sum of absolute difference betw Kappa & Rho
-    """
-    return((np.abs(fica_feats['Kappa'] - fica_feats['Rho'])).sum())
+    # A method to run the perturbation on the mixing matrix
+    def run_perturb(self, epsi, mmix_orig, nc, ICAmap=None):
+        """
+        Running perturbations + adding noise
+        - with a random matrix exponential function
+        """
+        # Make a matrix where the upper triangle has gaussian random noise
+        starting_triu = np.random.randn(nc, nc)[np.triu_indices(nc)]
+        # full matrix
+        starting_m = np.zeros((nc, nc))
+        # inputting triangle values in upper triangle
+        starting_m[np.triu_indices(nc)] = starting_triu
+        # Make the random matrix symmetric and scale by epsilon
+        skew_sym = (starting_m - starting_m.T) * epsi
+        # The perturbation is the matrix exponential
+        # exponentiate the matrix
+        perturb = expm(skew_sym)    
+        # dot product of mixing matrix & perturbation (noise) matrix
+        mmix_perturb = np.dot(mmix_orig, perturb).T
+        # calculate z-score of perturbation matrix
+        mmix_perturb_zsc = zscore(mmix_perturb, axis=-1).T
+        # if ICA Map is provided
+        if ICAmap is not None:
+            # compute least squares fit solution (minimized-error fit) betw ICA voxel map and perturbed matrix
+            fica_out_perturb, tmpResidFit = lstsq(mmix_perturb_zsc.T, ICAmap.T)
+            # transform the perturbation axises
+            fica_out_perturb = fica_out_perturb.T
+            # absolute sum of residuals must be less than this small 0 value, if not: the fit is too big
+            if(np.absolute(tmpResidFit).sum() > 1e-15):
+                print("+   WARNING in run_perturbs: The fit for the perturbed components to the original data is greater than expected: %30.30f" % np.absolute(tmpResidFit).sum())
+            # return the standardized perturbed mixing matrix & the least squares solution (fit that minimizes the error between ICAmap and standardized perturbed mixing matrix)
+            return mmix_perturb_zsc, fica_out_perturb
+        # if no ICA Map
+        else:
+            # return the z-scored perturbation matrix
+            return mmix_perturb_zsc
 
-def get_KappaRhoVar_diff_score(fica_feats_new, kappa, rho):
-    """
-    Calculating Kappa/Rho difference score:
-    - difference of each component from kappa = rho line (elbow or diagonal thru graph)
-    """
-    # The concept behind this score is that no individual component is going to
-    # radically change in a single permutation. I want to see the average percent
-    # difference of each component from the kappa=rho line.
-    # As of now, I'm not considering variance in this calculation
-    newdiff = np.abs(fica_feats_new['Kappa'] - fica_feats_new['Rho'])
-    basediff = np.abs(kappa - rho)
-    return(100*np.mean((newdiff-basediff)/basediff))
+    def get_KappaRhoVar_score(self, fica_feats):
+        """
+        Calculating Kappa/Rho variance score
+        - sum of absolute difference betw Kappa & Rho
+        """
+        return ((np.abs(fica_feats['Kappa'] - fica_feats['Rho'])).sum())
 
-def get_KappaRhoScaled_diff_score(kappa, rho, RhoScalingForScore):
-    return((np.abs(kappa -
-            (RhoScalingForScore*rho))).sum())
+    def get_KappaRhoVar_diff_score(self, fica_feats_new, kappa, rho):
+        """
+        Calculating Kappa/Rho difference score:
+        - difference of each component from kappa = rho line (elbow or diagonal thru graph)
+        """
+        # The concept behind this score is that no individual component is going to
+        # radically change in a single permutation. I want to see the average percent
+        # difference of each component from the kappa=rho line.
+        # As of now, I'm not considering variance in this calculation
+        newdiff = np.abs(fica_feats_new['Kappa'] - fica_feats_new['Rho'])
+        basediff = np.abs(kappa - rho)
+        return (100*np.mean((newdiff-basediff)/basediff))
 
-def get_KappaRhoScaled_DiffWeightMidline_score(kappa, rho, RhoScalingForScore, OrigKappaRhoScaling):
-    return(np.dot(np.abs(kappa -
-            (RhoScalingForScore*rho)), OrigKappaRhoScaling))
+    def get_KappaRhoScaled_diff_score(self, kappa, rho, RhoScalingForScore):
+        """
+        Again, this is the summed difference between Kappa & Rho,...
+        but scaled by the 'rho scaling' variable (user-defined)
+        """
+        return ((np.abs(kappa -
+                (RhoScalingForScore*rho))).sum())
 
-
-#### This method needs to be tested -> really could just call the entire command from tedana***
-def calculate_f_maps2(data_cat, Z_maps, mixing, adaptive_mask, tes, f_max=500):
-    """Calculate pseudo-F-statistic maps for TE-dependence and -independence models.
-    Parameters
-    ----------
-    data_cat : (M x E x T) array_like
-        Multi-echo data, already masked.
-    Z_maps : (M x C) array_like
-        Z-statistic maps for components, reflecting voxel-wise component loadings.
-    mixing : (T x C) array_like
-        Mixing matrix
-    adaptive_mask : (M) array_like
-        Adaptive mask, where each voxel's value is the number of echoes with
-        "good signal". Limited to masked voxels.
-    tes : (E) array_like
-        Echo times in milliseconds, in the same order as the echoes in data_cat.
-    f_max : float, optional
-        Maximum F-statistic, used to crop extreme values. Values in the
-        F-statistic maps greater than this value are set to it.
-    Returns
-    -------
-    F_T2_maps, F_S0_maps, pred_T2_maps, pred_S0_maps : (M x C) array_like
-        Pseudo-F-statistic maps for TE-dependence and -independence models,
-        respectively.
-    """
-    assert data_cat.shape[0] == Z_maps.shape[0] == adaptive_mask.shape[0]
-    assert data_cat.shape[1] == tes.shape[0]
-    assert data_cat.shape[2] == mixing.shape[0]
-    assert Z_maps.shape[1] == mixing.shape[1]
-
-    # TODO: Remove mask arg from get_coeffs
-    me_betas = get_coeffs(data_cat, mixing, mask=np.ones(data_cat.shape[:2], bool), add_const=True)
-    n_voxels, n_echos, n_components = me_betas.shape
-    mu = data_cat.mean(axis=2, dtype=float)
-    tes = np.reshape(tes, (n_echos, 1))
-
-    # set up Xmats
-    X1 = mu.T  # Model 1
-    X2 = np.tile(tes, (1, n_voxels)) * mu.T  # Model 2
-
-    F_T2_maps = np.zeros([n_voxels, n_components])
-    F_S0_maps = np.zeros([n_voxels, n_components])
-    pred_T2_maps = np.zeros([n_voxels, len(tes), n_components])
-    pred_S0_maps = np.zeros([n_voxels, len(tes), n_components])
-
-    for i_comp in range(n_components):
-        # size of comp_betas is (n_echoes, n_samples)
-        comp_betas = np.atleast_3d(me_betas)[:, :, i_comp].T
-        alpha = (np.abs(comp_betas) ** 2).sum(axis=0)
-
-        # Only analyze good echoes at each voxel
-        for j_echo in np.unique(adaptive_mask[adaptive_mask >= 3]):
-            mask_idx = adaptive_mask == j_echo
-            alpha = (np.abs(comp_betas[:j_echo]) ** 2).sum(axis=0)
-
-            # S0 Model
-            # (S,) model coefficient map
-            coeffs_S0 = (comp_betas[:j_echo] * X1[:j_echo, :]).sum(axis=0) / (
-                X1[:j_echo, :] ** 2
-            ).sum(axis=0)
-            pred_S0 = X1[:j_echo, :] * np.tile(coeffs_S0, (j_echo, 1))
-            SSE_S0 = (comp_betas[:j_echo] - pred_S0) ** 2
-            SSE_S0 = SSE_S0.sum(axis=0)  # (S,) prediction error map
-            F_S0 = (alpha - SSE_S0) * (j_echo - 1) / (SSE_S0)
-            F_S0[F_S0 > f_max] = f_max
-            F_S0_maps[mask_idx, i_comp] = F_S0[mask_idx]
-
-            # T2 Model
-            coeffs_T2 = (comp_betas[:j_echo] * X2[:j_echo, :]).sum(axis=0) / (
-                X2[:j_echo, :] ** 2
-            ).sum(axis=0)
-            pred_T2 = X2[:j_echo] * np.tile(coeffs_T2, (j_echo, 1))
-            SSE_T2 = (comp_betas[:j_echo] - pred_T2) ** 2
-            SSE_T2 = SSE_T2.sum(axis=0)
-            F_T2 = (alpha - SSE_T2) * (j_echo - 1) / (SSE_T2)
-            F_T2[F_T2 > f_max] = f_max
-            F_T2_maps[mask_idx, i_comp] = F_T2[mask_idx]
-
-            pred_S0_maps[mask_idx, :j_echo, i_comp] = pred_S0.T[mask_idx, :]
-            pred_T2_maps[mask_idx, :j_echo, i_comp] = pred_T2.T[mask_idx, :]
-
-    return F_T2_maps, F_S0_maps, pred_T2_maps, pred_S0_maps
-
-# This function was modified to only calculate necessary metrics (Kappa/Rho ratio & variance explained) during the inner loop to save on computation time (*)
-def generate_metrics2(data, data_oc, mmix, mask, tes):
-    """
-    Just generates Kappa/Rho and normalized variance explained (modified from original Tedana function)
-    """
-    # calculate (unnormalized) weight map
-    mixing_z = stats.zscore(mmix, axis=0)
-    data_vn = stats.zscore(data_oc, axis=0)
-    data_R = get_coeffs(data_vn, mmix, mask=None)
-    # get coeffs/betas and limit to range [-0.999,0.999]
-    data_R[data_R < -0.999] = -0.999
-    data_R[data_R > 0.999] = 0.999
-    # R-to-Z transform
-    data_Z = np.arctanh(data_R)
-    if data_Z.ndim == 1:
-        data_Z = np.atleast_2d(data_Z).T
-    weights = data_Z
-
-    # calculate weights and store in dictionary
-    signs = determine_signs(weights, axis=0)
-    weights, mixing = flip_components(weights, mmix, signs=signs)
-
-    # calculate Z maps
-    z_maps = calculate_z_maps(weights)
-
-    # calculate Fstat maps (T2/S0) & p-value for Fstat maps, kappa/rho, and normalized variance explained
-    f_T2, f_S0, p_f_T2, p_f_S0 = calculate_f_maps2(
-                data, z_maps, mmix, adap_mask, tes
-            )
-
-    kappa, rho = calculate_dependence_metrics(
-                F_T2_maps=f_T2,
-                F_S0_maps=f_S0,
-                Z_maps=z_maps,
-            )
-
-    norm_var_expl = calculate_varex_norm(
-                weights
-            )
-
-    # Put it into a dictionary:
-    ica_metrics = {'kappa': kappa, 'rho': rho, 'normalized variance explained': norm_var_expl}
-    return ica_metrics
+    def get_KappaRhoScaled_DiffWeightMidline_score(self, kappa, rho, RhoScalingForScore, OrigKappaRhoScaling):
+        """
+        The 'weight midline score' is:
+        the dot product betw the scaled kappa/rho differences & the original kappa-rho scaling (don't know what this is...)
+        """
+        return (np.dot(np.abs(kappa -
+                (RhoScalingForScore*rho)), OrigKappaRhoScaling))
 
 # Parser arguments for simulated annealing model parameters
 origCommandLine = " ".join(sys.argv[:])
@@ -241,7 +125,6 @@ prsInp.add_argument("-d","--orig_data",        dest='data_file',      help="List
 prsInp.add_argument("-e","--TEs",              dest='tes',            help="Echo times (in ms) ex: 15,39,63",          type=str,   default=None, required=True)
 prsInp.add_argument("-enum","--num_echoes",    dest='num_echoes',     help="Number of echoes collected during data acquisition, ex: 3", type=int, default=None, required=True)
 prsInp.add_argument(     "--TR",               dest='TR',             help="Repetion Time (in secs). ex: 1.5",           type=float, default=None, required=True)
-prsInp.add_argument(     "--tes_file",         dest='tes_file',       help="Path to file with Echo time information",  type=str,   default=None, required=True)
 prsOut.add_argument(     "--out_dir",          dest='out_dir',        help="Output Directory. Default: current directory",type=str,default='.', required=True)
 prsOut.add_argument(     "--prefix",           dest='prefix',         help="Output File Prefix. Default = sbj",type=str, default='SimAnneal_', required=True)
 prsCch.add_argument(     "--Num_OuterLoop",    dest='outer_loop_n',   help='Number of iterations of simulated annealing where the initial value changes based on the best score in the inner loop', default=None, type=int)
@@ -287,7 +170,6 @@ for eidx, e in enumerate(np.arange(1,options.num_echoes+1)):
     TR = float(TR)
     tes[eidx] = echo_time       # append echo time to 'tes' array
 
-#### Hardcoded variables for testing: ####
 # acquisition parameters extracted from the .json file
 options.tes = tes       # the echo times - in order
 options.data_file = [e for e in echo_list]      # the actual echo files
@@ -306,8 +188,6 @@ options.inner_loop_n = 3
 # 1) number of cpus, 2) full model computation (or not)
 options.Ncpus = 2       # this should be integrated with the swarm/sbash command
 options.doFM
-
-# Default
 
 # Raise errors for argument parsers
 if options.tes is None and options.tes_file is None:
@@ -433,19 +313,18 @@ print("Loading pre-existing ICA Mixing matrix [%s] from Tedana" % (ica_mix_path)
 mmix = pd.read_csv(ica_mix_path, sep='\t').to_numpy()           # T (number of timepoints) x C (number of components)
 # (339,106)
 
+### Note: test this either with the z-scored or reg components
 ica_maps_path = os.path.join(root,'desc-ICA_components.nii.gz')
 print("Loading pre-existing ICA Maps [%s]." % (ica_maps_path))
-ica_zcomp = nib.load(ica_maps_path)             
+ica_comp = nib.load(ica_maps_path)             
 # T (86,86,48,106) - comps
-# to be z-scored by latter Tedana commands (does not ask for z-scored components)
 # masked
 
 # Generating the statistics (kappa,rho,etc) for ICA
 # ----------------------------------------------------
 # should be able to get this from the metrics already run by Tedana
 print("Running the kappa and rho calculations for the original ICA")
-
-ica_metrics = generate_metrics2(data, data_oc, mmix, mask, tes)
+ica_metrics = generate_metrics(data, data_oc, mmix, mask, tes)
 
 # Normalize kappa and rho scale & calculate kappa - rho difference
 # ----------------------------------------------------------------
@@ -460,7 +339,7 @@ OrigKappaRhoDiff = (np.abs(ica_metrics['kappa'] -
 # components closest to the midline (kappa=RhoScalingForScore*rho) will have the largest weight for the cost function
 # more value for kappa/rhos closest to midline (not clearly separated) versus those far away (clearly separated)
 OrigKappaRhoScaling = 2-(OrigKappaRhoDiff/np.max(OrigKappaRhoDiff))
-OrigKappaRhoScore = get_KappaRhoScaled_DiffWeightMidline_score(ica_metrics['kappa'],ica_metrics['rho'],
+OrigKappaRhoScore = sim_annealing_methods.get_KappaRhoScaled_DiffWeightMidline_score(ica_metrics['kappa'],ica_metrics['rho'],
                                                             RhoScalingForScore, OrigKappaRhoScaling)
 print("Original Kappa Rho differentiation score %10.10f" % OrigKappaRhoScore)
 
@@ -471,13 +350,10 @@ print("Original Kappa Rho differentiation score %10.10f" % OrigKappaRhoScore)
 # ----------------------------------------------------------------
 print("Running the permutations of the ICA to optimize kappa and rho cost function")
 nc = mmix.shape[1] # number of components
-# put the ICA time series in a spatial map 
-# -> This is used to calculate the spatial map after the component x time matrix is perturbed.
-FittedTS = np.dot(ica_zcomp.get_fdata(), mmix.T)    # product of spatial voxel & component time matrices.
+FittedTS = np.dot(ica_comp.get_fdata(), mmix.T)    # element-wise product of ICA component maps & transposed mixing matrix (fits mixed time series to the spatial ica maps)
 # (86, 86, 48, 339)
 
-# INSERT:
-# Maybe calculate total variance? but, if the code needs to be sped up, that could be calculated once and reused
+# Suggestion from Dan: Maybe calculate total variance? but, if the code needs to be sped up, that could be calculated once and reused
 
 # Setting the clock & model parameters
 # ----------------------------------------------------------------
@@ -503,11 +379,10 @@ ModelPermutationResults.append(rr)
 # Setting variables to be updated during the loop   (initialized to ICA output)
 # -----------------------------------------------------------------------------
 # Using the mixing matrix as the starting point for each random permutation
+# Note: The "newbase" variables will be updated with the best score after every inner loop of permutations is completed. 
 newbase_mmix = mmix
 newbase_KappaRhoScore = OrigKappaRhoScore
 newbase_fica_feats = ica_metrics
-
-# Note: The "newbase" variables will be updated with the best score after every inner loop of permutations is completed. 
 
 # Starting the Loop: Outer and Inner
 # ----------------------------------------------------------------
@@ -525,18 +400,17 @@ for outer_iter in range(outer_loop_n):
         print("Inner Loop: \n", end=' ')
         print("The 'inner' variables will be updated with the best score after each permutation is completed.\n")
 
-        # Get the perturbed z-scaled mixing matrix -> using NO ICAMap to fit (cannot get it to work with lstsq() function from scipy) -> means there will be no perturbed ICAMap output either...
-        mmix_perturb_zsc = run_perturb(
+        # Get the perturbed z-scaled mixing matrix by the Fitted ICA Map (dot product of mixing matrix & ICA component map)
+        mmix_perturb_zsc, fica_out_perturb = run_perturb(
             inner_loop_epsilons[inner_iter],
-            newbase_mmix, nc, ICAmap=None)
+            newbase_mmix, nc, ICAmap=FittedTS)
 
         # Calculate Kappa,Rho,and Variance for components (with perturbed mixing matrix)
         start_gen_metrics2 = time.time()
-        tmpiter_fica_feats = generate_metrics2(data, data_oc, mmix_perturb_zsc, mask, tes)
+        tmpiter_fica_feats = generate_metrics(data, data_oc, mmix_perturb_zsc, mask, tes, io_generator, label='ICA', metrics=['Component','kappa','rho','normalized variance explained'])
         end_gen_metrics2 = time.time()
         delta_gen_metrics2 = end_gen_metrics2 - start_gen_metrics2
         print(f"Time for gen metrics 2: {delta_gen_metrics2}")
-        raise ValueError("")
 
         # Get the new score 
         tmpiter_KappaRhoScore = get_KappaRhoScaled_DiffWeightMidline_score(tmpiter_fica_feats['kappa'],tmpiter_fica_feats['rho'],
@@ -618,11 +492,6 @@ lastindex = ModelPermutationResults_df.index[-1]
 final_feats = ModelPermutationResults_df['ComponentMetrics'][lastindex]
 final_mmix = ModelPermutationResults_df['mmix'][lastindex]
 
-# Run the full 
-# Selection based on kappa and rho elbows - kundu selection
-# returns a component table with accepted, rejected, or ignored component table metrics
-#comptable, metric_metadata = kundu_selection_v2(pd.DataFrame(final_feats), n_echos=len(tes), n_vols=data.shape[2])
-
 # Generating output time-series - accepted, rejected & denoised time series per echo
 # -------------------------------------
 print("Generating output time series.")
@@ -631,14 +500,8 @@ print("Generating output time series.")
 # Generating the figures
 # ----------------------
 ## create the Bokeh plots
-# creates Bokeh column data source
-# bokeh_data_source = df._create_data_struct(f"./{comptable}",color_mapping=color_mapping)
-# bokeh_scatter_plot = df._create_kr_plt(bokeh_data_source)
-# bokeh_sorted_plot_k = df._create_sorted_plt(bokeh_data_source, n_comps=?, x_var='kappa', y_var='normalized variance explained', title='Kappa sorted by variance explained', x_label='kappa', y_label='norm. var. expl.')
-# bokeh_sorted_plot_r = df._create_sorted_plt(bokeh_data_source, n_comps=?, x_var='rho', y_var='normalized variance explained', title='Rho sorted by variance explained', x_label='rho', y_label='norm. var. expl.')
-# bokeh_pie_plot = df._create_varexp_pie_plt(bokeh_data_source, n_comps=?)
 
-# print("Successful Completion of the Simulated Annealing Analysis.")
+print("Successful Completion of the Simulated Annealing Analysis.")
 
 
 
@@ -666,10 +529,9 @@ print("Generating output time series.")
 
 
 
-
-
-
-
+#############################
+#### OLD NOTES AND STUFF ####
+#############################
 #     ModelPermutationResults_df = pd.read_pickle('perturbation_results_2017-12-08_18:30:49.pickle.gz')
 #     plt.plot(ModelPermutationResults_df['mmix'][0][29,:])
 #     plt.plot(ModelPermutationResults_df['mmix'][lastindex][29,:])
