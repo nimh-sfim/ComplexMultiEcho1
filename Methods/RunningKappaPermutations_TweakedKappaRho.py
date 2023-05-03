@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 help_desc = """
-This program iterates through random permutations of spatial components to
-find component sets that better separate kappa and rho variance than just ICA.
-Depends on Tedana functions.
+This program runs a Simulated Annealing script that attempts to 
+maximize the difference between Kappa and Rho through noise perturbations 
+to the ICA mixing matrix
 """
 
 # imports
@@ -32,7 +32,7 @@ class sim_annealing_methods():
         super().__init__()
 
     # A method to run the perturbation on the mixing matrix
-    def run_perturb(self, epsi, mmix_orig, nc, ICAmap=None):
+    def run_perturb(self, epsi, mmix_orig, nc):
         """
         Running perturbations + adding noise
         - with a random matrix exponential function
@@ -44,7 +44,7 @@ class sim_annealing_methods():
         # inputting triangle values in upper triangle
         starting_m[np.triu_indices(nc)] = starting_triu
         # Make the random matrix symmetric and scale by epsilon
-        skew_sym = (starting_m - starting_m.T) * epsi
+        skew_sym = (starting_m - starting_m.T) * epsi       # Note: this controls how small the random perturbation values are (they become smaller throughout each learning )
         # The perturbation is the matrix exponential
         # exponentiate the matrix
         perturb = expm(skew_sym)    
@@ -77,7 +77,7 @@ class sim_annealing_methods():
     def get_KappaRhoScaled_diff_score(self, kappa, rho, RhoScalingForScore):
         """
         Again, this is the summed difference between Kappa & Rho,...
-        but scaled by the 'rho scaling' variable (user-defined)
+        but scaled by the 'rho scaling' variable
         """
         return ((np.abs(kappa -
                 (RhoScalingForScore*rho))).sum())
@@ -85,7 +85,7 @@ class sim_annealing_methods():
     def get_KappaRhoScaled_DiffWeightMidline_score(self, kappa, rho, RhoScalingForScore, OrigKappaRhoScaling):
         """
         The 'weight midline score' is:
-        the dot product betw the scaled kappa/rho differences & the original kappa-rho scaling (don't know what this is...)
+        the dot product betw the scaled kappa/rho differences & the original kappa-rho scaling
         """
         return (np.dot(np.abs(kappa -
                 (RhoScalingForScore*rho)), OrigKappaRhoScaling))
@@ -95,96 +95,140 @@ sa = sim_annealing_methods()
 # Parser arguments for simulated annealing model parameters
 origCommandLine = " ".join(sys.argv[:])
 parser = ArgumentParser(description=help_desc,formatter_class=RawTextHelpFormatter)
-parser.add_argument("--TEs",dest='tes',help="Echo times (in ms) ex: 15,39,63",type=str,default=None)
-parser.add_argument("--Num_OuterLoop",dest='outer_loop_n',help='Number of iterations of simulated annealing where the initial value changes based on the best score in the inner loop',default=None,type=int)
-parser.add_argument("--Perm_Step_Sizes",dest='Perm_Step_Sizes',help='For the inner iterations without annealing, this is a list of scaling factors for how much the mixing matrix will change during each permutation (AKA, how many perturbations to the mixing matrix)',default="0.1,0.005,0.001",type=str)
-parser.add_argument("--Num_InnerLoop",dest='inner_loop_n',help='Number of permutations before annealing. Note, this is the number if permutations for EACH of the listed Perm_Step_Sizes. No default',default=None,type=int)
+parser.add_argument("--subj",dest='subj',help="Subject ID in format: sub-??",type=str,required=True)
+parser.add_argument("--task",dest='task',help="Task to run on: 'movie','breathing',or'wnw'",type=str,required=True)
+parser.add_argument("--run",dest='run',help="Run to extract the ICA components from",type=int,default=1,required=True)
+parser.add_argument("--tes",dest='tes',help="Echo times (in ms) ex: 15,39,63",type=str,default=None)
+parser.add_argument("--num_outer_loop",dest='outer_loop_n',help='Number of iterations of simulated annealing where the initial value changes based on the best score in the inner loop',default=None,type=int)
+parser.add_argument("--perm_step_sizes",dest='Perm_Step_Sizes',help='For the inner iterations without annealing, this is a list of scaling factors for how much the mixing matrix will change during each permutation (AKA, how many perturbations to the mixing matrix)',default="0.1,0.005,0.001",type=str)
+parser.add_argument("--num_inner_loop",dest='inner_loop_n',help='Number of permutations before annealing. Note, this is the number if permutations for EACH of the listed Perm_Step_Sizes. No default',default=None,type=int)
+parser.add_argument("--location",dest='loc',help="Location from which running the script: 'local' or 'biowulf'",default='local',type=str)
+parser.add_argument("--root",dest='root',help="Root of the location of data: '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/'",default='/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/',type=str)
 options = parser.parse_args()
 
-
-subj="sub-25"
-task="movie"
-run=1
-test_root = "/Users/holnessmn/Desktop/Model_Training/SimulatedAnnealing/"
-data_dir = f"{test_root}{subj}/proc_data/"              # make sure you're loading the preprocessed .volreg files from afni
-sub_root = f"{test_root}{subj}/tedana/"
-sim_anneal_out = f"{test_root}SA_results/"
-if not os.path.isdir(sim_anneal_out):
-    os.mkdir(sim_anneal_out)
-prefix = f"SimAnneal_{subj}_task-{task}_run-{run}_"          # prefix for the output pickle files
-
+"""
+Example bash call:
+python3 RunningKappaPermutations_TweakedKappaRho.py --subj sub-25 --task movie --run 1 --tes 13.44,31.70,49.96 --num_outer_loop 100 --perm_step_sizes .001 --num_inner_loop 3 --location biowulf --root /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/
+"""
 
 # a class to load the data and other important parameters (BEFORE training)
 class run_model():
     def __init__(self):
+        """
+        Initializing the variables from the argument parser:
+        Subject
+        Task
+        Run
+        TEs = Echo Times
+        Outer Loop N = number of outer loop iterations -> controls how many updates to the kappa-rho diff score are made
+        Perm Step Sizes = The perturbation step sizes controlled by the number of inner iterations
+        Inner Loop N = number of inner loop iterations -> controls how many perturbations to the mixing matrix occur
+        Loc = location of where to run script ('local' or 'biowulf')
+        Root = root directory
+        """
         super().__init__()
-        
-    def init_vars(self):
+        self.subj = options.subj
+        self.task = options.task
+        self.run = options.run
+        self.tes = np.fromstring(options.tes, dtype=np.float32, sep=',')       # the echo times - in order
+        self.outer_loop_n = options.outer_loop_n   
+        self.Perm_Step_Sizes = np.fromstring(options.Perm_Step_Sizes,sep=',',dtype=np.float32)       # alpha (controls how small the perturbation values are)
+        self.inner_loop_n = options.inner_loop_n
+        self.loc = options.loc
+        self.root = options.root
 
-        # acquisition parameters extracted from the .json file
-        options.tes = "13.44,31.70,49.96"
-        tes = np.fromstring(options.tes, dtype=np.float32, sep=',')       # the echo times - in order
-
-        # parameters for simulated annealing loops
-        options.outer_loop_n = 100    
-        options.Perm_Step_Sizes = '.001'        # alpha
-        options.inner_loop_n = 3
-
-        # set variables
-        Perm_Step_Sizes = np.fromstring(options.Perm_Step_Sizes,sep=',',dtype=np.float32)
-        outer_loop_n = options.outer_loop_n
-        inner_loop_n = options.inner_loop_n
-
-        return tes, Perm_Step_Sizes, outer_loop_n, inner_loop_n
+    def initialize_directories(self):
+        """
+        Initializing the directories for the data:
+        afni_root: where to get 'volreg' data from
+        ted_root: where to get tedana files from
+        sim_anneal_out: where to output the simulated annealing results
+        prefix: file prefix: SimAnneal_sub-??_task-???_run-?_
+        """
+        if self.root == 'local':
+            afni_root = f"{self.root}{options.subj}/proc_data/"
+            ted_root = f"{self.root}{options.subj}/tedana/"
+        elif self.root == 'biowulf':
+            if self.task == 'wnw':
+                task_dir = 'WNW'
+                ted_dir = f"tedana_r0{self.run}"
+            elif self.task in ['movie','breathing']:
+                task_dir = f"{self.task}_run-{self.run}"
+                ted_dir = f"tedana_r01"
+            afni_root = f"{self.root}{options.subj}/afniproc_orig/{task_dir}/{self.subj}.results/"
+            ted_root = f"{afni_root}{ted_dir}/"
+        sim_anneal_out = f"{self.root}SA_results/"      # simulated annealing output prefix
+        if not os.path.isdir(sim_anneal_out):
+            os.mkdir(sim_anneal_out)
+        prefix = f"SimAnneal_{options.subj}_task-{options.task}_run-{options.run}_"          # prefix for the output pickle files
+        return afni_root, ted_root, sim_anneal_out, prefix
 
     def load_tedana_outp(self, tes):
+        """
+        Loading the files from tedana and Afni
+        Adaptive mask: adative_mask.nii.gz (mask of number of good echoes (2-4), automatically thresholded to 3 echoes when calling generate_metrics() )
+        Echo List: List of the 'volume-registered' echoes from Afni's preprocessed files for that run
+        Data OC: The optimally-combined data from Tedana's output (should not be different from Afni's 'combine' file, since this is the input)
+        Data: Concatenated echoes from Afni's 'volume-registered' set from echo_list
+        Mixing Matrix: The mixing matrix containing the component time-series from ICA
+        ICA Component Map (ica_components.nii.gz): The spatial map containing the Full ICA coefficients
+            Note: The ICA coefficient refers to: components (rows) x sources (columns)
+            1) how much each component's variance contributes to each source (source loadings) - column-wise
+            2) how much each component's variance contributes across the sources (component loadings) - row-wise
+        """
+        afni_root, ted_root, _, _ = self.initialize_directories()     # initialize the Afni/Tedana directories
 
-        # Loading Tedana's files to use as parameters in model (pre-masked files)
-        mask_path = os.path.join(sub_root,'adaptive_mask.nii.gz')
+        # Load Tedana's adaptive mask (voxel values should include number of echoes >=2)
+        mask_path = os.path.join(ted_root,'adaptive_mask.nii.gz')
         mask_nii = nib.load(mask_path)
         mask = mask_nii.get_fdata().flatten().astype(int)
-        tot_voxels = np.sum(mask[np.where(mask != 0)])       # sum values (3 threshold)
+        tot_voxels = np.sum(mask[np.where(mask != 0)])       # sum values that are not equal to zero (in the mask)
         print("Approximate Number of Voxels in mask [Nv=%i]" %tot_voxels)
         print("Mask shape: ", mask.shape)
 
-        # Gather the echo-specific values from the .JSON file (TR is not echo-specific, but still extracting this from the .JSON)
-        echo_list = sorted(glob(f"{data_dir}pb04.{subj}.r0{str(run)}.e0?.volreg+orig.HEAD"))
+        # Gather Afni's 'volreg' preprocessed files - only 'HEAD'
+        echo_list = sorted(glob(f"{afni_root}pb0?.{self.subj}.r0{str(self.run)}.e0?.volreg+orig.HEAD"))
         print("Echo List: ", echo_list)        # magnitude echoes only
 
-        # data OC
-        octs_path = os.path.join(sub_root,'ts_OC.nii.gz')
+        # Load Tedana's data OC & reshape spatial dimensions to Samples (voxels) x Time (points)
+        octs_path = os.path.join(ted_root,'ts_OC.nii.gz')
         data_oc = nib.load(octs_path)
+        data_oc = data_oc.get_fdata().reshape(data_oc.shape[0]*data_oc.shape[1]*data_oc.shape[2],data_oc.shape[3])      # S (voxels) x T
+        print("OC Data shape: ", data_oc.shape)     # i.e., (355008, 339)
 
-        # load each of the resampled echoes & remove the last 5 noise scans
+        # Load the 'vol_reg' echoes with Tedana's load_data() func, which concatenates by the echoes: Samples x Echoes x Time
         data, ref_img = load_data(data=echo_list, n_echos=len(tes))     # -> S x E x T
         io_generator = tedana.io.OutputGenerator(ref_img)           # tedana's output generator
         print(f"Data cat dimensions: {data.shape}")
 
-        data_oc = data_oc.get_fdata().reshape(data_oc.shape[0]*data_oc.shape[1]*data_oc.shape[2],data_oc.shape[3])      # S (voxels) x T
-        print("OC Data shape: ", data_oc.shape)     # (355008, 339)
-
-        ica_mix_path   = os.path.join(sub_root,'ica_mixing.tsv')
+        # Load Tedana's ICA mixing matrix, dimensions should be Time x Components
+        ica_mix_path = os.path.join(ted_root,'ica_mixing.tsv')
         mmix = pd.read_csv(ica_mix_path, sep='\t').to_numpy()           # T (number of timepoints) x C (number of components)   # (339,106)
 
+        # Load Tedana's ICA component map, the Full ICA Coefficient feature set (NOT z-transformed or standardized)
         ### Note: test this either with the z-scored or reg components
-        ica_maps_path = os.path.join(sub_root,'ica_components.nii.gz')
-        ica_comp = nib.load(ica_maps_path)          # T (86,86,48,106) - comps
+        ica_maps_path = os.path.join(ted_root,'ica_components.nii.gz')
+        ica_comp = nib.load(ica_maps_path)          # i.e., T (86,86,48,106) - comps
 
         return mask, data, data_oc, mmix, ica_comp, io_generator
 
     def generate_initial_stats(self, data, data_oc, mmix, mask, tes, io_generator):
-
+        """
+        Generate the initial statistics for ICA: kappa, rho, and variance explained
+        1) The original kappa-rho difference [per component] is scaled by the average ratio of Kappa/Rho [averaged across components]
+        2) The components closest to the midline (kappa/rho elbow) will have the largest weight for the cost function
+        """
         # Generating the statistics (kappa,rho,etc) for ICA
         print("Running the kappa and rho calculations for the original ICA")
-        ica_metrics = generate_metrics(data, data_oc, mmix, mask, tes, io_generator, label='ICA', metrics=['kappa','rho','normalized variance explained'])
+        ica_metrics = generate_metrics(data, data_oc, mmix, mask, tes, io_generator, label='ICA', metrics=['kappa','rho','variance explained'])
 
-        # Normalize kappa and rho scale & calculate kappa - rho difference
+        # Generate the original Kappa & Rho scores
         origMeanKappa = np.mean(ica_metrics['kappa'])
         origMeanRho = np.mean(ica_metrics['rho'])
-        RhoScalingForScore = origMeanKappa/origMeanRho
-        OrigKappaRhoDiff = (np.abs(ica_metrics['kappa'] -
-                            (RhoScalingForScore*ica_metrics['rho'])))
-
+        RhoScalingForScore = origMeanKappa/origMeanRho      # the scaling score for rho = the ratio of average kappa / avg rho
+        OrigKappaRhoDiff = (np.abs(ica_metrics['kappa'] -                   # calculate the difference between kappa & rho per component while scaling the rho metric by the average ratio of kappa/rho
+                            (RhoScalingForScore*ica_metrics['rho'])))       # assuming that Kappa is larger than Rho (i.e., 4/2)), this scaling factor will bump up the Rho Score and make sure the Kappa-Rho difference is not too large (and accurately represents the current distribution of components)
+        
         # Scaling the cost function weights (by distance from midline)
         # Note: components closest to the midline (kappa=RhoScalingForScore*rho) will have the largest weight for the cost function
         ####### more value for kappa/rhos closest to midline (not clearly separated) versus those far away (clearly separated)
@@ -195,16 +239,16 @@ class run_model():
 
         return OrigKappaRhoScaling, OrigKappaRhoScore, ica_metrics, RhoScalingForScore
 
-    def initialize_loop(self, mmix, ica_comp, Perm_Step_Sizes, inner_loop_n, outer_loop_n, OrigKappaRhoScore, ica_metrics):
-
-        nc = mmix.shape[1] # number of components
-        # Suggestion from Dan: Maybe calculate total variance? but, if the code needs to be sped up, that could be calculated once and reused
-
-        # Setting the clock & model parameters
-        starttime_total = time.monotonic()
-        # repeat each element 50 (n) times
-        inner_loop_epsilons = np.repeat(Perm_Step_Sizes, inner_loop_n)          #inner_loop_epsilons = np.repeat([0.01, 0.005, 0.001], 50)
+    def initialize_loop(self, mmix, Perm_Step_Sizes, inner_loop_n, outer_loop_n, OrigKappaRhoScore, ica_metrics):
+        """
+        Initialize the original 'base' metrics and scores & Create the Results dictionary to store each outer loop metrics
+        """
+        # number of components
+        nc = mmix.shape[1]
+        # create an array of the epsilon 'steps' for the outer loop, influenced by the number of inner loops (i.e., inner_loop_n = 1 -> [0.01, 0.005, 0.001], inner_loop_n = 3 -> [0.01 , 0.01 , 0.01 , 0.005, 0.005, 0.005, 0.001, 0.001, 0.001])
+        inner_loop_epsilons = np.repeat(Perm_Step_Sizes, inner_loop_n)          #inner_loop_epsilons = np.repeat([0.01, 0.005, 0.001], 50) -> this fills in to an array that includes these values gradually decreasing for the number of inner loops ***
         # total number of iterations (number of rows in inner_loop_epsilons)
+        # the number of inner loops = the total number of iterations
         inner_loop_fulln = inner_loop_epsilons.shape[0]
         print("Number of outer loop iterations with simulated annealing: %i" % outer_loop_n)
         print("Number of inner loop iterations without simulated annealing: %i" % inner_loop_fulln)
@@ -219,48 +263,69 @@ class run_model():
         rr['PerturbEpsilon'] = 0
         ModelPermutationResults.append(rr)
 
-        # Setting variables to be updated during the loop   (initialized to ICA output)
+        # Initializing the base 'original' scores: mixing matrix, kappa-rho diff score, and original ica metrics
         # Using the mixing matrix as the starting point for each random permutation,
         # the "newbase" variables will be updated with the best score after every inner loop of permutations is completed. 
         newbase_mmix = mmix
         newbase_KappaRhoScore = OrigKappaRhoScore
         newbase_fica_feats = ica_metrics
 
-        return nc, starttime_total, ModelPermutationResults, newbase_mmix, newbase_KappaRhoScore, newbase_fica_feats, inner_loop_fulln, inner_loop_epsilons
+        return nc, ModelPermutationResults, newbase_mmix, newbase_KappaRhoScore, newbase_fica_feats, inner_loop_fulln, inner_loop_epsilons
 
     # save the variables in a pickle file (to pre-load first and THEN run the training loop)
     def save_variables(self):
+        """
+        1) Load the tedana/Afni output files to be used in the SA loop
+        2) Generate the initial metrics (kappa/rho/variance explained) and the initial kappa-rho diff score
+        3) Initialize the base variables to be used in SA loop
+        4) Save the variables in a pickle file
+        """
+        mask, data, data_oc, mmix, ica_comp, io_generator = self.load_tedana_outp(self.tes)
+        OrigKappaRhoScaling, OrigKappaRhoScore, ica_metrics, RhoScalingForScore = self.generate_initial_stats(data, data_oc, mmix, mask, self.tes, io_generator)
+        nc, ModelPermutationResults, newbase_mmix, newbase_KappaRhoScore, newbase_fica_feats, inner_loop_fulln, inner_loop_epsilons = self.initialize_loop(mmix, self.Perm_Step_Sizes, self.inner_loop_n, self.outer_loop_n, OrigKappaRhoScore, ica_metrics)
 
-        tes, Perm_Step_Sizes, outer_loop_n, inner_loop_n = self.init_vars()
-        mask, data, data_oc, mmix, ica_comp, io_generator = self.load_tedana_outp(tes)
-        OrigKappaRhoScaling, OrigKappaRhoScore, ica_metrics, RhoScalingForScore = self.generate_initial_stats(data, data_oc, mmix, mask, tes, io_generator)
-        nc, starttime_total, ModelPermutationResults, newbase_mmix, newbase_KappaRhoScore, newbase_fica_feats, inner_loop_fulln, inner_loop_epsilons = self.initialize_loop(mmix, ica_comp, Perm_Step_Sizes, inner_loop_n, outer_loop_n, OrigKappaRhoScore, ica_metrics)
-
-        variables = [tes, outer_loop_n, mask, data, data_oc, io_generator, OrigKappaRhoScaling, RhoScalingForScore, nc, starttime_total, ModelPermutationResults, newbase_mmix, newbase_KappaRhoScore, newbase_fica_feats, inner_loop_fulln, inner_loop_epsilons]
+        variables = [self.tes, self.outer_loop_n, mask, data, data_oc, io_generator, OrigKappaRhoScaling, RhoScalingForScore, nc, ModelPermutationResults, newbase_mmix, newbase_KappaRhoScore, newbase_fica_feats, inner_loop_fulln, inner_loop_epsilons]
 
         with open('sa_vars.pkl','wb') as file:
             pickle.dump(variables, file)
 
     def sa_loop(self):
-
+        """
+        The simulated annealing loop that:
+        1) runs inner loops that perturbs the ICA mixing matrix with noise [on each iteration] and chooses the highest Kappa-Rho Diff score
+        2) runs an outer loop that updates the new scores based on the chosen score from the inner loops
+        3) Stores the scores for each outer loop iteration (epoch) within a DataFrame, which includes:
+            - The calculated Kappa-Rho diff score per outer loop
+            - The epsilon factor that influences how much the previous ICA mixing matrix is perturbed (these steps naturally decrease to reach convergence)
+            - The total (summed) variance explained across all the components
+            - The metrics from each outer-loop iteration (i.e., kappa, rho, etc.)
+        """
+        # load the saved variables from the pickle file
         with open('sa_vars.pkl','rb') as file:
-            tes, outer_loop_n, mask, data, data_oc, io_generator, OrigKappaRhoScaling, RhoScalingForScore, nc, starttime_total, ModelPermutationResults, newbase_mmix, newbase_KappaRhoScore, newbase_fica_feats, inner_loop_fulln, inner_loop_epsilons = pickle.load(file)
+            tes, outer_loop_n, mask, data, data_oc, io_generator, OrigKappaRhoScaling, RhoScalingForScore, nc, ModelPermutationResults, newbase_mmix, newbase_KappaRhoScore, newbase_fica_feats, inner_loop_fulln, inner_loop_epsilons = pickle.load(file)
 
+        # setting the monotonic clock timer (for beginning of iterations)
+        starttime_total = time.monotonic()
+
+        # begin the outer iterations
         for outer_iter in range(outer_loop_n):
             print("Starting Outerloop %d" % outer_iter)
 
-            # initialize the variables
+            # initialize the variables from the file as 'newbase', which is a factor that will be updated per outer loop
             starttime_outer = time.monotonic()
             inner_KappaRhoScore = newbase_KappaRhoScore
             inner_mmix = newbase_mmix
             inner_fica_feats = newbase_fica_feats
             inner_epsi = 0
 
+            # begin the inner iterations: this is when the mixing matrix is perturbed and the ICA metrics are re-generated for the decomposed ICA components (mixing matrix) 
+            # Note: generate_metrics: (sources are reidentified from the existing independent sources but ICA is NOT being re-calculated). This is the step when the mixing matrix betas are fit to the T2* and S0 models (F-stat maps) 
+            # Note: The ICA components: (these will be statistically 'independent' sources, so adding random noise should not affect the underlying independent sources, but lead to a better estimate of Kappa/Rho by driving the two scores apart)
             for inner_iter in range(inner_loop_fulln):
                 print("Inner Loop: \n", end=' ')
                 print("The 'inner' variables will be updated with the best score after each permutation is completed.\n")
 
-                # Get the perturbed z-scaled mixing matrix
+                # Calculate the perturbed z-scaled mixing matrix (the epsilon is influenced by the number of inner and outer loop iterations, but should decrease gradually from )
                 mmix_perturb_zsc = sa.run_perturb(
                     inner_loop_epsilons[inner_iter],
                     newbase_mmix, nc)
@@ -270,13 +335,13 @@ class run_model():
                 tmpiter_fica_feats = generate_metrics(data, data_oc, mmix_perturb_zsc, mask, tes, io_generator, label='ICA', metrics=['kappa','rho','normalized variance explained'])
                 end_gen_metrics2 = time.time()
                 delta_gen_metrics2 = end_gen_metrics2 - start_gen_metrics2
-                print(f"Time for gen metrics 2: {delta_gen_metrics2}")
+                print(f"Time for generate metrics: {delta_gen_metrics2}")       # takes ~5 secs
 
                 # Get the new score 
                 tmpiter_KappaRhoScore = sa.get_KappaRhoScaled_DiffWeightMidline_score(tmpiter_fica_feats['kappa'],tmpiter_fica_feats['rho'],
                                                                                     RhoScalingForScore, OrigKappaRhoScaling)
                 
-                tmpiter_total_variance = np.sum(tmpiter_fica_feats['normalized variance explained'])        # should sum to [almost] 1
+                tmpiter_total_variance = np.sum(tmpiter_fica_feats['variance explained'])        # should sum to less than %100
                 
                 # check if temporary kapparho score is greater than current inner kapparho score (within inner loop)
                 if tmpiter_KappaRhoScore > inner_KappaRhoScore:
@@ -301,27 +366,38 @@ class run_model():
             rr['PerturbEpsilon'] = inner_epsi
             rr['TotalVariance'] = newbase_total_variance
 
-            # append to a list
+            # append each updated outer-loop score to the permutation results list
             ModelPermutationResults.append(rr)
 
-            # print the times
+            # print the times per outer-loop, 
             print("Finished Outerloop %d in %5.5s minutes. Time per loop: %5.5s min. Total time for permutations: %5.5s min.\n"
-                % (outer_iter, (time.monotonic()-starttime_outer)/60,
-                (time.monotonic()-starttime_total)/(60*(outer_iter+1)), (time.monotonic()-starttime_total)/60))
+                % (outer_iter,          # index of outer loop iteration
+                   (time.monotonic()-starttime_outer)/60,       # starttime for current outer loop - current monotonic time = elapsed time for current outer loop
+                (time.monotonic()-starttime_total)/(60*(outer_iter+1)),     # (current monotonic time - starttime from very beginning) / number of outerloop iterations = time per outer loop
+                (time.monotonic()-starttime_total)/60       # current monotonic time - starttime from very beginning = total time for permutations
+                )
+                )
 
-        # save the dictionary results to a pandas dataframe
+        # save the permutation results dictionary to a pandas dataframe
         ModelPermutationResults_df = pd.DataFrame(ModelPermutationResults)
         print(ModelPermutationResults_df)
         print(ModelPermutationResults_df['KappaRhoScore'])
         print(ModelPermutationResults_df['PerturbEpsilon'])
         print(ModelPermutationResults_df['TotalVariance'])
         print("Successful Completion of the Simulated Annealing Analysis.")
+
+        # save the permutation results dataframe to a pickle file
+        _, _, sim_anneal_out, prefix = self.initialize_directories()     # initialize the SA output directory and SA file prefix
         ModelPermutationResults_df.to_pickle(f"{sim_anneal_out}perturbation_results_%s_%s.pickle.gz" % (prefix, time.strftime("%Y-%m-%d_%H:%M:%S", time.gmtime())))        #test_load = pd.read_pickle('./perturbation_results_2017-11-22_15:52:35.pickle.gz')
-        return ModelPermutationResults_df
 
     def inspect_results(self):
-
+        """
+        Generate 2 plots of the SA iterations
+        1) scatterplot of the original (blue) vs final (red) Kappa/Rho scores
+        2) Kappa-Rho difference curve across outerloop iterations (should go up)
+        """
         # get last file
+        _, _, sim_anneal_out, prefix = self.initialize_directories()     # initialize the SA output directory and SA file prefix
         pickle_file = glob(f"{sim_anneal_out}*.pickle.gz")[-1]
         with gzip.open(pickle_file) as fread:
             df = pickle.load(fread)
@@ -329,13 +405,13 @@ class run_model():
         # extract the original variables from the dataframe
         orig_kappas = df['ComponentMetrics'][0]['kappa']
         orig_rhos = df['ComponentMetrics'][0]['rho']
-        orig_variance = 2*df['ComponentMetrics'][0]['normalized variance explained']
+        orig_variance = 2*df['ComponentMetrics'][0]['variance explained']
 
         # extract the last (most recent) variables from the dataframe
         lastindex = df.index[-1]
         final_kappas = df['ComponentMetrics'][lastindex]['kappa']
         final_rhos = df['ComponentMetrics'][lastindex]['rho']
-        final_variance = 2*df['ComponentMetrics'][lastindex]['normalized variance explained']
+        final_variance = 2*df['ComponentMetrics'][lastindex]['variance explained']
 
         # create the plots of the kappa, rho, and normalized variance explained
         fig,ax=plt.subplots()
@@ -354,32 +430,19 @@ class run_model():
         plt.close()
 
 if __name__ == '__main__':
-    rm = run_model()
-    # rm.save_variables()
-    # ModelPermutationResults_df = rm.sa_loop()
-    rm.inspect_results()
+    rm = run_model()        # model obj to initialize the SA loop that runs the class
+    rm.save_variables()     # save the variables in a pickle file
+    rm.sa_loop()            # open those saved variables and begin the simulated annealing (SA) loop
+    rm.inspect_results()    # plot the SA results
 
 
 
 
-######### TESTING ON BIOWULF ###########
-# Directory stuff
-# main roots & directories  - on Biowulf
-#remote_root = '/data/holnessmn/'
-#if task == 'wnw':
-#    task_dir = 'WNW'
-#    t_dir_run = run     # tedana directory run: 1-3
-#elif task in ['movie','breathing']:
-#    task_dir = f"{task}_run-{run}"
-#    t_dir_run = 1       # tedana directory run: 1 -> every single time
 
-# Define the subject-specific directory
-#subj_dir = f"/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/{subj}/"
-## Define the data directory to retrieve the echoes
-#echo_dir = f"{subj_dir}Unprocessed/func/"
-## Define the directory from which you're retrieving the Tedana files:
-#tedana_dir = f"{subj_dir}afniproc_orig/{task_dir}/{subj}.results/tedana_r0{t_dir_run}/"
-# Define the output directory for simulated annealing output & generate if it does not exist
+
+
+
+
 
 
 
