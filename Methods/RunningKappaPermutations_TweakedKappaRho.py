@@ -145,10 +145,10 @@ class run_model():
         sim_anneal_out: where to output the simulated annealing results
         prefix: file prefix: SimAnneal_sub-??_task-???_run-?_
         """
-        if self.root == 'local':
+        if self.loc == 'local':
             afni_root = f"{self.root}{options.subj}/proc_data/"
             ted_root = f"{self.root}{options.subj}/tedana/"
-        elif self.root == 'biowulf':
+        elif self.loc == 'biowulf':
             if self.task == 'wnw':
                 task_dir = 'WNW'
                 ted_dir = f"tedana_r0{self.run}"
@@ -182,7 +182,7 @@ class run_model():
         mask_path = os.path.join(ted_root,'adaptive_mask.nii.gz')
         mask_nii = nib.load(mask_path)
         mask = mask_nii.get_fdata().flatten().astype(int)
-        tot_voxels = np.sum(mask[np.where(mask != 0)])       # sum values that are not equal to zero (in the mask)
+        tot_voxels = np.sum(mask != 0)       # sum values that are not equal to zero (in the mask)
         print("Approximate Number of Voxels in mask [Nv=%i]" %tot_voxels)
         print("Mask shape: ", mask.shape)
 
@@ -323,7 +323,7 @@ class run_model():
             # Note: The ICA components: (these will be statistically 'independent' sources, so adding random noise should not affect the underlying independent sources, but lead to a better estimate of Kappa/Rho by driving the two scores apart)
             for inner_iter in range(inner_loop_fulln):
                 print("Inner Loop: \n", end=' ')
-                print("The 'inner' variables will be updated with the best score after each permutation is completed.\n")
+                # print("The 'inner' variables will be updated with the best score after each permutation is completed.\n")
 
                 # Calculate the perturbed z-scaled mixing matrix (the epsilon is influenced by the number of inner and outer loop iterations, but should decrease gradually from )
                 mmix_perturb_zsc = sa.run_perturb(
@@ -332,7 +332,7 @@ class run_model():
 
                 # Calculate Kappa,Rho,and Variance for components (with perturbed mixing matrix)
                 start_gen_metrics2 = time.time()
-                tmpiter_fica_feats = generate_metrics(data, data_oc, mmix_perturb_zsc, mask, tes, io_generator, label='ICA', metrics=['kappa','rho','normalized variance explained'])
+                tmpiter_fica_feats = generate_metrics(data, data_oc, mmix_perturb_zsc, mask, tes, io_generator, label='ICA', metrics=['kappa','rho','variance explained'])
                 end_gen_metrics2 = time.time()
                 delta_gen_metrics2 = end_gen_metrics2 - start_gen_metrics2
                 print(f"Time for generate metrics: {delta_gen_metrics2}")       # takes ~5 secs
@@ -403,12 +403,16 @@ class run_model():
             df = pickle.load(fread)
 
         # extract the original variables from the dataframe
+        print("Original Component Table")
+        print(df['ComponentMetrics'][0])
         orig_kappas = df['ComponentMetrics'][0]['kappa']
         orig_rhos = df['ComponentMetrics'][0]['rho']
         orig_variance = 2*df['ComponentMetrics'][0]['variance explained']
 
         # extract the last (most recent) variables from the dataframe
         lastindex = df.index[-1]
+        print("Final Component Table")
+        print(df['ComponentMetrics'][lastindex])
         final_kappas = df['ComponentMetrics'][lastindex]['kappa']
         final_rhos = df['ComponentMetrics'][lastindex]['rho']
         final_variance = 2*df['ComponentMetrics'][lastindex]['variance explained']
