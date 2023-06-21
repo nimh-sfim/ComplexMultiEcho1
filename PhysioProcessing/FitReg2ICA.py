@@ -4,8 +4,11 @@ import argparse
 import json
 import os
 
+
 from FitReg2ICAClass import *
 import FitReg2ICAClass as fclass   # import the FitReg2ICAClass.py file & all its imports/methods
+from tedana import io as tedio
+
 fg = fclass.FitReg2ICA()   # call the FitReg2ICA() class as an obj
 
 def main():
@@ -90,47 +93,40 @@ def main():
 
     # Argument parsers to enable the user to change the parameters from the command line easily...
     parser = argparse.ArgumentParser()
-    parser.add_argument("--rootdir", dest="rootdir", help="Root directory for where to read and write files", type=str, default='./')
-    parser.add_argument("--regressors", dest="regressors", help="Regressor Model file (full path or relative to rootdir)", type=str)
-    parser.add_argument("--ica_mixing", dest="ica_mixing", help="ICA mixing matrix file (full path or relative to rootdir)", type=str)
-    parser.add_argument("--ica_metrics", dest="ica_metrics", help="ICA metrics file with the component table from tedana (full path or relative to rootdir)", type=str)
-    parser.add_argument("--outprefix", dest="outprefix", help="Prefix for outputted files. (Can include subdirectories relative to rootdir)", type=str)
+    parser.add_argument("--registry", dest="registry", help="tedana file registry listing relevant input filenames", type=str, default='./desc-tedana_registry.json')
+    parser.add_argument("--regressors", dest="regressors", help="Regressor Model file (full path or relative the path to the registry file)", type=str)
+    parser.add_argument("--outdir", dest="outdir", help="Direcotry for outputted files (full path or relative to file registry base directory)", type=str, default='./regressor_model')
+    parser.add_argument("--outprefix", dest="outprefix", help="Prefix for outputted files.", type=str, default="reg")
     parser.add_argument("--p_thresh", dest="p_thresh", help="Uncorrected p value threshold for significant regressor model fits. Bonferroni corrected by number of components.", type=float, default=0.05)
     parser.add_argument("--R2_thresh", dest="R2_thresh", help="R^2 threshold for regressor model fits. Allows rejection only for significant components that also model a percentage of variance within that component.", type=float, default=0.5)
     parser.add_argument("--showplots", action="store_true", help="Will create plots in addition to text outputs, if true")
 
     ARG = parser.parse_args()
 
-    rootdir = ARG.rootdir
+    registry = ARG.registry
     regressor_file = ARG.regressors
-    ica_mixing_file = ARG.ica_mixing
-    ica_metrics_file = ARG.ica_metrics
+    outdir = ARG.outdir
     outprefix = ARG.outprefix
     p_thresh = ARG.p_thresh
     R2_thresh = ARG.R2_thresh
     show_plot = ARG.showplots
 
-    # Go to root directory
-    if os.path.isdir(rootdir):
-        os.chdir(rootdir)
-        print(f"Running in {rootdir}")
+    # Load registry into tedana input harvestor class
+    ioh = tedio.InputHarvester(registry)
+
+    # Go to base directory
+    if os.path.isdir(ioh._base_dir):
+        os.chdir(ioh._base_dir)
+        print(f"Running in {ioh._base_dir}")
     else:
-        raise ValueError(f"rootdir {rootdir} does not exist")
+        raise ValueError(f"rootdir {ioh._base_dir} does not exist")
 
     # Read in the ICA components
-    if os.path.isfile(ica_mixing_file):
-        ica_mixing = pd.read_csv(ica_mixing_file, sep='\t')
-        print("Size of ICA mixing matrix: ", ica_mixing.shape)
-    else:
-        raise ValueError(f"ICA mixing matrix file {ica_mixing_file} does not exist")
+    ica_mixing = np.asarray(ioh.get_file_contents("ICA mixing tsv"))
     
 
     # Read in the ICA component table which includes which components tedana rejected
-    if os.path.isfile(ica_metrics_file):
-        ica_metrics = pd.read_csv(ica_metrics_file, sep='\t')
-        print("Size of ICA metrics table: ", ica_metrics.shape)
-    else:
-        raise ValueError(f"ICA metrics file {ica_metrics_file} does not exist")
+    ica_metrics = ioh.get_file_contents("ICA metrics tsv")
 
 
     # X-Data #
@@ -139,22 +135,18 @@ def main():
         noise_regress_table = pd.read_csv(regressor_file, sep='\t')
         print(f"Size of noise regressors: {noise_regress_table.shape}")
     else:
-        raise ValueError(f"Noise regressor file {ica_metrics_file} does not exist")
+        raise ValueError(f"Noise regressor file {regressor_file} does not exist")
 
-    # Parse the outprefix and create directory if it doesn't exist
-    # Then justprefix is the prefix for all outputted files and the current directory is changed to
-    #  the directory where outputted files should go
-    outprefix_split = os.path.split(outprefix)
-    if outprefix_split[0]:
-        if not os.path.isdir(outprefix_split[0]):
-            os.mkdir(outprefix_split[0])
-        os.chdir(outprefix_split[0])
-    justprefix = outprefix_split[1]
+    # create output directory if it doesn't already exist
+    if not os.path.isdir(outdir):
+        os.mkdir(outdir)
+    os.chdir(outdir)
+
     print(f"Output directory is {os.path.abspath(os.path.curdir)}")
 
     ######################################### -> to view the methods used in this function, view FitReg2ICAClass.py
     # Fit the models, calculate signficance, and, if show_plot, plot results
-    betas_full_model, F_vals, p_vals, R2_vals, regress_dict, Regressor_Models = fg.fit_ICA_to_regressors(ica_mixing, noise_regress_table, prefix=justprefix, show_plot=show_plot)
+    betas_full_model, F_vals, p_vals, R2_vals, regress_dict, Regressor_Models = fg.fit_ICA_to_regressors(ica_mixing, noise_regress_table, prefix=outprefix, show_plot=show_plot)
     # In the output below, the first series of subplots is the full model vs the baseline of the polort detrending regressors for the first 20 components
     # The following series of suplots are the full model vs the full model excluding other categories of regressors
     # (which shows the significanc of each category of regressors)
@@ -165,7 +157,7 @@ def main():
     #########################################
     # Identifying components that are rejected by one or both methods (tedana & regressors)
     # Setting the p value with Bonferroni correction
-    num_components = len(ica_mixing.columns)
+    num_components = ica_mixing.shape[1]
     p_thresh_Bonf = p_thresh/num_components
 
     # Find the components that have both a p value below threshold and an R2 above threshold
@@ -181,97 +173,121 @@ def main():
 
 
     # Create the regressor matrix with only the rejected components from the ICA mixing matrix
-    Rejected_Component_Timeseries = ica_mixing.iloc[:,reject_idx]
+    Rejected_Component_Timeseries = ica_mixing[:,reject_idx]
 
     # Documenting which components were rejected by which methods and, 
     #   for regressors, which category of regressors (i.e. motion, card/resp rate, RVT, CSF/WM)
     # These will be added to a component metric table taht also includes all the information
     # from the metric table generated by tedana
 
-    # The original tedana classifications are moved to "tedana classification" and "classification"
-    #  will contain those rejected by both tedana and regressors
+    # The original tedana classifications are copied to "tedana classification"
     ica_combined_metrics = ica_metrics.copy()
-    ica_combined_metrics = ica_combined_metrics.rename(columns={"classification": "tedana classification"})
-    ica_combined_metrics["classification"] = ica_combined_metrics["tedana classification"]
+    ica_combined_metrics["tedana classification"] = ica_combined_metrics["classification"]
+
+    # "classification" is for the combined accept/reject for both tedana and regressors
     ica_combined_metrics.loc[reject_just_regressors, 'classification'] = 'rejected'
 
-    # Add new columns to identify which ones were rejected by tedana and/or regressors
-    ica_combined_metrics["Tedana Rejected"] = False
-    ica_combined_metrics.loc[tedana_reject_idx, 'Tedana Rejected'] = True
-    ica_combined_metrics["Regressors Rejected"] = False
-    ica_combined_metrics.loc[regressors_reject_idx, 'Regressors Rejected'] = True
+    # Make column for regressor classification
+    ica_combined_metrics["regressors classification"] = 'accepted'
+    ica_combined_metrics.loc[regressors_reject_idx, "regressors classification"] = 'rejected'
+
+    # Make 4 boolean columns for acecpted or rejected by one or the other method
+    ica_combined_metrics["Accepted Both"] = np.logical_and((ica_combined_metrics["tedana classification"]=='accepted').values,
+                                              (ica_combined_metrics["regressors classification"]=='accepted').values)
+    ica_combined_metrics["Rejected Both"] = np.logical_and((ica_combined_metrics["tedana classification"]=='rejected').values,
+                                              (ica_combined_metrics["regressors classification"]=='rejected').values)
+    ica_combined_metrics["Rejected Tedana Only"] = np.logical_and((ica_combined_metrics["tedana classification"]=='rejected').values,
+                                              (ica_combined_metrics["regressors classification"]=='accepted').values)
+    ica_combined_metrics["Rejected Regressors Only"] = np.logical_and((ica_combined_metrics["tedana classification"]=='accepted').values,
+                                              (ica_combined_metrics["regressors classification"]=='rejected').values)
+    
+
 
     # For components rejected by regressors, mark as true those rejected by each
     #  of the classification types
     regress_categories = regress_dict.keys()
-    reject_type_list = []
-    reject_type = np.zeros(len(regress_categories), dtype=int)
+    reject_type_comp_list = []
+    reject_type_count = np.zeros(len(regress_categories), dtype=int)
     for idx, reg_cat in enumerate(regress_categories):
-        ica_combined_metrics[f"Signif {reg_cat}"] = False
-        tmp_reject = np.logical_and((p_vals[f"{reg_cat} Model"]<p_thresh_Bonf).values, 
-                                    (ica_combined_metrics["Regressors Rejected"]).values)
-        print(f"{reg_cat} {tmp_reject}")
-        ica_combined_metrics.loc[tmp_reject, f"Signif {reg_cat}"] = True
+        ica_combined_metrics[f"Signif {reg_cat}"] = None
+        ica_combined_metrics.loc[regressors_reject_idx, f"Signif {reg_cat}"] = False
+        tmp_submodel_reject_idx = np.squeeze(np.argwhere((p_vals[f"{reg_cat} Model"]<p_thresh_Bonf).values))
+        tmp_submodel_signif_idx = list(set(regressors_reject_idx).intersection(set(tmp_submodel_reject_idx)))
+        print(tmp_submodel_signif_idx)
+        ica_combined_metrics.loc[tmp_submodel_signif_idx, f"Signif {reg_cat}"] = True
+
+        reject_type_count[idx] = len(tmp_submodel_signif_idx)
+        reject_type_comp_list.append(np.sort(tmp_submodel_signif_idx))
         
-        tmp_true_idx = np.squeeze(np.argwhere(tmp_reject))
-        print(f"tmp_true_idx={tmp_true_idx}")
-        print(f"tmp_true_idx type = {type(tmp_true_idx)}, size={tmp_true_idx.size}")
-        reject_type[idx] = tmp_true_idx.size
-        reject_type_list.append(tmp_true_idx)
-        
-    #TODO Add variance explained and add to output text
+
 
     ###############################
     # Saving outputs
-
     # Create output summary text to both print to the screen and save in {prefix}_OutputSummary.json
     output_text = {
         "component counts": 
         {
             "total": int(num_components),
-            "rejected based on motion and phys regressors": int(len(regressors_reject_idx)),
-            "rejected based on tedana": int(len(tedana_reject_idx)),
-            "rejected by both regressors and tedana": int(len(reject_idx)),
-            "reject by regressors with signif fit to": dict()
+            "rejected by tedana": int(len(np.squeeze(np.argwhere((ica_combined_metrics["tedana classification"]=='rejected').values)))),
+            "rejected by regressors": int(len(np.squeeze(np.argwhere((ica_combined_metrics["regressors classification"]=='rejected').values)))),
+            "accepted by both tedana and regressors": int(len(np.squeeze(np.argwhere((ica_combined_metrics["Accepted Both"]==True).values)))),
+            "rejected by both regressors and tedana": int(len(np.squeeze(np.argwhere((ica_combined_metrics["Rejected Both"]==True).values)))),
+            "rejected by tedana only": int(len(np.squeeze(np.argwhere((ica_combined_metrics["Rejected Tedana Only"]==True).values)))),
+            "rejected by regressors only": int(len(np.squeeze(np.argwhere((ica_combined_metrics["Rejected Regressors Only"]==True).values)))),
+            "rejected by regressors with signif fit to": dict()
         },
-        "variance rejected": {
-            "just regressors": ica_combined_metrics.loc[ica_combined_metrics["Regressors Rejected"]==True, "variance explained"].sum(),
-            "just tedana": ica_combined_metrics.loc[ica_combined_metrics["Tedana Rejected"]==True, "variance explained"].sum(),
-            "both regressors and tedana": ica_combined_metrics.loc[ica_combined_metrics["classification"]=="rejected", "variance explained"].sum(),
-            "by regressors with signif fit to": dict()
+        "variance": {
+            "total": ica_combined_metrics["variance explained"].sum(),
+            "rejected by tedana": ica_combined_metrics.loc[ica_combined_metrics["tedana classification"]=='rejected', "variance explained"].sum(),
+            "rejected by regressors": ica_combined_metrics.loc[ica_combined_metrics["regressors classification"]=='rejected', "variance explained"].sum(),
+            "accepted by both tedana and regressors": ica_combined_metrics.loc[ica_combined_metrics["Accepted Both"]==True, "variance explained"].sum(),
+            "rejected by both regressors and tedana": ica_combined_metrics.loc[ica_combined_metrics["Rejected Both"]==True, "variance explained"].sum(),
+            "rejected by tedana only": ica_combined_metrics.loc[ica_combined_metrics["Rejected Tedana Only"]==True, "variance explained"].sum(),
+            "rejected by regressors only":  ica_combined_metrics.loc[ica_combined_metrics["Rejected Regressors Only"]==True, "variance explained"].sum(),     
+            "rejected by regressors with signif fit to": dict()
         },
         "component lists": {
-                        "just regressors": [int(i) for i in reject_just_regressors],
-                        "just tedana": [int(i) for i in reject_just_tedana],
-                        "both regressors and tedana": [int(i) for i in reject_both],
-                        "by regressors with signif fit to": dict()
+                        "rejected by both regressors and tedana": [int(i) for i in np.sort(reject_both)],
+                        "rejected by regressors only": [int(i) for i in np.sort(reject_just_regressors)],
+                        "rejected by tedana only": [int(i) for i in np.sort(reject_just_tedana)],
+                        "rejected by regressors with signif fit to": dict()
                     }
     }
 
     for idx, reg_cat in enumerate(regress_categories):
-        output_text["component counts"]["reject by regressors with signif fit to"][f"{reg_cat}"] = int(reject_type[idx])
-        if reject_type_list[idx].size >1:
-            output_text["component lists"]["by regressors with signif fit to"][f"{reg_cat}"] = [int(i) for i in reject_type_list[idx]]
-        elif reject_type_list[idx].size == 1:
-            output_text["component lists"]["by regressors with signif fit to"][f"{reg_cat}"] = [int(reject_type_list[idx])]
+        output_text["component counts"]["rejected by regressors with signif fit to"][f"{reg_cat}"] = int(reject_type_count[idx])
+        if reject_type_comp_list[idx].size >1:
+            output_text["component lists"]["rejected by regressors with signif fit to"][f"{reg_cat}"] = [int(i) for i in np.sort(reject_type_comp_list[idx])]
+        elif reject_type_comp_list[idx].size == 1:
+            output_text["component lists"]["rejected by regressors with signif fit to"][f"{reg_cat}"] = [int(reject_type_comp_list[idx])]
         else: # reject_type_list[idx] is empty
-            output_text["component lists"]["by regressors with signif fit to"][f"{reg_cat}"] = []
+            output_text["component lists"]["rejected by regressors with signif fit to"][f"{reg_cat}"] = []
  
-        output_text["variance rejected"]["by regressors with signif fit to"][f"{reg_cat}"] = float(ica_combined_metrics.loc[ica_combined_metrics[f"Signif {reg_cat}"]==True, "variance explained"].sum())
+        output_text["variance"]["rejected by regressors with signif fit to"][f"{reg_cat}"] = float(ica_combined_metrics.loc[ica_combined_metrics[f"Signif {reg_cat}"]==True, "variance explained"].sum())
 
     print(json.dumps(output_text, indent=4))
 
+    # Rename column titles for R2_vals and p_vals and then append them into the main component table
+    regress_cat_list = list(regress_categories)
+    regress_cat_list.append('Full')
+    for reg_cat in regress_cat_list:
+        R2_vals = R2_vals.rename(columns={f"{reg_cat} Model": f"R2 {reg_cat} Model"})
+        p_vals = p_vals.rename(columns={f"{reg_cat} Model": f"pval {reg_cat} Model"})
+        print({f"{reg_cat} Model": f"R2 {reg_cat} Model"})
+    ica_combined_metrics = ica_combined_metrics.join(R2_vals)
+    ica_combined_metrics = ica_combined_metrics.join(p_vals)
+
     # Save all the relevant information into multiple files
-    # {justprefix}_Rejected_ICA_Components.csv will be the input for noise regressors into 3dDeconvolve
+    # {outprefix}_Rejected_ICA_Components.csv will be the input for noise regressors into 3dDeconvolve
     Full_Regressor_Model = pd.DataFrame(Regressor_Models['full'])
-    Full_Regressor_Model.to_csv(f"{justprefix}_FullRegressorModel.csv")
-    F_vals.to_csv(f"{justprefix}_Fvals.csv")
-    p_vals.to_csv(f"{justprefix}_pvals.csv")
-    R2_vals.to_csv(f"{justprefix}_R2vals.csv")
-    betas_full_model.to_csv(f"{justprefix}_betas.csv")
-    Rejected_Component_Timeseries.to_csv(f"{justprefix}_Rejected_ICA_Components.csv", index=False)
-    ica_combined_metrics.to_csv(f"{justprefix}_Combined_Metrics.csv", index=False)
-    with open(f"{justprefix}_OutputSummary.json", 'w') as f:
+    Full_Regressor_Model.to_csv(f"{outprefix}_FullRegressorModel.csv")
+    F_vals.to_csv(f"{outprefix}_Fvals.csv")
+    # p_vals.to_csv(f"{outprefix}_pvals.csv")
+    # R2_vals.to_csv(f"{outprefix}_R2vals.csv")
+    betas_full_model.to_csv(f"{outprefix}_betas.csv")
+    pd.DataFrame(Rejected_Component_Timeseries).to_csv(f"{outprefix}_Rejected_ICA_Components.csv", index=False)
+    ica_combined_metrics.to_csv(f"{outprefix}_Combined_Metrics.csv", index=False)
+    with open(f"{outprefix}_OutputSummary.json", 'w') as f:
         json.dump(output_text, f, indent=4)
 
 if __name__ == '__main__':

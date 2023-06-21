@@ -244,10 +244,10 @@ class FitReg2ICA():
             plt.clf()
             fig = plt.figure(figsize=(20,24))
             for idx in range(30):
-                print('Outer bound index: ', idx)
+                # print('Outer bound index: ', idx)
                 
                 if idx < Y.shape[1]:       # num of components
-                    print('Actual axis index: ', idx)
+                    # print('Actual axis index: ', idx)
                     ax = fig.add_subplot(5,6,idx+1)     # this axis index starts from 1
                     self.plot_fit(ax, Y[:,idx], betas_full[:,idx], Regressor_Models['full'], betas_base=betas_base[:,idx], X_base=Regressor_Models[base_label],
                                 F_val=F_vals[idx], p_val=p_vals[idx], R2_val=R2_vals[idx], SSE_base=SSE_base[idx], 
@@ -272,10 +272,10 @@ class FitReg2ICA():
             noise_regress_table: A DataFrame with the noise regressor models
             polort: Add polynomial detrending regressors to the linear model
             regress_dict: A Dictionary that groups parts of regressors names in noise_regress_table with common element
-            For example, there can be "Motion": {"_dmn", "_drv"} to say take all columns with _dmn and _drv and
-            calculate an F value for them together.
-            Default is None and the function that call this doesn't currently have an 
-            option to define it outside this program
+              For example, there can be "Motion": {"_dmn", "_drv"} to say take all columns with _dmn and _drv and
+              calculate an F value for them together.
+              Default is None and the function that call this doesn't currently have an 
+              option to define it outside this program
             prefix: Output file prefix. Used in subfunctions to output some figure in .eps format
             show_plot: Will create and save figures if true.
 
@@ -286,7 +286,7 @@ class FitReg2ICA():
             regress_dict: If inputted as None, this dictionary is generated based on defaults in build_noise_regressors
         """
 
-        Y = ica_mixing.to_numpy()
+        Y = ica_mixing
 
         print("Running fit_ICA_to_regressors")
         print(f"ICA matrix has {Y.shape[0]} time points and {Y.shape[1]} components")
