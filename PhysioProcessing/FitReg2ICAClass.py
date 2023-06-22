@@ -57,7 +57,7 @@ class FitReg2ICA():
                     "Phys_Variability": {"_rvt", "_hrv"},
                     "WM & CSF": {"WM_e", "Csf_vent"}}
         polort: (int) Number of polynomial regressors to include in the baseline noise model. default=4
-        prefix: Output file prefix. Used here to output some figure in .eps format
+        prefix: Output file prefix. Used here to output some figure in .jpg format
         show_plot: (bool) Plots each category of regressors, if True. default=False
 
         RETURNS:
@@ -69,7 +69,7 @@ class FitReg2ICA():
         Full_Model_Labels: A list of all the column labels for all the regressors 
         regress_dict: Either the same as the input or the defaul is generated in this function
         
-        if showplot then {prefix}_ModelRegressors.eps has subplots for each category of regressors
+        if showplot then {prefix}_ModelRegressors.jpg has subplots for each category of regressors
         """
 
         print("Running build_noise_regressors")
@@ -148,7 +148,7 @@ class FitReg2ICA():
                     ax = fig.add_subplot(3,2,idx+2)
                     ax.plot(stats.zscore(categorized_regressors[reg_cat].to_numpy(), axis=0))
                     plt.title(reg_cat)
-            plt.savefig(f"{prefix}_ModelRegressors.eps", dpi='figure')
+            plt.savefig(f"{prefix}_ModelRegressors.jpeg", pil_kwargs={'quality': 20}, dpi='figure') # could also be saves as .eps
 
         return Regressor_Models, Full_Model_Labels, regress_dict
 
@@ -216,7 +216,7 @@ class FitReg2ICA():
         The value for 'full' is always used
         base_label: The key in Regressor_Model (i.e. 'base' or 'no Motion')
         to compare to 'full'
-        prefix: Output file prefix. Used here to output some figure in .eps format
+        prefix: Output file prefix. Used here to output some figure in .jpg format
         show_plot: (bool) Plots each category of regressors, if True. default=False
 
 
@@ -226,7 +226,7 @@ class FitReg2ICA():
         p_vals: The p values for the full vs base model fit to each component (components) numpy array
         R2_vals: The R^2 values for the full vs base model fit to each component (components) numpy array
 
-        if showplots then {prefix}_ModelFits_{base_save_label}.eps are the plotted fits for the first 30 components
+        if showplots then {prefix}_ModelFits_{base_save_label}.jpg are the plotted fits for the first 30 components
         for full model and baseline model
         """
 
@@ -253,7 +253,7 @@ class FitReg2ICA():
                                 F_val=F_vals[idx], p_val=p_vals[idx], R2_val=R2_vals[idx], SSE_base=SSE_base[idx], 
                                 SSE_full=SSE_full[idx], base_legend=base_label)
             base_save_label = base_label.replace(" ", "_")
-            plt.savefig(f"{prefix}_ModelFits_{base_save_label}.eps", dpi='figure')
+            plt.savefig(f"{prefix}_ModelFits_{base_save_label}.jpeg", pil_kwargs={'quality': 20}, dpi='figure') # could also be saved as eps
 
         return betas_full, F_vals, p_vals, R2_vals
 
@@ -276,7 +276,7 @@ class FitReg2ICA():
               calculate an F value for them together.
               Default is None and the function that call this doesn't currently have an 
               option to define it outside this program
-            prefix: Output file prefix. Used in subfunctions to output some figure in .eps format
+            prefix: Output file prefix. Used in subfunctions to output some figure in .jpg format
             show_plot: Will create and save figures if true.
 
         Output:

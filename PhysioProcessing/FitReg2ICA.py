@@ -26,31 +26,39 @@ def main():
     X = Regressor model
     betas = fit for regressor model to ICA components
 
+    
+    parser.add_argument("--registry", dest="registry", help="tedana file registry listing relevant input filenames", type=str, default='./desc-tedana_registry.json')
+    parser.add_argument("--regressors", dest="regressors", help="Regressor Model file (full path or relative the path to the registry file)", type=str)
+    parser.add_argument("--outdir", dest="outdir", help="Direcotry for outputted files (full path or relative to file registry base directory)", type=str, default='./regressor_model')
+    parser.add_argument("--outprefix", dest="outprefix", help="Prefix for outputted files.", type=str, default="reg")
+    parser.add_argument("--p_thresh", dest="p_thresh", help="Uncorrected p value threshold for significant regressor model fits. Bonferroni corrected by number of components.", type=float, default=0.05)
+    parser.add_argument("--R2_thresh", dest="R2_thresh", help="R^2 threshold for regressor model fits. Allows rejection only for significant components that also model a percentage of variance within that component.", type=float, default=0.5)
+    parser.add_argument("--showplots", action="store_true", help="Will create plots in addition to text outputs, if true")
+
+
     INPUTS:
-        rootdir: Path to the root directory from which all other paths can be relative
         regressors: A tsv file with the regressors to fit to the ICA components.
-           The command line input is hard-coded so that the following column labels are
-           expected.
-           Motion regressors will end with _dmn or _drv
-           Physiological frequency regressors will end with _sin or _cos
-           Physiological variability regressors will end with _rvt or _hrv
-           White matter & CSF regressors will be called: WM_e and Csf_vent
-        
-           The code is written so that these pairings can be altered, but it's not
-           currently set up to take an alternative as a command line input
-
-        ica_mixing: The ICA mixing matrix from tedana
-        ica_metrics: The ICA component table from the same execution of tedana
-        outprefix: The output prefix for all files. If there's a new subdirectory in the name, it will create it
-
+            The command line input is hard-coded & the following column labels are expected
+                Motion regressors will end with _dmn or _drv
+                Physiological frequency regressors will end with _sin or _cos
+                Physiological variability regressors will end with _rvt or _hrv
+                White matter & CSF regressors will be called: WM_e and Csf_vent
+        registry: Path to the registry.json file outputted by tedana. This is used to 
+            locate the mixing matrix and component table files. Either a full file path
+            or relative to the current directory. default="./desc-tedana_registry.json"
+            The code is written so that these pairings can be altered, but it's not
+            currently set up to take an alternative as a command line input
+        outdir: The output directory for all files (full path or relative to file registry
+            base directory). If there's a new subdirectory in the name, it will create it.
+            default="./regressor_model"
+        outprefix: Prefix for outputted files. default="reg"
         p_thresh: Fits will be significant for p<p_thresh + Bonferroni correction
         R2_thresh: Can threshold for value above a defined R^2
-        Rejected components will be for p<p_thresh(bonf) AND R^2>R2_thresh
-
+            Rejected components will be for p<p_thresh(bonf) AND R^2>R2_thresh
         showplots: If true will save some intermediate plots to help with quality checks
 
     OUTPUTS:
-        {outprefix}_Rejected_ICA_Components.csv: Contains the the timeseries of the 
+        {outprefix}_Rejected_ICA_Components.csv: Contains the timeseries of the 
             rejected components that should be the noise regressors for the GLM
         {outprefix}_OutputSummary.json: Contains the counts and indices of components
             classified as rejected with each method and their combination. Also contains
@@ -58,36 +66,40 @@ def main():
             These numbers may be useful for generating summary data
         {outprefix}_betas.csv: Fit magnitudes for regressor model to ICA
         {outprefix}_Combined_Metrics.csv: The copied component metrics table from tedana with additional rows
-            "tedana classification" is the original classification from tedana
-            "classification" now lists rejected components for both tedana and regressors
-            "Tedana Rejected" True for components rejected by tedana
-            "Regressors Rejected" True for components rejected by regressors
-            Signif [Motion, Phys_Freq, Phys_Variability, WM & CSF]: For components rejected by regressors
-               True for those where one of this categories has a significant F statistic for the model
-            Note: This can be simplified by using the eventual "classification tags" header in tedana
-              but, until that's done, this will be easier to interact with
-        {outprefix}_Fvals.csv
-        {outprefix}_pvals.csv
-        {outprefix}_R2vals.csv
-            Each column is an [F,p,R^2] value for each component. 
+            "classification" rejected if rejected by tedana OR regressors
+            "tedana classification" is the original accept/reject classification from tedana
+            "regressors classification" is the accept/reject classification from regressor method
+            "Accepted Both" True for components accepted by both methods
+            "Rejected Both" True for components rejected by both methods
+            "Rejected Tedana Only" True for components rejected by tedana and accepted by regressors
+            "Rejected Regressors Only" True for components rejected by regressors and accepted by tedana
+        "Signif Motion", "Signif Phys_Freq", "Signif Phys_Variability", "Signif WM & CSF":
+            For components rejected by regressor model, testing if there is also
+            a significiant fit to these 4 categories of regressors. True if the category contributes
+            signif to the model, False if not signif, and empty if the full model wasn't significant
+            Note: If an R2 threshold is used, these columns only show values rejected by the model
+              so columns where the full model is significant (p<X) but is below the R2 threshold,
+              the values will be empty. They can be calculated using the p values also saved in this table
+        "R2 Full Model", "R2 Motion", "R2 Phys_Freq", "R2 Phys_Variability", "R2 WM & CSF":
+        "pval Full Model", "pval Motion", "pval Phys_Freq", "pval Phys_Variability", "pval WM & CSF":
+            The R^2 and pvals for the full regresor model and the listed sub-categories
+        {outprefix}_Fvals.csv: Each column is an F value for each component. 
             Columns are for the Full, Motion, Phys_Freq, Phys_Variability, and WM&CSF models
 
         If showplots is true:
-        {outprefix}_ModelRegressors.eps: Visualization of the 5 categories of model regressors that were
+        {outprefix}_ModelRegressors.jpg: Visualization of the 5 categories of model regressors that were
            given as input
-        {outprefix}_ModelFits_base.eps: The model fits for the Full model (vs detrended baseline) for the
+        {outprefix}_ModelFits_base.jpg: The model fits for the Full model (vs detrended baseline) for the
            first 30 components
-        {outprefix}_ModelFits_no[Motion,Phys_Freq,Phys_Variability,WM_&_CSF].eps: Model fits for the full model
+        {outprefix}_ModelFits_no[Motion,Phys_Freq,Phys_Variability,WM_&_CSF].jpg: Model fits for the full model
            vs the full model excluding one class of regressors. These are used to generate the partial-F values
            for each group
         
     Example parser call:
-    python  /Users/handwerkerd/code/nimh-sfim/ComplexMultiEcho1/PhysioProcessing/FitReg2ICA.py \
-        --rootdir  /Volumes/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-01 \
-        --regressors sub-01_RegressorModels_wnw_run-1.tsv \
-        --ica_mixing afniproc_orig/WNW/sub-01.results/tedana_kic_r01/ica_mixing.tsv \
-        --ica_metrics afniproc_orig/WNW/sub-01.results/tedana_kic_r01/ica_metrics.tsv \
-        --outprefix tmp/testfits \
+    python /data/handwerkerd/nimh-sfim/ComplexMultiEcho1/PhysioProcessing/FitReg2ICA.py \
+        --registry /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-01/afniproc_orig/WNW/sub-01.results/tedana_v23_kic_kundu_r01/desc-tedana_registry.json \
+        --regressors ../../../../Regressors/sub-01_RegressorModels_wnw_run-1.tsv \
+        --outdir sub-01_Reg2ICA --outprefix sub-01_wnw_run-1_kic_kundu \
         --p_thresh 0.05 --R2_thresh 0.5 --showplots
     """
 

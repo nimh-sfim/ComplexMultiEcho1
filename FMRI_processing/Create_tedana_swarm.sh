@@ -11,7 +11,7 @@ cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/
 
 swarmname=tedana_rerun_swarm.txt
 if [ -f $swarmname ]; then
-    echo Deleting and recreating WNW_tedana_sbatch.txt
+    echo Deleting and recreating $swarmname
     rm $swarmname
 fi
 touch $swarmname
@@ -30,12 +30,16 @@ for subidx in $(seq -f "%02g" 1 $numsbj); do
           "${rootdir}/${subj}/afniproc_orig/WNW/${subj}.results" 
           "${rootdir}/${subj}/afniproc_orig/movie_run-1/${subj}.results" 
           "${rootdir}/${subj}/afniproc_orig/movie_run-2/${subj}.results" 
-          "${rootdir}/${subj}/afniproc_orig/movie_run-2/${subj}.results" 
+          "${rootdir}/${subj}/afniproc_orig/movie_run-3/${subj}.results" 
           "${rootdir}/${subj}/afniproc_orig/breathing_run-1/${subj}.results"
           "${rootdir}/${subj}/afniproc_orig/breathing_run-2/${subj}.results"           
           "${rootdir}/${subj}/afniproc_orig/breathing_run-3/${subj}.results" )
   maskname="full_mask.$subj+orig.HEAD"
   runnum=( 01 02 03 01 01 01 01 01 01)
+
+  # Had a typo and ended up running movie_run-3 separately
+  # rundir=( "${rootdir}/${subj}/afniproc_orig/movie_run-3/${subj}.results" )
+  # runnum=( 01 )
 
   echo ${rundir[@]}
 
