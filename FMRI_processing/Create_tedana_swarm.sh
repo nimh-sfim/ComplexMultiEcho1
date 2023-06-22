@@ -80,7 +80,7 @@ for subidx in $(seq -f "%02g" 1 $numsbj); do
           "${rootdir}/${subj}/afniproc_orig/WNW/${subj}.results" 
           "${rootdir}/${subj}/afniproc_orig/movie_run-1/${subj}.results" 
           "${rootdir}/${subj}/afniproc_orig/movie_run-2/${subj}.results" 
-          "${rootdir}/${subj}/afniproc_orig/movie_run-2/${subj}.results" 
+          "${rootdir}/${subj}/afniproc_orig/movie_run-3/${subj}.results" 
           "${rootdir}/${subj}/afniproc_orig/breathing_run-1/${subj}.results"
           "${rootdir}/${subj}/afniproc_orig/breathing_run-2/${subj}.results"           
           "${rootdir}/${subj}/afniproc_orig/breathing_run-3/${subj}.results" )
@@ -89,7 +89,7 @@ for subidx in $(seq -f "%02g" 1 $numsbj); do
 
   # echo ${rundir[@]}
 
-  for ridx in $(seq -f "%g" 0 8); do
+  for ridx in $(seq -f "%g" 1 9); do
      if [ -d ${rundir[$ridx]} ]; then
        if [ -f ${rundir[$ridx]}/tedana_v23_kic_kundu_r${runnum[$ridx]}/desc-optcomDenoised_bold.nii.gz ] ; then
          tmp=`ls -lh ${rundir[$ridx]}/tedana_v23_kic_kundu_r${runnum[$ridx]}/desc-optcomDenoised_bold.nii.gz | awk '{print $6  $5  $4  $7}'`

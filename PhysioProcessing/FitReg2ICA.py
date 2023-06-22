@@ -224,8 +224,7 @@ def main():
         ica_combined_metrics[f"Signif {reg_cat}"] = None
         ica_combined_metrics.loc[regressors_reject_idx, f"Signif {reg_cat}"] = False
         tmp_submodel_reject_idx = np.squeeze(np.argwhere((p_vals[f"{reg_cat} Model"]<p_thresh_Bonf).values))
-        tmp_submodel_signif_idx = list(set(regressors_reject_idx).intersection(set(tmp_submodel_reject_idx)))
-        print(tmp_submodel_signif_idx)
+        tmp_submodel_signif_idx = list(np.intersect1d(regressors_reject_idx, tmp_submodel_reject_idx))
         ica_combined_metrics.loc[tmp_submodel_signif_idx, f"Signif {reg_cat}"] = True
 
         reject_type_count[idx] = len(tmp_submodel_signif_idx)

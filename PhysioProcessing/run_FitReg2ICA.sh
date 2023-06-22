@@ -38,7 +38,7 @@ for subidx in $(seq -f "%02g" 1 $numsbj); do
                    "breathing_run-1" "breathing_run-2" "breathing_run-3")
 
   echo ${rundir[@]}
-  echo "~/InitConda.sh; \\" >> $swarmname
+  echo "source ~/InitConda.sh; \\" >> $swarmname
   for ridx in $(seq -f "%g" 0 8); do
      if [ -d ${rundir[$ridx]} ]; then
         echo "Setting up ${rundir[$ridx]} FitICA calls"
@@ -78,17 +78,15 @@ for subidx in $(seq -f "%02g" 1 $numsbj); do
                    "movie_run-1" "movie_run-2" "movie_run-3" \
                    "breathing_run-1" "breathing_run-2" "breathing_run-3")
 
-  echo ${rundir[@]}
-
-  for ridx in $(seq -f "%g" 0 8); do
+  for ridx in $(seq -f "%g" 1 9); do
      if [ -d ${rundir[$ridx]} ]; then
         for tedtype in kic_kundu kic_minimal c70_kundu c70_minimal; do
 
             if [ -f ${rundir[$ridx]}/tedana_v23_${tedtype}_r${runnum[$ridx]}/desc-optcomDenoised_bold.nii.gz ] ; then
             tmp=`ls -lh ${rundir[$ridx]}/tedana_v23_${tedtype}_r${runnum[$ridx]}/${subj}_Reg2ICA/${subj}_${regresslabeling[$ridx]}_${tedtype}_OutputSummary.json | awk '{print $6  $5  $4  $7}'`
-            echo $tmp ${rundir[$ridx]} $tedtype
+            echo $tmp ${rundir[$ridx]} r${runnum[$ridx]} $tedtype
             else
-            echo Not found ${rundir[$ridx]} $tedtype
+            echo Not found ${rundir[$ridx]} r${runnum[$ridx]} $tedtype
             fi
         done
      fi
