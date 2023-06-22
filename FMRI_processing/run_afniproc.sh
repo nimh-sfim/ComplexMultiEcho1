@@ -50,20 +50,23 @@ then
    # the movie/resp runs, and then use that image to align to the same anatomical as the WNW runs.
    # The movie/resp anatomical alignment will not be identical to the WNW alignment so this should
    # be looked at carefully
-   volregstateWNW="  -blip_forward_dset ${origdir}func/${subj_id}_task-EpiTest_echo-1_part-mag_bold.nii'[0..4]'  \
-                       -blip_reverse_dset ${origdir}func/${subj_id}_task-EpiTestPA_echo-1_part-mag_bold.nii'[0..4]'  \
+  #  -blip_forward_dset ${origdir}func/${subj_id}_task-EpiTest_echo-1_part-mag_bold.nii'[0..4]'  \
+  #                      -blip_reverse_dset ${origdir}func/${subj_id}_task-EpiTestPA_echo-1_part-mag_bold.nii'[0..4]'  \
+
+   volregstateWNW="  -blip_forward_dset ${origdir}func/${subj_id}_task-EpiTest_echo-1_part-mag_sbref.nii  \
+                       -blip_reverse_dset ${origdir}func/${subj_id}_task-EpiTestPA_echo-1_part-mag_sbref.nii  \
                        -volreg_post_vr_allin yes  \
                        -volreg_pvra_base_index MIN_OUTLIER  \
                        -volreg_align_to MEDIAN_BLIP"
-   volregstateOther="  -blip_forward_dset ${origdir}func/${subj_id}_task-EpiTest2_echo-1_part-mag_bold.nii'[0..4]'  \
-                       -blip_reverse_dset ${origdir}func/${subj_id}_task-EpiTestPA2_echo-1_part-mag_bold.nii'[0..4]'  \
+   volregstateOther="  -blip_forward_dset ${origdir}func/${subj_id}_task-EpiTest2_echo-1_part-mag_sbref.nii  \
+                       -blip_reverse_dset ${origdir}func/${subj_id}_task-EpiTestPA2_echo-1_part-mag_sbref.nii  \
                        -volreg_post_vr_allin yes  \
                        -volreg_pvra_base_index MIN_OUTLIER  \
                        -volreg_align_to MEDIAN_BLIP"
 
 else
-   volregstateWNW="  -blip_forward_dset ${origdir}func/${subj_id}_task-EpiTest_echo-1_part-mag_bold.nii'[0..4]'  \
-                       -blip_reverse_dset ${origdir}func/${subj_id}_task-EpiTestPA_echo-1_part-mag_bold.nii'[0..4]'  \
+   volregstateWNW="  -blip_forward_dset ${origdir}func/${subj_id}_task-EpiTest_echo-1_part-mag_sbref.nii  \
+                       -blip_reverse_dset ${origdir}func/${subj_id}_task-EpiTestPA_echo-1_part-mag_sbref.nii  \
                        -volreg_post_vr_allin yes  \
                        -volreg_pvra_base_index MIN_OUTLIER  \
                        -volreg_align_to MEDIAN_BLIP"
@@ -195,36 +198,36 @@ done
 # Note: This assignment of a jobid from sbatch works on biowulf, but not elsewhere.
 #   See: https://hpc.nih.gov/docs/job_dependencies.html
 
-# separate processes for hard to process subjects (high motion censoring)
-if [[ ${difficult_subj_array[*]} =~ $subj_id ]]; then
+# # separate processes for hard to process subjects (high motion censoring)
+# if [[ ${difficult_subj_array[*]} =~ $subj_id ]]; then
 
-  # require second file argument for task (i.e., WNW or moviebreath)
-  task=$2
+#   # require second file argument for task (i.e., WNW or moviebreath)
+#   task=$2
 
-  if [ $RunJobs -eq 1 ]; then
+#   if [ $RunJobs -eq 1 ]; then
 
-    cd $rootdir
-    if [ -f ${subj_id}_jobhist_sbatch.txt ]; then
-        echo Deleting and recreating ${subj_id}_jobhist_sbatch.txt
-        rm ${subj_id}_jobhist_sbatch.txt
-    fi
-    touch ${subj_id}_jobhist_sbatch.txt
+#     cd $rootdir
+#     if [ -f ${subj_id}_jobhist_sbatch.txt ]; then
+#         echo Deleting and recreating ${subj_id}_jobhist_sbatch.txt
+#         rm ${subj_id}_jobhist_sbatch.txt
+#     fi
+#     touch ${subj_id}_jobhist_sbatch.txt
 
-    echo '#!/bin/sh' >> ${subj_id}_jobhist_sbatch.txt
+#     echo '#!/bin/sh' >> ${subj_id}_jobhist_sbatch.txt
 
-    if [ $task == 'WNW' ]; then
-      WNWjobID=$(sbatch --time 6:00:00 --cpus-per-task=8 --mem=24G --error=slurm_${subj_id}_WNW.e --output=slurm_${subj_id}_WNW.o ${subj_id}_WNW_sbatch.txt)
-      echo "jobhist ${WNWjobID} > ${subj_id}_jobhist_results.txt " >> ${subj_id}_jobhist_sbatch.txt
-    elif [ $task == 'moviebreath' ]; then
-      moviebreath_jobID=$(swarm --time 06:00:00 -g 24 -t 8 -m afni --merge-output --job-name moviebreath ${subj_id}_moviebreath_swarm.txt)
-      echo "jobhist ${moviebreath_jobID} >> ${subj_id}_jobhist_results.txt " >> ${subj_id}_jobhist_sbatch.txt
-      sbatch --time 00:30:00 --cpus-per-task=1 --partition=norm,quick ${subj_id}_jobhist_sbatch.txt
-    fi
+#     if [ $task == 'WNW' ]; then
+#       WNWjobID=$(sbatch --time 6:00:00 --cpus-per-task=8 --mem=24G --error=slurm_${subj_id}_WNW.e --output=slurm_${subj_id}_WNW.o ${subj_id}_WNW_sbatch.txt)
+#       echo "jobhist ${WNWjobID} > ${subj_id}_jobhist_results.txt " >> ${subj_id}_jobhist_sbatch.txt
+#     elif [ $task == 'moviebreath' ]; then
+#       moviebreath_jobID=$(swarm --time 06:00:00 -g 24 -t 8 -m afni --merge-output --job-name moviebreath ${subj_id}_moviebreath_swarm.txt)
+#       echo "jobhist ${moviebreath_jobID} >> ${subj_id}_jobhist_results.txt " >> ${subj_id}_jobhist_sbatch.txt
+#       sbatch --time 00:30:00 --cpus-per-task=1 --partition=norm,quick ${subj_id}_jobhist_sbatch.txt
+#     fi
 
-  fi
+#   fi
 
-# run dependency processes for all other subjects
-else
+# # run dependency processes for all other subjects
+# else
   if [ $RunJobs -eq 1 ]; then
     WNWjobID=$(sbatch --time 6:00:00 --cpus-per-task=8 --mem=24G --error=slurm_${subj_id}_WNW.e --output=slurm_${subj_id}_WNW.o ${subj_id}_WNW_sbatch.txt)
     moviebreath_jobID=$(swarm --time 6:00:00 --dependency=afterok:${WNWjobID} -g 24 -t 8 -m afni --merge-output --job-name moviebreath ${subj_id}_moviebreath_swarm.txt)
@@ -244,7 +247,7 @@ else
 
   fi
 
-fi
+# fi
 
 
 
