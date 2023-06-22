@@ -240,12 +240,12 @@ def main():
         "component counts": 
         {
             "total": int(num_components),
-            "rejected by tedana": int(len(np.squeeze(np.argwhere((ica_combined_metrics["tedana classification"]=='rejected').values)))),
-            "rejected by regressors": int(len(np.squeeze(np.argwhere((ica_combined_metrics["regressors classification"]=='rejected').values)))),
-            "accepted by both tedana and regressors": int(len(np.squeeze(np.argwhere((ica_combined_metrics["Accepted Both"]==True).values)))),
-            "rejected by both regressors and tedana": int(len(np.squeeze(np.argwhere((ica_combined_metrics["Rejected Both"]==True).values)))),
-            "rejected by tedana only": int(len(np.squeeze(np.argwhere((ica_combined_metrics["Rejected Tedana Only"]==True).values)))),
-            "rejected by regressors only": int(len(np.squeeze(np.argwhere((ica_combined_metrics["Rejected Regressors Only"]==True).values)))),
+            "rejected by tedana": int((np.squeeze(np.argwhere((ica_combined_metrics["tedana classification"]=='rejected').values))).size),
+            "rejected by regressors": int((np.squeeze(np.argwhere((ica_combined_metrics["regressors classification"]=='rejected').values))).size),
+            "accepted by both tedana and regressors": int((np.squeeze(np.argwhere((ica_combined_metrics["Accepted Both"]==True).values))).size),
+            "rejected by both regressors and tedana": int((np.squeeze(np.argwhere((ica_combined_metrics["Rejected Both"]==True).values))).size),
+            "rejected by tedana only": int((np.squeeze(np.argwhere((ica_combined_metrics["Rejected Tedana Only"]==True).values))).size),
+            "rejected by regressors only": int((np.squeeze(np.argwhere((ica_combined_metrics["Rejected Regressors Only"]==True).values))).size),
             "rejected by regressors with signif fit to": dict()
         },
         "variance": {
