@@ -55,7 +55,7 @@ class FitReg2ICA():
         Default:  {"Motion": {"_dmn", "_drv"}, 
                     "Phys_Freq": {"_sin", "_cos"},
                     "Phys_Variability": {"_rvt", "_hrv"},
-                    "WM & CSF": {"WM_e", "Csf_vent"}}
+                    "CSF": {"csf1", "csf2", "csf3"}}
         polort: (int) Number of polynomial regressors to include in the baseline noise model. default=4
         prefix: Output file prefix. Used here to output some figure in .jpg format
         show_plot: (bool) Plots each category of regressors, if True. default=False
@@ -78,7 +78,7 @@ class FitReg2ICA():
             regress_dict = {"Motion": {"_dmn", "_drv"}, 
                             "Phys_Freq": {"_sin", "_cos"},
                             "Phys_Variability": {"_rvt", "_hrv"},
-                            "WM & CSF": {"WM_e", "Csf_vent"}}
+                            "CSF": {"csf1", "csf2", "csf3"}}
 
         # The category titles to group each regressor
         regress_categories = regress_dict.keys()
@@ -236,7 +236,6 @@ class FitReg2ICA():
         F_vals = np.divide((SSE_base-SSE_full)/(DF_base-DF_full), (SSE_full/DF_full))       # larger sammple variance / smaller sample variance (F = (SSE1 – SSE2 / m) / SSE2 / n-k, where SSE = residual sum of squares, m = number of restrictions and k = number of independent variables) -> the 'm' restrictions in this case is the DOF range betw the base - full model, the 'n-k' is the number of DOF (independent variables/timepoints) from the fully-fitted model
         p_vals = 1-stats.f.cdf(F_vals, DF_base-DF_full, DF_full)        # cumulative distribution (FX(x) = P(X<=x), X = real-valued variable, x=probable variable within distribution) of the F-values + extra parameters to shape the range of the distribution values (range: start = DOF_base (unfitted) - DOF_Full (fitted with full model), end = DOF_Full)
         R2_vals = 1 - np.divide(SSE_full,SSE_base)      # estimate proportion of variance (R2-squared fit) by SSE full [fully fitted] (sum of 1st errors) / SSE base [non-fitted] (sum of 2nd errors) ... and subtracting the error ratio from 1: R² = SSR (fitted model)/SST(total or model base) = Σ (Y_pred-Y_actual)**2 / Σ (Y_pred-Y_actual)**2
-
         print(Y.shape)
 
         # Plots the fits for the first 20 components

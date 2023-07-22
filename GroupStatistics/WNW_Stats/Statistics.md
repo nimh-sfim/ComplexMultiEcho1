@@ -1,4 +1,4 @@
-## Statistics documentation
+for ## Statistics documentation
 ---
 <br>
 
@@ -70,4 +70,4 @@ f"{out}DOF_GLMs_All_group.tsv"
 
 <br>To view graphical representations of the above results:
 
-See [Visualizations/OHBM2022Poster/Visualizations.md](Visualizations/OHBM2022Poster/Visualizations.md)
+See [../../Visualizations/OHBM2022Poster/Visualizations.md](../../Visualizations/OHBM2022Poster/Visualizations.md)

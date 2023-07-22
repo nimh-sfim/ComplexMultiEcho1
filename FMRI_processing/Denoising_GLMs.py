@@ -15,11 +15,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
 def main():
     # Argument Parsing
     parser = ArgumentParser(
-        description="Run GLMs for the Word Nonword task with specific noise regressors"
+        description="Run GLMs for the Word Nonword & Movie/Respiration tasks with specific noise regressors"
     )
 
     parser.add_argument("SUBJ", help="Subject identifier (01, NOT sub-01)")
@@ -37,7 +36,7 @@ def main():
         default=None)
     parser.add_argument(
         "--inputfiles", type=str, required=False, default="tedana_r0?/ts_OC.nii.gz",
-        help="The file names, with ? wildcards for the 3 runs of WNW data to input. Relative to INPUTDIR. Default=tedana_r0?/ts_OC.nii.gz"
+        help="The file names, with ? wildcards for the 3 runs of WNW data to input. Relative to INPUTDIR. Default=tedana_r0?/ts_OC.nii.gz. For movie/breathing, will be tedana_r01/ts_OC.nii.gz"
     )
     parser.add_argument(
         "--scale_ts", action="store_true",
@@ -56,6 +55,14 @@ def main():
         help="This program will run the GLM script by default. use this option to just generate the script, but not run it"
     ) 
 
+    parser.add_argument(
+        "--task", help="specify whether task is 'wnw' or 'rest' for the GLM type", required=True
+    )
+
+    parser.add_argument(
+        "--denoising_type", help="specify whether removing 'regressors only' regressors or 'combined regressors' (OPTIONAL)", required=False
+    )
+
     args = parser.parse_args()
 
     # TODO: Consider initializing this all into a class like in the Denoising pilot
@@ -69,8 +76,9 @@ def main():
     scale_ts = args.scale_ts
     include_motion = args.include_motion
     include_CSF = args.include_CSF
-
     dontrunscript = args.dontrunscript
+    task = args.task
+    denoising = args.denoising_type
 
     # Make sure key files & directories exist and create output directory
     if not os.path.exists(out_dir):
@@ -79,8 +87,13 @@ def main():
         os.chdir(out_dir)
         if os.path.exists(GLMlabel):
             print(f"{GLMlabel} subdirectory exists. Deleting directory and contents")
-            rmtree(GLMlabel)
-        os.mkdir(GLMlabel)
+            command=f"rm -r {GLMlabel}"
+            run(command, shell=True)
+        if not os.path.exists(input_dir):
+            print("This run does not exist")
+            os._exit(0)     # exit script without raising an error
+        else:
+            os.mkdir(GLMlabel)
 
     # Check if orig_dir exists
     if not os.path.exists(input_dir):
@@ -88,38 +101,49 @@ def main():
     else:
         input_dir = os.path.abspath(input_dir)
 
-
     # Find fMRI files for GLM in input_dir
     file_targets = os.path.join(input_dir, inputfiles)
     input_files = sorted(glob.glob(file_targets))
     if not input_files:
         raise OSError(f"{file_targets} not found")
-    elif len(input_files) != 3:
+    elif len(input_files) != 3 and task == 'task':
         raise OSError(f"{input_files} found. Should be 3 files")
+    elif len(input_files) != 1 and task == 'rest':
+        raise OSError(f"{input_files} found. Should be 1 file")
     else:
         print(f"Running GLM using {input_files} input files")
 
-
+    # regressors
     if regressors:
         regressor_targets = os.path.join(input_dir, regressors)
-        regressor_files = sorted(glob.glob(regressor_targets))
+        print("REGRESSORS TARGETS: ",regressor_targets)
+        if task == 'wnw':
+            regressor_files = sorted(glob.glob(regressor_targets))
+            print("REGRESSORS TARGET FILES: ", regressor_files)
+        else:
+            regressor_files = [regressor_targets]
+        print(regressor_files)
         if not regressor_files:
             raise OSError(f"{regressor_targets} not found")
-        elif len(input_files) != 3:
-            raise OSError(f"{regressor_files} found. Should be 3 files")
+        elif len(input_files) != 3 and task == 'wnw':
+            raise OSError(f"{input_files} found. Should be 3 files")
+        elif len(input_files) != 1 and task == 'rest':
+            raise OSError(f"{input_files} found. Should be 1 file")
         if regressors_metric_table:
             regressors_metric_targets = os.path.join(input_dir, regressors_metric_table)
             regressors_metric_table_files = sorted(glob.glob(regressors_metric_targets))
             if not regressors_metric_table_files:
                 raise OSError(f"{regressors_metric_targets} not found")
-            elif len(input_files) != 3:
-                raise OSError(f"{regressors_metric_table_files} found. Should be 3 files")   
+            elif len(input_files) != 3 and task == 'wnw':
+                raise OSError(f"{input_files} found. Should be 3 files")
+            elif len(input_files) != 1 and task == 'rest':
+                raise OSError(f"{input_files} found. Should be 1 file")
             print(f"Using inputted regressor files: {regressor_files}")
             print(f"Using inputted component metric table files: {regressors_metric_table_files}")
-            combined_regressors = parse_metric_table(GLMlabel, regressor_files, metric_table_files=regressors_metric_table_files)
+            combined_regressors = parse_metric_table(task, denoising, GLMlabel, regressor_files, metric_table_files=regressors_metric_table_files)
         else:
             print(f"Using inputted regressor files: {regressor_files}")
-            combined_regressors = parse_metric_table(GLMlabel, regressor_files)
+            combined_regressors = parse_metric_table(task, denoising, GLMlabel, regressor_files)
     else:
         combined_regressors = None
 
@@ -131,7 +155,7 @@ def main():
     #   censor files based on different censoring thresholds
     censorfile = os.path.abspath(os.path.join(input_dir, f"censor_{subj}_combined_2.1D"))
 
-
+    # End of GLM statement
     FullStatement = [
         "#!/bin/tcsh -xef",
         "",
@@ -147,13 +171,8 @@ def main():
         scale_statement, input_files = scale_time_series(subj, GLMlabel, input_files, maskfile)
         FullStatement.extend(scale_statement)
 
-
-    
-
-
-
     # One function to generate the GLM, which includes all of the conditional logic based on inputs
-    FullStatement.extend(generate_GLM_statement(subj, GLMlabel, input_files, censorfile, regressors=combined_regressors, 
+    FullStatement.extend(generate_GLM_statement(task, subj, GLMlabel, input_files, censorfile, regressors=combined_regressors, 
                     include_motion=include_motion, include_CSF=include_CSF))
     
     # Generate fixed commands for everything after the GLM
@@ -163,7 +182,7 @@ def main():
     create_and_run_glm(subj, GLMlabel, FullStatement, dontrunscript=dontrunscript)
 
 
-def parse_metric_table(GLMlabel, regressor_files, metric_table_files=None):
+def parse_metric_table(task, denoising, GLMlabel, regressor_files, metric_table_files=None):
     """
     INPUT:
     GLMlabel: The string that labels the subdirectory where the file should be written out
@@ -187,7 +206,11 @@ def parse_metric_table(GLMlabel, regressor_files, metric_table_files=None):
     n_vols = np.zeros(3, dtype=int)
     n_rej_comps = np.zeros(3, dtype=int)
 
-    for idx in range(3):
+    if task == 'wnw':
+        nrange=3
+    else:
+        nrange=1
+    for idx in range(nrange):
         tmpsfx = regressor_files[idx].split('.')[-1]
         if tmpsfx == 'csv':
             sep=','
@@ -213,7 +236,14 @@ def parse_metric_table(GLMlabel, regressor_files, metric_table_files=None):
             if (ica_mixing[idx]).shape[1] != (ica_metrics[idx]).shape[0]:
                 raise ValueError(f"Different number of components in the mixing matrics ({(ica_mixing[idx]).shape[1]}) vs the metrics table ({(ica_metrics[idx]).shape[0]})")
 
-            reject_idx.append(list(np.squeeze(np.argwhere(((ica_metrics[idx])['classification']=='rejected').values))))
+            if denoising == 'regressors only':      # only rejecting 'combined regressors' regressors (Tedana Rejects Most of these so only want to get the ones that are captured by Combined Regressors)
+                indices = list(np.where((ica_metrics[idx])['Rejected Regressors Only'] == True)[0])
+                reject_idx.append(indices)
+            elif denoising == 'combined regressors':        # this decision criteria only rejects components that are rejected by EITHER Tedana or BOTH Tedana and the Linear Model
+                reject_idx.append(list(np.squeeze(np.argwhere(((ica_metrics[idx])['classification']=='rejected').values))))
+            elif denoising == 'rejected both':              # rejecting components that were mutually rejected by Tedana AND Linear Model
+                indices = list(np.where((ica_metrics[idx])['Rejected Both'] == True)[0])
+                reject_idx.append(indices)
             n_rej_comps[idx] = len(reject_idx[idx])
         else:
             print(f"ica_metrics is none {ica_metrics}")
@@ -235,24 +265,25 @@ def parse_metric_table(GLMlabel, regressor_files, metric_table_files=None):
     column_labels.extend(["r01-" + s for s in tmp_cols])
     Rejected_Timeseries[0:n_vols[0], 0:n_rej_comps[0]] = tmp_DF.to_numpy(dtype=float)
 
-    # Run 2
-    print(f"2: {n_vols[0]}:{(n_vols[:2].sum())}, {n_rej_comps[0]}:{(n_rej_comps[:2].sum())}")
-    if not isinstance(metric_table_files, type(None)):
-        tmp_DF = (ica_mixing[1]).iloc[:,reject_idx[1]]
-    else:
-        tmp_DF = ica_mixing[1]
-    tmp_cols = tmp_DF.columns
-    column_labels.extend(["r02-" + s for s in tmp_cols])
-    Rejected_Timeseries[n_vols[0]:(n_vols[:2].sum()), n_rej_comps[0]:(n_rej_comps[:2].sum())] = tmp_DF.to_numpy()
-    # Run 3
-    print(f"3: {(n_vols[:2].sum())}:{(n_vols.sum())}, {(n_rej_comps[:2].sum())}:{(n_rej_comps.sum())}")
-    if not isinstance(metric_table_files, type(None)):
-        tmp_DF = (ica_mixing[2]).iloc[:,reject_idx[2]]
-    else:
-        tmp_DF = ica_mixing[2]
-    tmp_cols = tmp_DF.columns
-    column_labels.extend(["r03-" + s for s in tmp_cols])
-    Rejected_Timeseries[(n_vols[:2].sum()):(n_vols.sum()), (n_rej_comps[:2].sum()):(n_rej_comps.sum())] = tmp_DF.to_numpy()
+    if task == 'wnw':
+        # Run 2
+        print(f"2: {n_vols[0]}:{(n_vols[:2].sum())}, {n_rej_comps[0]}:{(n_rej_comps[:2].sum())}")
+        if not isinstance(metric_table_files, type(None)):
+            tmp_DF = (ica_mixing[1]).iloc[:,reject_idx[1]]
+        else:
+            tmp_DF = ica_mixing[1]
+        tmp_cols = tmp_DF.columns
+        column_labels.extend(["r02-" + s for s in tmp_cols])
+        Rejected_Timeseries[n_vols[0]:(n_vols[:2].sum()), n_rej_comps[0]:(n_rej_comps[:2].sum())] = tmp_DF.to_numpy()
+        # Run 3
+        print(f"3: {(n_vols[:2].sum())}:{(n_vols.sum())}, {(n_rej_comps[:2].sum())}:{(n_rej_comps.sum())}")
+        if not isinstance(metric_table_files, type(None)):
+            tmp_DF = (ica_mixing[2]).iloc[:,reject_idx[2]]
+        else:
+            tmp_DF = ica_mixing[2]
+        tmp_cols = tmp_DF.columns
+        column_labels.extend(["r03-" + s for s in tmp_cols])
+        Rejected_Timeseries[(n_vols[:2].sum()):(n_vols.sum()), (n_rej_comps[:2].sum()):(n_rej_comps.sum())] = tmp_DF.to_numpy()
 
     Rejected_Component_Timeseries = pd.DataFrame(data=Rejected_Timeseries, columns=column_labels)
     outfilename = os.path.join(GLMlabel, "Rejected_ICA_Components")
@@ -290,7 +321,7 @@ def scale_time_series(subj, GLMlabel, input_files, maskfile):
 
     return scale_statement, new_input_files
 
-def generate_GLM_statement(subj, GLMlabel, input_files, censorfile, regressors=None, include_motion=False, include_CSF=False):
+def generate_GLM_statement(task, subj, GLMlabel, input_files, censorfile, regressors=None, include_motion=False, include_CSF=False):
     """
     Generate the GLM statement given the desired inputs and regressors
     
@@ -309,36 +340,42 @@ def generate_GLM_statement(subj, GLMlabel, input_files, censorfile, regressors=N
 
     if (include_CSF):
         print("Including default CSF regressors")
-        GLMstatement.extend([
-            f"  -ortvec {input_dir}/ROIPC.FSvent.r01.1D ROIPC.FSvent.r01  \\",
-            f"  -ortvec {input_dir}/ROIPC.FSvent.r02.1D ROIPC.FSvent.r02  \\",
-            f"  -ortvec {input_dir}/ROIPC.FSvent.r03.1D ROIPC.FSvent.r03  \\"
-        ])
-    
-    # TODO: Currently no WM option, but might want to consider adding
-    # if (include_WM):
-    #     print("Including default White matter regressor")
-    #     GLMstatement.append(
-    #         f"  -ortvec {input_dir}/mean.ROI.FSWe.1D ROI.We[would need to make for the 3 runs separately].r01  \\",
-    #     )
+        if task == 'task':
+            GLMstatement.extend([
+                f"  -ortvec {input_dir}/ROIPC.FSvent.r01.1D ROIPC.FSvent.r01  \\",
+                f"  -ortvec {input_dir}/ROIPC.FSvent.r02.1D ROIPC.FSvent.r02  \\",
+                f"  -ortvec {input_dir}/ROIPC.FSvent.r03.1D ROIPC.FSvent.r03  \\"
+            ])
+        elif task == 'rest':
+            GLMstatement.extend([
+                f"  -ortvec {input_dir}/ROIPC.FSvent.r01.1D ROIPC.FSvent.r01  \\"
+            ])
 
     if (include_motion):
         print("Including default motion regressors")
-        GLMstatement.extend([
-            f"  -ortvec {input_dir}/mot_demean.r01.1D mot_demean_r01  \\",
-            f"  -ortvec {input_dir}/mot_demean.r02.1D mot_demean_r02  \\",
-            f"  -ortvec {input_dir}/mot_demean.r03.1D mot_demean_r03  \\",
-            f"  -ortvec {input_dir}/mot_deriv.r01.1D mot_deriv_r01  \\",
-            f"  -ortvec {input_dir}/mot_deriv.r02.1D mot_deriv_r02  \\",
-            f"  -ortvec {input_dir}/mot_deriv.r03.1D mot_deriv_r03  \\"
-        ])
-    if(regressors):
+        if task == 'task':
+            GLMstatement.extend([
+                f"  -ortvec {input_dir}/mot_demean.r01.1D mot_demean_r01  \\",
+                f"  -ortvec {input_dir}/mot_demean.r02.1D mot_demean_r02  \\",
+                f"  -ortvec {input_dir}/mot_demean.r03.1D mot_demean_r03  \\",
+                f"  -ortvec {input_dir}/mot_deriv.r01.1D mot_deriv_r01  \\",
+                f"  -ortvec {input_dir}/mot_deriv.r02.1D mot_deriv_r02  \\",
+                f"  -ortvec {input_dir}/mot_deriv.r03.1D mot_deriv_r03  \\"
+            ])
+        elif task == 'rest':
+            GLMstatement.extend([
+                f"  -ortvec {input_dir}/motion_demean.1D mot_demean_r01  \\",
+                f"  -ortvec {input_dir}/motion_deriv.1D mot_deriv_r01  \\"
+            ])
+
+    if (regressors):
         print(f"Including custom regressors in {regressors}")
         GLMstatement.append(
             f"  -ortvec {regressors} combined_ort_vec \\"
-        )
-
-    GLMstatement.extend([
+    )
+    
+    if task == 'wnw':
+        GLMstatement.extend([
         "  -polort 4                                             \\",
         "  -num_stimts 5                                         \\",
         f"  -stim_times 1 {input_dir}/stimuli/{subj}_VisProc_Times.1D 'BLOCK(4,1)'    \\",
@@ -377,8 +414,27 @@ def generate_GLM_statement(subj, GLMlabel, input_files, censorfile, regressors=N
         ""
     ])
 
-    return(GLMstatement)
+    if task == 'rest':
+        GLMstatement.extend([
+        "  -polort 3                                             \\",
+        "  -fout -tout -rout -x1D X.xmat.1D -xjpeg X.jpg                       \\",
+        "  -x1D_uncensored X.nocensor.xmat.1D                            \\",
+        f"  -fitts fitts.{subj}.{GLMlabel}                                            \\",
+        f"  -errts errts.{subj}.{GLMlabel}                                          \\",
+        f"  -bucket stats.{subj}.{GLMlabel} \\",
+        f"  -cbucket cbucket.{subj}.{GLMlabel} \\",
+        "  -x1D_stop", # this option means 3dDeconvolve doesn't run, but it does generate the files needed for 3dREMLfit
+        " ",
+        "# display degrees of freedom info from X-matrix",
+        "1d_tool.py -show_df_info -infile X.xmat.1D |& tee out.df_info.txt",
+        " ",
+        "# -- execute the 3dREMLfit script, written by 3dDeconvolve --",
+        "tcsh -x stats.REML_cmd",
+        ""
+        ""
+    ])
 
+    return(GLMstatement)
 
 
 def generate_post_GLM_statements(subj, GLMlabel, censorfile):
@@ -538,8 +594,6 @@ def  create_and_run_glm(subj, GLMlabel, Fullstatement, dontrunscript=False):
     the output directory.
     Submit that file using sbatch in this function
     """
-
-
     # Fullstatement = GLMstatement + post_GLMstatements
     # print(*Fullstatement, sep="\n")
 

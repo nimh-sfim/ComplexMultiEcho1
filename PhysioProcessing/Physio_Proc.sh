@@ -1,7 +1,9 @@
+#!/bin/bash
 # Physiological Processing Script for BIDS file conversion (BIDSPHysio), trimming, and calculating regressors (NiPhlem)
 
 sub=$1
-echo "${sub} physiological files are being processed"
+call=$2
+echo "${sub} physiological files are being processed with ${call}"
 
 # tmp root to hold converted physiological files
 tmp_root=/data/holnessmn/tmp/${sub}/
@@ -15,30 +17,44 @@ data_root=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/
 func_root=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/Unprocessed/func/
 afni_wnw=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/afniproc_orig/WNW/${sub}.results/
 
-echo "Enter process to call: (Ex: trim)"
-read call
-
 ####################
 # Calls to be made #
 # Shell Variables #
 ####################
 
 # trim file and drop into func_root
-trim_file() {python3 ${scripts}file_trimmer.py \
+trim_file() {
+    python3 ${scripts}file_trimmer.py \
     --filepath ${tmp_root}${sub}_task-${task}_run-${run}_physio.tsv.gz \
     --jsonpath ${tmp_root}${sub}_task-${task}_run-${run}_physio.json \
-    --outpath ${func_root}}
+    --outpath ${func_root}
+    }
 
 # create NiPhlem regressors and drop into ${data_root}/Regressors/ dir
-Niphlm_regressors() {python3 ${scripts}niphlem_regressors.py \
+niphlem_regressors_calc() {
+    python3 ${scripts}niphlem_regressors.py \
     --tsv ${func_root}${sub}_task-${task}_run-${run}_physio.tsv.gz \
     --json ${func_root}${sub}_task-${task}_run-${run}_physio.json \
     --n_vols $nvols \
     --motion_demean $dmn \
     --motion_deriv $drv \
-    --WM $wm \
-    --CSF $csf \
-    --prefix ${data_root}Regressors/${sub}_RegressorModels_${task}_run-${run}}
+    --CSF_PCs $csf_pcs \
+    --prefix ${data_root}Regressors/${sub}_RegressorModels_${task}_run-${run}
+    }
+
+# plot the niphlem & AFNI regressors
+niphlm_regressors_plot() {
+    python3 ${scripts}niphlem_regressors.py \
+    --tsv ${func_root}${sub}_task-${task}_run-${run}_physio.tsv.gz \
+    --json ${func_root}${sub}_task-${task}_run-${run}_physio.json \
+    --n_vols $nvols \
+    --motion_demean $dmn \
+    --motion_deriv $drv \
+    --CSF_PCs $csf_pcs \
+    --prefix ${data_root}Regressors/${sub}_RegressorModels_${task}_run-${run} \
+    --plots \
+    --plot_prefix ${sub}_${task}_run-${run}_
+}
 
 ####################
 
@@ -60,7 +76,7 @@ convert() {
 
     while [[ $answer == "yes" ]]; do
         # Get acquisition times from 1st echo of func Unprocessed data
-        echo "Enter: task run \nEx: wnw 1"
+        echo "Sub is $sub. Enter: task run \nEx: wnw 1"
         read task run
         jq .AcquisitionTime $func_root${sub}_task-${task}_run-${run}_echo-1_part-mag_bold.json
 
@@ -81,14 +97,14 @@ convert() {
 # trim file and drop into func_root
 trim() {
     # Trim
-    for task in $tasks; do
+    for task in ${tasks[@]}; do
 
         # WNW
         if [[ $task == 'wnw' ]]; then 
             # set variables & commands
             runs=(1 2 3); echo "Runs $runs"
             cd $root
-            for run in $runs; do
+            for run in ${runs[@]}; do
                 tsv_file=${tmp_root}${sub}_task-${task}_run-${run}_physio.tsv.gz
                 json_file=${tmp_root}${sub}_task-${task}_run-${run}_physio.json
                 if [ -f $tsv_file ]; then
@@ -101,7 +117,7 @@ trim() {
         # Movie / Breathing
         if [[ $task == 'breathing' || $task == 'movie' ]]; then
             cd $root; runs=(1 2 3)
-            for run in $runs; do 
+            for run in ${runs[@]}; do 
                 tsv_file=${tmp_root}${sub}_task-${task}_run-${run}_physio.tsv.gz
                 json_file=${tmp_root}${sub}_task-${task}_run-${run}_physio.json
                 if [ -f $tsv_file ]; then
@@ -122,18 +138,16 @@ check_physios() {
 
 # don't forget to remove files in 'tmp'!!!
 
-# access these files for Linear Regression: ica_mixing.tsv, motion_demean.1D, motion_deriv.1D, mean.ROI.FSWe.1D, mean.ROI.FSvent.1D
+# access these files for Linear Modelling: ica_mixing.tsv, motion_demean.1D, motion_deriv.1D, mean.ROI.FSWe.1D, mean.ROI.FSvent.1D
 
-# Calculate NiPhlem Regressors and drop into Regressors/ dir
-calc_regressors() {
-
+regressors_run(){
     #check if 'Regressors' directory exists
     if ! [ -d ${data_root}Regressors/ ]; then
         mkdir ${data_root}Regressors/
     fi
 
     runs=(1 2 3)
-    for task in $tasks; do
+    for task in ${tasks[@]}; do
         echo "Task is ${task}. Subj is ${sub}."
         # enter num of vols without last 5 noise files
         if [[ $task == 'wnw' ]]; then
@@ -147,42 +161,58 @@ calc_regressors() {
             fi
         echo "Num of vols is $nvols"
         # default: 3 runs (wnw)
-            for run in $runs; do
+            for run in ${runs[@]}; do
                 # differential .1D noise directory paths (by task)
                 dmn=${afni_wnw}motion_demean.1D
                 drv=${afni_wnw}motion_deriv.1D
-                wm=${afni_wnw}mean.ROI.FSWe.1D
-                csf=${afni_wnw}mean.ROI.FSvent.1D                    
-                Niphlm_regressors
+                csf_pcs=${afni_wnw}ROIPC.FSvent.r0${run}.1D         
+                $call_function       # call this function (either Niphlem_regressors or niphlem_regressors_plot)
             done
         elif [[ $task == 'movie' ]]; then nvols=299;
         echo "Num of vols is $nvols"
         # default: 2 runs (movie)
-            for run in $runs; do
+            for run in ${runs[@]}; do
                 afni_resp=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/afniproc_orig/${task}_run-${run}/${sub}.results/
-                dmn=${afni_resp}motion_demean.1D
-                drv=${afni_resp}motion_deriv.1D
-                wm=${afni_resp}mean.ROI.FSWe.1D
-                csf=${afni_resp}mean.ROI.FSvent.1D
-                Niphlm_regressors
+                if [ -d $afni_resp ]; then 
+                    dmn=${afni_resp}motion_demean.1D
+                    drv=${afni_resp}motion_deriv.1D
+                    csf_pcs=${afni_resp}ROIPC.FSvent.r01.1D
+                    $call_function
+                else
+                    echo "This run: ${sub} ${task} run ${run} does not exist"
+                fi
             done
         elif [[ $task == 'breathing' ]]; then nvols=299;
         echo "Num of vols is $nvols"
         # default: 1 run (breathing)
-            for run in $runs; do
+            for run in ${runs[@]}; do
                 # differential .1D noise directory paths (by task)
                 afni_resp=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/afniproc_orig/${task}_run-${run}/${sub}.results/
-                dmn=${afni_resp}motion_demean.1D
-                drv=${afni_resp}motion_deriv.1D
-                wm=${afni_resp}mean.ROI.FSWe.1D
-                csf=${afni_resp}mean.ROI.FSvent.1D
-                Niphlm_regressors
+                if [ -d $afni_resp ]; then
+                    dmn=${afni_resp}motion_demean.1D
+                    drv=${afni_resp}motion_deriv.1D
+                    csf_pcs=${afni_resp}ROIPC.FSvent.r01.1D
+                    $call_function
+                else
+                    echo "This run: ${sub} ${task} run ${run} does not exist"
+                fi
             done
         fi
-    done 
+    done
+}
+
+# Calculate NiPhlem Regressors and drop into Regressors/ dir
+calc_regressors() {
+    call_function=niphlem_regressors_calc
+    regressors_run
+}
+
+plot_regressors() {
+    call_function=niphlm_regressors_plot
+    regressors_run
 }
 
 ######
-#calls: convert, trim, check_physios, calc_regressors
+#calls: convert, trim, check_physios, calc_regressors, or plot_regressors
 ######
 $call

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # GroupMask Creation File
+# Also does blurring as well (for between-subject analyses)
 
 rootdir=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/
 GroupDir=${rootdir}GroupResults/GroupMaps/
@@ -10,8 +11,6 @@ if ! [ -d group_mask/ ]; then
     mkdir group_mask/
 fi
 out=group_mask/
-
-tot_subjs=25
 
 # Creating individual subject masks:
 individual_masks() {
@@ -27,10 +26,20 @@ masking_second_echoes() {
     for sub in {01..25}; do
         currdir=${rootdir}sub-${sub}/afniproc_orig/
         cd $currdir;
-        for task in 'breathing_run-1' 'breathing_run-2' 'breathing_run-3' 'movie_run-1' 'movie_run-2' 'movie_run-3'; do
+        for task in 'WNW'; do
+        #'breathing_run-1' 'breathing_run-2' 'breathing_run-3' 'movie_run-1' 'movie_run-2' 'movie_run-3'; do
             if [ -d ${task} ]; then
-                file=`ls ${task}/sub-${sub}.results/pb0?.sub-${sub}.r01.e02.volreg+orig.HEAD`
-                3dcalc -overwrite -a ${file::-5} -b ${out}sub-${sub}_mask.nii.gz -expr 'a*bool(b)' -prefix ${out}sub-${sub}_task-${task}_2nd_echo_masked.nii.gz
+                if [[ ${task} == 'WNW' ]]; then
+                    files=`ls ${task}/sub-${sub}.results/pb0?.sub-${sub}.r0?.e02.volreg+orig.HEAD`
+                    run=0;
+                    for f in $files; do
+                        run=$((run+1));
+                        3dcalc -overwrite -a ${f::-5} -b ${out}sub-${sub}_mask.nii.gz -expr 'a*bool(b)' -prefix ${out}sub-${sub}_task-${task}_run-${run}_2nd_echo_masked.nii.gz
+                    done
+                else
+                    file=`ls ${task}/sub-${sub}.results/pb0?.sub-${sub}.r01.e02.volreg+orig.HEAD`
+                    3dcalc -overwrite -a ${file::-5} -b ${out}sub-${sub}_mask.nii.gz -expr 'a*bool(b)' -prefix ${out}sub-${sub}_task-${task}_2nd_echo_masked.nii.gz
+                fi
             fi
         done
     done
@@ -61,7 +70,6 @@ group_mask_generation() {
 # masking note: DO NOT mask the FisherZ-correlation files (will only mask between high-intensity voxels, not giving the entire brain, basically the equivalent of calling 3dTcorrelate -automask)
 masking_warped_files() {
     original_warped=`ls warped_files/orig_warped/*.nii`
-    # original masking
     for orig in $original_warped; do
         3dAutomask -overwrite -apply_prefix $orig $orig;
     done
@@ -73,6 +81,31 @@ group_mask_2nd_try() {
     full_masks=`ls ${rootdir}sub-??/afniproc_orig/movie_run-1/sub-??.results/full_mask.sub-??+orig.HEAD`
     # Concatenate all of the full masks
     3dTcat -overwrite -prefix ${out}Concatenated_sbj_masks_All_full_mask.nii.gz $full_masks
+}
+
+# Between-subject correlations blurring
+blurring_between_correlations() {
+    between_dirs=`ls -d ${rootdir}GroupResults/GroupISC/IS_Correlations/Between_subjects/*`
+    for dir in $between_dirs; do
+        cd $dir;
+        files_to_blur=`ls ./*.nii`;
+        for f in ${files_to_blur}; do
+            if ! [ -f ${f::-4}_blurred.nii ]; then
+                3dBlurToFWHM -input $f -prefix ${f::-4}_blurred.nii -FWHM 4
+            fi
+        done
+    done
+}
+
+# converts all errts .BRIK & .HEAD to .Nifti files (for 2nd echo, OC, ted_DN, and combined_regressors)
+# Note: heads = "${path%/*}", tails = echo "${path##*/}"
+cr_nifti_conversion() {
+    errts=`ls -f ${rootdir}sub-??/GLMs/*_v23_c70_kundu_*/errts*.HEAD`
+    for e in $errts; do
+        fpath=${e%/*}
+        cd $fpath
+        3dAFNItoNIFTI $e
+    done
 }
 
 # allows you to call the functions from command line (as the 1st argument)
@@ -97,11 +130,22 @@ case "$1" in
       group_mask_2nd_try
       exit 0
       ;;
+    (blurring_between_correlations)
+      blurring_between_correlations
+      exit 0
+      ;;
+    (cr_nifti_conversion)
+      cr_nifti_conversion
+      exit 0
+      ;;
 esac
 
 # Really quick so just run within sinteractive session
 # bash GroupMask_MH.sh individual_masks
-# sbatch GroupMask_MH.sh masking_second_echoes
+# sbatch --time=06:00:00 GroupMask_MH.sh masking_second_echoes
 # bash GroupMask_MH.sh group_mask_generation
 # sbatch GroupMask_MH.sh masking_warped_files
 # sbatch GroupMask_MH.sh group_mask_2nd_try
+
+# sbatch GroupMask_MH.sh blurring_between_correlations      # swarm [since this might take awhile]
+# sbatch GroupMask_MH.sh cr_nifti_conversion

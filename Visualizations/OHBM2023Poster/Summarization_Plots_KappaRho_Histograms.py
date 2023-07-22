@@ -1,7 +1,7 @@
 # A script to create the new Kappa Rho plots and histogram distribution
 
 """
-Can use these boolean dataframes as 'masks' to get the data values
+A script to generate new plots for OHBM 2023
 """
 
 from argparse import ArgumentParser
@@ -10,12 +10,16 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
 from matplotlib.lines import Line2D
+import matplotlib.patches as mpatches
 import socket
 import pandas as pd
 import numpy as np
 import seaborn as sns
 from time import sleep
 import json
+from glob import glob
+import scipy
+from pylab import setp
 
 # Generate base names
 class DataFinder:
@@ -32,7 +36,7 @@ class DataFinder:
         )
         self.outdir = op.join(
             self.projectdir,
-            "Component_Plots/"
+            "Component_Plots_UPDATED/"
         )
         self.subject = subject
         self.run = run
@@ -49,7 +53,7 @@ class DataFinder:
     def set_taskdir(self):
         if self.task == 'wnw':
             taskdir = 'WNW'
-        elif self.task == 'movie' | 'breathing':
+        elif self.task == 'movie' or self.task == 'breathing':
             taskdir = f"{self.task}_run-{self.run}"
         return taskdir
 
@@ -63,8 +67,11 @@ class DataFinder:
         return op.join(
             self.projectdir,
             self.subid(),
-            "Regressors",
-            "RejectedComps",
+            "afniproc_orig",
+            self.set_taskdir(),
+            f"{self.subid()}.results",
+            f"tedana_v23_c70_kundu_r0{self.run}",
+            f"{self.subid()}_Reg2ICA"
         )
     
     # check for pre-existing regressors BEFORE returning a file that doesn't exist
@@ -87,15 +94,14 @@ class DataFinder:
             "afniproc_orig",
             taskdir,
             f"{self.subid()}.results",
-            f"tedana_r{self.run:02}"
+            f"tedana_v23_c70_kundu_r0{self.run}"
         )
-        self.run_check(mixing_dir)          # run a check to see if that subj/task/run exists, if it does, return the variable
+        return mixing_dir
 
     def regressor_prefix(self):
-        run = self.run
         regressor_prefix = op.join(
             self.regressor_dir(),
-            f"{self.subid()}_{self.task}_r{run:02}_CombinedRejected_"
+            f"{self.subid()}_{self.task}_run-{self.run}_c70_kundu_"
         )
         return regressor_prefix
 
@@ -103,392 +109,605 @@ class DataFinder:
         combined_metrics = self.regressor_prefix() + "Combined_Metrics.csv"
         return self.run_check(combined_metrics)
 
-    def combined_betas(self):
-        combined_betas = self.regressor_prefix() + "betas.csv"
-        return self.run_check(combined_betas)
-
-    def combined_r2(self):
-        combined_r2 = self.regressor_prefix() + "R2vals.csv"
-        return self.run_check(combined_r2)
-
-    def combined_f(self):
-        combined_f = self.regressor_prefix() + "Fvals.csv"
-        return self.run_check(combined_f)
-
-    def combined_p(self):
-        combined_p = self.regressor_prefix() + "pvals.csv"
-        return self.run_check(combined_p)
-
-    def full_model(self):
-        full_model = self.regressor_prefix() + "FullRegressorModel.csv"
-        return self.run_check(full_model)
-
     def mixing_matrix(self):
         mixing_matrix = op.join(
             self.mixing_dir(),
-            "ica_mixing.tsv",
+            "desc-ICA_mixing.tsv",
         )
         return self.run_check(mixing_matrix)
     
-class extract_data:
+    def output_json(self):
+        output_json = self.regressor_prefix() + "OutputSummary.json"
+        return self.run_check(output_json)
+    
+    def betas(self):
+        output_json = self.regressor_prefix() + "betas.csv"
+        return self.run_check(output_json)
+    
+    def full_model(self):
+        output_json = self.regressor_prefix() + "FullRegressorModel.csv"
+        return self.run_check(output_json)
+
+# easy loop to go through subject, task, runs - with df
+def subject_loop(start, end, task, func):
+    run_idx=0
+    for subject in np.arange(start, end+1):
+        for run in np.arange(1,4):
+            print("Run idx: ", run_idx)
+
+            file_obj = DataFinder(subject, task, run)
+            print(f"Sub-{subject}, task {task}, run {run}")
+
+            regr_dir = file_obj.regressor_dir()
+            if os.path.exists(regr_dir):    # check if the directory for that run exists
+                func(file_obj, run_idx)
+                run_idx=run_idx+1      # add 1 to increment
+            else:
+                pass
+
+def return_summary_stats(dtype:str, col_stats, base):
+    """
+    Input:
+        - type of summary statistic    ('count','mean', or 'stdev')
+        - A dataframe
+        - The column to extract the stat from
+    Options: Mean, Standard Deviation, and Sums (counts)
+    Returns: 
+    Output statistic
+    """
+    # calculate the count per column/model if dtype is count,percentage,or deviation
+    if dtype == 'sum':
+        # sum = sum of comps within the specific model
+        sum = np.sum(col_stats, axis=0)      # pd.Series stats will ignore the NaNs: for higher-level statistics not using 'pd', might need another way to ignore NaNs in calculations...
+        out = sum
+    elif dtype == 'average':
+        # mean = sum of comps within the model / tot num of comps within the run
+        # OR average of the component metrics per run
+        mean = np.mean(col_stats, axis=0)
+        out = mean
+    elif dtype == 'percentage':
+        # percentage of comps contributing to the base (tot num of comps in base model)
+        # aka how much does each model count contribute to the overall base model sum
+        perc = 100*np.sum(col_stats, axis=0) / base
+        out = perc
+    # return list of summary statistics [that correspond to each of the columns]
+    return out
+
+def subject_statistics(file_obj, mode:str):
+    """
+    This is the main function that will separate the components by 2 categories
+    1st category: Rej_Both, Rej_TedOnly, Rej_RegOnly, Acc_All, Acc_Ted
+    2nd category: Full_Model_Rej, Full_Model_Acc, Sig_Motion, Sig_Phys_Freq, Sig_Phys_Var, Sig_WM_CSF
+
+    Full Model = components that were rejected by the Combined Regressors model (and NOT rejected by Tedana)
+    Sig = significantly fit to the partial model  (model = the regressor in the design matrix)
+
+    Output:
+    Saves the required dataframes as .csv files
+    """
+
+    # get the files for each category:
+    with open(file_obj.output_json(),'rb') as json_obj:
+        jsonf = json.load(json_obj)
+    metrics = pd.read_csv(file_obj.combined_metrics(), sep=',')
+
+    RB_indices = jsonf["component lists"]["rejected by both regressors and tedana"]
+    RRonly_indices = jsonf["component lists"]["rejected by regressors only"]
+    RTonly_indices = jsonf["component lists"]["rejected by tedana only"]
+
+    Motion_indices = jsonf["component lists"]["rejected by regressors with signif fit to"]["Motion"]
+    Phys_Freq_indices = jsonf["component lists"]["rejected by regressors with signif fit to"]["Phys_Freq"]
+    Phys_Var_indices = jsonf["component lists"]["rejected by regressors with signif fit to"]["Phys_Variability"]
+    WM_CSF_indices = jsonf["component lists"]["rejected by regressors with signif fit to"]["WM & CSF"]
+
+    total_var = jsonf["variance"]["total"]       # variance
+    RT_var = jsonf["variance"]["rejected by tedana"]
+    RR_var = jsonf["variance"]["rejected by regressors"]
+    AB_var = jsonf["variance"]["accepted by both tedana and regressors"]
+    RB_var = jsonf["variance"]["rejected by both regressors and tedana"]
+    RTonly_var = jsonf["variance"]["rejected by tedana only"]
+    RRonly_var = jsonf["variance"]["rejected by regressors only"]
+    Motion_var = jsonf["variance"]["rejected by regressors with signif fit to"]["Motion"]
+    Phys_Freq_var = jsonf["variance"]["rejected by regressors with signif fit to"]["Phys_Freq"]
+    Phys_Var_var = jsonf["variance"]["rejected by regressors with signif fit to"]["Phys_Variability"]
+    WM_CSF_var = jsonf["variance"]["rejected by regressors with signif fit to"]["WM & CSF"]
+
+    total_counts = jsonf["component counts"]["total"]        # counts
+    RT_counts = jsonf["component counts"]["rejected by tedana"]
+    RR_counts = jsonf["component counts"]["rejected by regressors"]
+    AB_counts = jsonf["component counts"]["accepted by both tedana and regressors"]
+    RB_counts = jsonf["component counts"]["rejected by both regressors and tedana"]
+    RTonly_counts = jsonf["component counts"]["rejected by tedana only"]
+    RRonly_counts = jsonf["component counts"]["rejected by regressors only"]
+    Motion_counts = jsonf["component counts"]["rejected by regressors with signif fit to"]["Motion"]
+    Phys_Freq_counts = jsonf["component counts"]["rejected by regressors with signif fit to"]["Phys_Freq"]
+    Phys_Var_counts = jsonf["component counts"]["rejected by regressors with signif fit to"]["Phys_Variability"]
+    WM_CSF_counts = jsonf["component counts"]["rejected by regressors with signif fit to"]["WM & CSF"]
+
+    RB_kappa = metrics.loc[RB_indices,"kappa"]      # kappa
+    RRonly_kappa = metrics.loc[RRonly_indices,"kappa"]
+    RTonly_kappa = metrics.loc[RTonly_indices,"kappa"]
+    Motion_kappa = metrics.loc[Motion_indices,"kappa"]
+    Phys_Freq_kappa = metrics.loc[Phys_Freq_indices,"kappa"]
+    Phys_Var_kappa = metrics.loc[Phys_Var_indices,"kappa"]
+    WM_CSF_kappa = metrics.loc[WM_CSF_indices,"kappa"]
+
+    RB_rho = metrics.loc[RB_indices,"rho"]          # rho
+    RRonly_rho = metrics.loc[RRonly_indices,"rho"]
+    RTonly_rho = metrics.loc[RTonly_indices,"rho"]
+    Motion_rho = metrics.loc[Motion_indices,"rho"]
+    Phys_Freq_rho = metrics.loc[Phys_Freq_indices,"rho"]
+    Phys_Var_rho = metrics.loc[Phys_Var_indices,"rho"]
+    WM_CSF_rho = metrics.loc[WM_CSF_indices,"rho"]
+
+    RB_varex = metrics.loc[RB_indices,"variance explained"]          # variance explained
+    RRonly_varex = metrics.loc[RRonly_indices,"variance explained"]
+    RTonly_varex = metrics.loc[RTonly_indices,"variance explained"]
+    Motion_varex = metrics.loc[Motion_indices,"variance explained"]
+    Phys_Freq_varex = metrics.loc[Phys_Freq_indices,"variance explained"]
+    Phys_Var_varex = metrics.loc[Phys_Var_indices,"variance explained"]
+    WM_CSF_varex = metrics.loc[WM_CSF_indices,"variance explained"]
+
+    if mode == 'variance':
+        return total_var, RT_var, RR_var, AB_var, RB_var, RTonly_var, RRonly_var, Motion_var, Phys_Freq_var, Phys_Var_var, WM_CSF_var
+    elif mode == 'counts':
+        return total_counts, RT_counts, RR_counts, AB_counts, RB_counts, RTonly_counts, RRonly_counts, Motion_counts, Phys_Freq_counts, Phys_Var_counts, WM_CSF_counts
+    elif mode == 'kappa-rho':
+        return RB_kappa, RRonly_kappa, RTonly_kappa, Motion_kappa, Phys_Freq_kappa, Phys_Var_kappa, WM_CSF_kappa, \
+                RB_rho, RRonly_rho, RTonly_rho, Motion_rho, Phys_Freq_rho, Phys_Var_rho, WM_CSF_rho, \
+                RB_varex, RRonly_varex, RTonly_varex, Motion_varex, Phys_Freq_varex, Phys_Var_varex, WM_CSF_varex
+
+def plot_base(suptitle, subtitles:list, xlabel, ylabel, xrange, yrange, plottype:str, dim:tuple):
+    """
+    Plot bases - single or multi-plot
+    """
+    # plot parameters - main: figure titles & colors/fonts
+    font = font_manager.FontProperties(family='DejaVu Sans',
+                                    style='normal', size=16)
+    fig = plt.figure(figsize=(10,7))
+    fig.suptitle(suptitle, font='DejaVu Sans', fontsize=14)
+
+    if plottype == 'single':
+        # plot parameters - additional: X/Y axises and ticks
+        plt.xlim(xrange)
+        plt.ylim(yrange)
+        plt.xticks(font='DejaVu Sans', fontsize=10)
+        plt.yticks(font='DejaVu Sans', fontsize=10)
+        plt.ylabel(ylabel, fontsize=13, font='DejaVu Sans', labelpad=10)
+        plt.xlabel(xlabel, fontsize=13, font='DejaVu Sans', labelpad=20)
+        plt.autoscale(enable=True, axis='y', tight=True)
+        plt.tight_layout(pad=1.01)
+        return fig
+    elif plottype == 'multi':
+        subplots = [fig.add_subplot(dim[0], dim[1], p+1) for p in range(dim[2])]
+        # fig, ([subplots]) = plt.subplots(nrows=3, sharex=True)
+        for sidx, s in enumerate(subplots):
+            s.set_title(subtitles[sidx], y=0.75, size=12, font='DejaVu Sans')
+            s.tick_params(labelsize=6)
+            s.set_xlim(xrange[0],xrange[1])
+            s.set_ylim(yrange[0],yrange[1])
+        fig.supxlabel(xlabel, size=12, font='DejaVu Sans', ha='center')
+        fig.supylabel(ylabel, size=12, font='DejaVu Sans', va='center', rotation='vertical')
+        return fig, subplots
+
+class group_plots:
     def __init__(self):
-        super().__init__()
+            super().__init__()    # initiate the class object -> only 'instance' you're initializing since there are no arguments
 
-    def obj(self, subj:int, task:str, run:int):
-        finder_obj = DataFinder(subj, task, run)
-        return finder_obj
+    # a function for looping through all subjects and combining all of these plots into an SVG file
+    def scatter_svg(self, start:int, end:int, task:str, mode:str):
+        """
+        1) Loops through all runs (from all subjects)
+        2) Displays all of OR the average 'kappa' value of the components from each category
+        """
+        # plot parameters
+        suptitle=f"Kappa-Rho Space for Classified Components - {task}"
+        xlabel='kappa'
+        ylabel='rho'
+        xrange=[0,200]
+        yrange=[0,200]
 
-    # a function to parse any dataframe with any condition to get what you want
-    def parse_df(self, *conds):
-        """
-        Enter: conditions (MUST be >1 condition)
-        Returns a boolean dataframe that matches ALL those conditions with the accompanying indices
-        """
-        bool_df = np.logical_and(*conds).fillna(value=bool(0), inplace=False)
-        return bool_df
+        dim=(4,3,7)
+        subtitles=("Rejected by Both", "Rejected by Regressors Only", "Rejected by Tedana Only", "Rejected by Motion","Rejected by Phys_Freq","Rejected by Phys_Var","Rejected by WM & CSF")
+        prefix="TedanaVsRegressors_"
+        fig, subplots = plot_base(suptitle, subtitles, xlabel, ylabel, xrange, yrange, 'multi', dim=dim)
 
-    def extract_metrics(self, df, *metrics):
-        """
-        reads in a 'csv' file & returns only the metrics that you want from a specified dataframe
-        Returns: a dictionary of those metrics with the 'metric name' as the key and the 'metric values' as the value for that key
-        """
-        df = pd.read_csv(df, sep=',')
-        df_metrics = {}
-        for m in metrics:
-            df_metrics[m] = df[m]
-        return df, df_metrics
+        def scatter_cat(file_obj, run_idx):
+            """
+            Plot the kappa/rho categories
+            size of each scatterpoint is scaled by the variance explained of the component
+            """
+            RB_kappa, RRonly_kappa, RTonly_kappa, Motion_kappa, Phys_Freq_kappa, Phys_Var_kappa, WM_CSF_kappa, \
+                RB_rho, RRonly_rho, RTonly_rho, Motion_rho, Phys_Freq_rho, Phys_Var_rho, WM_CSF_rho, \
+                RB_varex, RRonly_varex, RTonly_varex, Motion_varex, Phys_Freq_varex, Phys_Var_varex, WM_CSF_varex = subject_statistics(file_obj, mode='kappa-rho')
 
-    def return_component_indices(self, bool_df):
-        """
-        Return the indices for each component (True) within an indicated dataframe
-        This is useful for isolating these specific components to either plot them or compare them to other informative metrics
-        """
-        bool_df_idx = bool_df.index[bool_df == True].tolist()
-        return bool_df_idx
-    
-    def exclude_component_indices(self, class_df, opp_df):
-        """
-        excludes the component indices from the opposite condition (opp_df)
-        i.e.,  for Tedana-only vs Regressor-Only conditions, which are mutually exclusive
-        """
-        # get indices of opposite condition
-        opp_indices = self.return_component_indices(opp_df)
-        # exclude those 'opp' indices by transforming those indices to 'False' in the class_df
-        class_df[opp_indices] = False
-        # return original df with excluded indices
-        return class_df
-    
-    def return_sig_only(self, model, class_df, pval_df, pval_conditional, classt:str, opp_cond):
-        """
-        Returns the significant components (pval_conditional) by the model type & classification:
-        1) boolean dataframe (entire one), 2) indices, and 3) values
-        """
-        # if clause for separating tedonly vs regonly; each df should be exclusive of the other (hence, 'only')
-        if classt == "Rej Reg-Only" or classt == "Rej Ted-Only":
-            class_df_excl = self.exclude_component_indices(class_df, opp_cond)
-            signif_bools = self.parse_df(pval_conditional, class_df_excl)
+            sme_RB = subplots[0].scatter(RB_kappa, RB_rho, s=np.sqrt(RB_varex) * 20, c="red")
+            sme_RRonly = subplots[1].scatter(RRonly_kappa, RRonly_rho, s=np.sqrt(RRonly_varex) * 20, c="orange")
+            sme_RTonly = subplots[2].scatter(RTonly_kappa, RTonly_rho, s=np.sqrt(RTonly_varex) * 20, c="brown")
+            sme_Motion = subplots[3].scatter(Motion_kappa, Motion_rho, s=np.sqrt(Motion_varex) * 20, c="magenta")
+            sme_Phys_Freq = subplots[4].scatter(Phys_Freq_kappa, Phys_Freq_rho, s=np.sqrt(Phys_Freq_varex) * 20, c="blue")
+            sme_Phys_Var = subplots[5].scatter(Phys_Var_kappa, Phys_Var_rho, s=np.sqrt(Phys_Var_varex) * 20, c="pink")
+            sme_WM_CSF = subplots[6].scatter(WM_CSF_kappa, WM_CSF_rho, s=np.sqrt(WM_CSF_varex) * 20, c="grey")
+        
+        # implement subject loop
+        subject_loop(start, end, task, scatter_cat)
+        
+        if mode == 'save':
+            group_outdir = DataFinder(None,None,None).set_outdir()
+            plt.savefig(f"{group_outdir}{prefix}Combined_kappa_rho_plots_{task}.svg")
         else:
-            signif_bools = self.parse_df(pval_conditional, class_df)
-        sig_indices = self.return_component_indices(signif_bools)
-        sig_values = pval_df.loc[sig_indices, model].values
-        return signif_bools, sig_indices, sig_values
-    
-    def return_metrics_by_selected_components(self, main_df, *bool_dfs, **metrics):
+            plt.show()
+
+    def kde_density_plot(self, task:str, mode:str):
         """
-        *** I intend to feed the boolean dfs with the [sig-only (classified) components] booleans into this function.
-        This way you can get all the metrics for the components per classification (df) per model (col) [sig-only]
-        
-        Use the indices for each component (True) in the indicated dataframes (>1 df)
-        This is useful for isolating these specific components to either plot them or compare them to other informative metrics
-        Arguments:
-        main_df = main dataframe (.csv) from which to extract the data
-        bool_dfs = boolean dataframes from which to extract components
-        metrics = the additional metrics to print out to compare with the extracted components 
-
-        Note: the default 'metrics' file to use is the 'Combined_Metrics.csv' file which contains kappa/rho and other Tedana-derived metrics
-        *** you can use this function on other files (i.e., Fvals, Pvals, etc.) from which to extract more information about these components, but they might not have metrics as columns
+        Kernel density estimation (KDE) plot:
+        What it does:
+        - 1) places a Gaussian kernel (tiny kernel with normal distribution) over each data point (x)
+        - 2) then sums these non-negative Gaussian kernels (K) together to get the "density" or number of kernels involved in the summation of these distributions (xi...xn)
+        - 3) the "bandwidth" (h) is a free parameter that determines how much to smooth the waveform (after summation)
+        KDE Equation: f(x) = (np.sum(K (x-xi) / h)) / n*h   ->  for each datapoint (x), calculate the difference betw the mean (x) and the normal distribution centered on that datapoint (xi), 
+        feed it through a non-negative kernel function (K) that is scaled by the smoothing factor (h), and then scale that distribution by the number of normal distributions (n) * the smoothing factor (h)
+        The result is a scaled distribution that is smoothed by the parameter 'h'
         """
-        # a dictionary to retain the scores for those selected components & a wrapper dictionary for classification
-        score_dict = {}
-        wrapper_dict = {}
+        # pull in base plot and the data to plot
+        group_outdir = DataFinder(None,None,None).set_outdir()
 
-        # most of the time, you will use 'combined_metrics.csv' file, but this function allows you to use other .csv files as well: make note of the columns you're calling
-        df = pd.read_csv(main_df)
+        RT_perc_list, RR_perc_list, AB_perc_list, RB_perc_list, RTonly_perc_list, RRonly_perc_list, Motion_perc_list, Phys_Freq_perc_list, Phys_Var_perc_list, WM_CSF_perc_list = [], [], [], [], [], [], [], [], [], []
+        subtitles=("Rejected by Tedana","Rejected by Regressors","Accepted by Both","Rejected by Both","Rejected by Tedana Only","Rejected by Regressors Only","Motion","Phys_Freq","Phys_Var","WM_CSF")
 
-        # iterate thru the boolean dfs 'masks'
-        for b in bool_dfs:
-            df_masked = df[b]
-            # index the dataframe with those indices (rows), and select the metrics column (m)
-            for m in metrics:
-                print(f"{m} scores for component indices: ", df_masked[m])
-                score_dict[m] = df_masked[m]
+        def perc_components(file_obj, run_idx):
+            total_counts, RT_counts, RR_counts, AB_counts, RB_counts, RTonly_counts, \
+            RRonly_counts, Motion_counts, Phys_Freq_counts, Phys_Var_counts, WM_CSF_counts = subject_statistics(file_obj, mode='counts')
 
-        return score_dict
-    
-extr = extract_data()
-
-class calculations:
-    def __init__(self):
-        super().__init__()
-
-    def return_summary_stats_significant_fits(self, rej_both_signif, rej_tedonly_signif, rej_regonly_signif, acc_all_signif, dtype:str):
-        """
-        return summary statistics of these signif components across models -> can add MORE summarization metrics
-        Options: Mean, Standard Deviation, and Sums (counts)
-        Note: summary stats will depend on the df fed into the function*
-        """
-        # calculate summary statistics of these signif comps
-        summary_dict_dfs = {}
-        dfs = [rej_both_signif, rej_tedonly_signif, rej_regonly_signif, acc_all_signif]
-        classes = ["Rej Both Sig", "Rej Ted-Only Sig", "Rej Reg-Only Sig", "Acc All Sig"]
-        for dfidx, df in enumerate(dfs):
-            summary_dict = {}
-            for reg in df.columns:
-
-                summary_dict[reg] = {}
-
-                # bool dfs
-                if dtype == 'count':
-                    sum = np.sum(df[reg])
-                    print(f"{reg} sum or count: {np.sum(df[reg])}")
-                    out = sum
-                # actual values dfs
-                elif dtype == 'mean':
-                    mean = round(np.mean(df[reg]), 1)
-                    print(f"{reg} mean: {mean}")
-                    out = mean
-                elif dtype == 'stdev':
-                    std = round(np.std(df[reg]), 2)
-                    print(f"{reg} stdev: {std}")
-                    out = std
-                
-                summary_dict[reg][dtype] = out
-
-            class_idx = classes[dfidx]
-            summary_dict_dfs[class_idx] = summary_dict
-        return summary_dict_dfs
-    
-    def get_classification_categories(self, df, kappas, to_plot:None):
-        """
-        extract the classification categories (color-denoted) and restrict them to a 4-square subplot
-        comparing the Tedana vs Combined Regressors GLMs
-        """
-
-        # Finding the components that fit underneath these boolean categories
-        rej_both = extr.parse_df(df["Tedana Rejected"] == True, df["Regressors Rejected"] == True)
-        rej_tedonly = extr.parse_df(df["Tedana Rejected"] == True, df["Regressors Rejected"] == False)
-        rej_regonly = extr.parse_df(df["Tedana Rejected"] == False, df["Regressors Rejected"] == True)
-        acc_all = extr.parse_df(df["Tedana Rejected"] == False, df["Regressors Rejected"] == False)
-
-        # return the indices for each component & the kappa values
-        acc_all_idx = acc_all.index[acc_all == True].tolist()
-        print(f"Accepted by All rejections (comp number and kappa): \n{kappas[acc_all_idx]}")
-        rej_both_idx = rej_both.index[rej_both == True].tolist()
-        print(f"Rej by Both rejections (comp number and kappa): \n{kappas[rej_both_idx]}")
-        rej_tedonly_idx = rej_tedonly.index[rej_tedonly == True].tolist()
-        print(f"Rej by Tedana only rejections (comp number and kappa): \n{kappas[rej_tedonly_idx]}")
-        rej_regonly_idx = rej_regonly.index[rej_regonly == True].tolist()
-        print(f"Rej by Reg only rejections (comp number and kappa): \n{kappas[rej_regonly_idx]}")
-
-        # set the colors for the subplots to be plotted
-        if to_plot != None:
-            # colors for the component categories
-            colors = pd.Series(data=["none" for _ in kappas])
-            if to_plot[0]:      # accepted by both tedana & regressors
-                colors[acc_all] = "green"
-            if to_plot[1]:      # rejected by both tedana & regressors
-                colors[rej_both] = "red"
-            if to_plot[2]:      # rejected by tedana only
-                colors[rej_tedonly] = "orange"
-            if to_plot[3]:      # rejected by regressors only
-                colors[rej_regonly] = "brown"
-
-            return colors, rej_both, rej_tedonly, rej_regonly, acc_all
-        
-        else:   # to_plot = None
-            return rej_both, rej_tedonly, rej_regonly, acc_all
-        
-    def get_classification_categories_per_model(self, class_df, pval_df, kappas):
-
-        # extract the classification categories - boolean categories
-        rej_both, rej_tedonly, rej_regonly, acc_all = self.get_classification_categories(class_df, kappas, None)
-        
-        rej_both_idx = extr.return_component_indices(rej_both)
-        rej_tedonly_idx = extr.return_component_indices(rej_tedonly)
-        rej_regonly_idx = extr.return_component_indices(rej_regonly)
-        acc_all_idx = extr.return_component_indices(acc_all)
-        
-        rej_both_signif = pd.DataFrame(columns=['Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model'], index=np.arange(0,max(rej_both.index)+1,1), dtype=object)
-        rej_tedonly_signif = pd.DataFrame(columns=['Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model'], index=np.arange(0,max(rej_tedonly.index)+1,1), dtype=object)
-        rej_regonly_signif = pd.DataFrame(columns=['Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model'], index=np.arange(0,max(rej_regonly.index)+1,1), dtype=object)
-        acc_all_signif = pd.DataFrame(columns=['Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model'], index=np.arange(0,max(acc_all.index)+1,1), dtype=object)
-
-        # get all significant p-vals from full model
-        numcomp=len(pval_df)
-        # base full model p-vals
-        base_signif = pval_df['Full Model']<(0.05/numcomp)
-
-        # partial models for p-vals
-        for model in ['Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model']:
-            if model == 'Full Model':
-                pval_conditional = base_signif
-            else:   # partial model conditionals (based on Full Model booleans)
-                pval_conditional = ((pval_df[model]<(0.05/numcomp)) * base_signif)
-            rb_signif_bools, rb_sig_indices, rb_sig_values = extr.return_sig_only(model, rej_both, pval_df, pval_conditional, "Rej Both", None)
-            rej_both_signif[model] = rb_signif_bools
-            rjt_signif_bools, rjt_sig_indices, rjt_sig_values = extr.return_sig_only(model, rej_tedonly, pval_df, pval_conditional, "Rej Ted-Only", rej_regonly)
-            rej_tedonly_signif[model] = rjt_signif_bools
-            rjr_signif_bools, rjr_sig_indices, rjr_sig_values = extr.return_sig_only(model, rej_regonly, pval_df, pval_conditional, "Rej Reg-Only", rej_tedonly)
-            rej_regonly_signif[model] = rjr_signif_bools
-            aa_signif_bools, aa_sig_indices, aa_sig_values = extr.return_sig_only(model, acc_all, pval_df, pval_conditional, "Acc All", None)
-            acc_all_signif[model] = aa_signif_bools
-
-        print("\n\nREJ BOTH:\n INDICES (SIG): ", rb_sig_indices, "\n(ORIG): ", rej_both_idx, "\nVALUES (SIG):", rb_sig_values)
-        print("\n\nREJ TED-ONLY:\n INDICES (SIG): ", rjt_sig_indices, "\n(ORIG): ", rej_tedonly_idx, "\nVALUES (SIG):", rjt_sig_values)
-        print("\n\nREJ REG-ONLY:\n INDICES (SIG): ", rjr_sig_indices, "\n(ORIG): ", rej_regonly_idx, "\nVALUES (SIG):", rjr_sig_values)
-        print("\n\nACC ALL:\n INDICES (SIG): ", aa_sig_indices, "\n(ORIG): ", acc_all_idx, "\nVALUES (SIG):", aa_sig_values)
-
-        return rej_both_signif.fillna(False), rej_tedonly_signif.fillna(False), rej_regonly_signif.fillna(False), acc_all_signif.fillna(False)
-        # return rb_sig_indices, rjt_sig_indices, rjr_sig_indices, aa_sig_indices
-
-
-    def extract_signif_components(self, obj, df, reg_cat, row_idx, dtype:str):
-        """
-        Extract a percentage or number of signif components per model across the subj/runs WITHIN the Full Model of signif components
-            - Full Model served as the base criteria for comparing the other partial models against
-        Note: each sum/percentage is scaled by a boolean dataframe of the Full Model
-        I.E., if the signif component was 'True' in the Phys Var model but 'False' in the Full Model, then 1 * 0 = 0, and the component was not counted.
-        This might control for false positives in the Linear Model.
-        """
-        
-        # get p-values
-        pvals = obj.combined_p()
-        if pvals != None:
-            pvals = pd.read_csv(pvals)
-            numcomp = len(pvals)
-            if dtype == '%':
-                # calculate the percentage of signif components:
-                # for the Full Model
-                tmp_signif=pvals['Full Model']<(0.05/numcomp)       # 'significant' only includes Bonferroni-corrected p-values: orig_pval < (.05 / tot_comps) -> will be a boolean array of True/False (1/0)
-                df['Full Model'].iloc[row_idx] = 100*np.sum(tmp_signif)/numcomp     # an average of summed sig-comps/tot_comps
-
-                # for the other 'partial' models
-                for reg in reg_cat:
-                    df[reg].iloc[row_idx] = 100*np.sum((pvals[reg]<(0.05/numcomp)) * tmp_signif)/numcomp    # each Bonferroni-corrected p-value is weighted by the Bonferroni-corrected p-values from the Full Model
-
-            elif dtype == 'num':       # option == 'num'
-                # calculate the number of signif components:
-                # for the Full Model
-                tmp_signif=pvals['Full Model']<(0.05/numcomp)       # 'significant' only includes Bonferroni-corrected p-values: orig_pval < (.05 / tot_comps) -> will be a boolean array of True/False (1/0)
-                df['Full Model'].iloc[row_idx] = np.sum(tmp_signif)     # summed sig-comps
-
-                # for the other 'partial' models
-                for reg in reg_cat:
-                    df[reg].iloc[row_idx] = np.sum((pvals[reg]<(0.05/numcomp)) * tmp_signif)    # each Bonferroni-corrected p-value is weighted by the Bonferroni-corrected p-values from the Full Model
+            def return_perc(counts):
+                return (counts/total_counts)*100
             
-            row_idx+=1      # index to next row 
-        row_idx=row_idx     # return same index if pval file doesn't exist
+            RT_perc_list.append(return_perc(RT_counts))
+            RR_perc_list.append(return_perc(RR_counts))
+            AB_perc_list.append(return_perc(AB_counts))
+            RB_perc_list.append(return_perc(RB_counts))
+            RTonly_perc_list.append(return_perc(RTonly_counts))
+            RRonly_perc_list.append(return_perc(RRonly_counts))
+            Motion_perc_list.append(return_perc(Motion_counts))
+            Phys_Freq_perc_list.append(return_perc(Phys_Freq_counts))
+            Phys_Var_perc_list.append(return_perc(Phys_Var_counts))
+            WM_CSF_perc_list.append(return_perc(WM_CSF_counts))
+
+        subject_loop(1,25,task,perc_components)
+        
+        def transform_to_dataframe(list, column:str):
+            df = pd.DataFrame(list, columns=[column])
+            return df
+        
+        RT_perc_df = transform_to_dataframe(RT_perc_list, "Rejected by Tedana")
+        RR_perc_df = transform_to_dataframe(RR_perc_list, "Rejected by Regressors")
+        AB_perc_df = transform_to_dataframe(AB_perc_list, "Accepted by Both")
+        RB_perc_df = transform_to_dataframe(RB_perc_list, "Rejected by Both")
+        RTonly_perc_df = transform_to_dataframe(RTonly_perc_list, "Rejected by Tedana Only")
+        RRonly_perc_df = transform_to_dataframe(RRonly_perc_list, "Rejected by Regressors Only")
+        Motion_perc_df = transform_to_dataframe(Motion_perc_list, "Motion")
+        Phys_Freq_perc_df = transform_to_dataframe(Phys_Freq_perc_list, "Phys_Freq")
+        Phys_Var_perc_df = transform_to_dataframe(Phys_Var_perc_list, "Phys_Var")
+        WM_CSF_perc_df = transform_to_dataframe(WM_CSF_perc_list, "WM_CSF")
+
+        xrange=[-1,101]
+        xlabel = "percentage of removed components (pval<.05,Bonf & R2>.5) fit to model"
+        ylabel = "Kernel Density Estimate"
+        ylim=0.02
+        stitle="percentage"
+        
+        fig = plot_base(suptitle=f"{task} - {stitle}", subtitles=None, xlabel=xlabel, ylabel=ylabel, xrange=xrange, yrange=None, plottype='single', dim=(1,1,1))
+
+        colors = ['brown','orange','green','red','goldenrod','lightsalmon','magenta','slateblue','darkorchid','lightgray']
+        prefix="TedanaVsRegressors_"
+    
+        # plot the Kernel Density Estimate Distribution
+        for didx, df in enumerate([RT_perc_df, RR_perc_df, AB_perc_df, RB_perc_df, RTonly_perc_df, RRonly_perc_df, Motion_perc_df, Phys_Freq_perc_df, Phys_Var_perc_df, WM_CSF_perc_df]):
+            linestyle='-'
+            df[df.columns[0]].plot.kde(bw_method=0.3, ind=50, color=colors[didx], linestyle=linestyle)
+
+        def get_mean(df):
+            return np.mean(df[df.columns[0]], axis=0)
+
+        RT_perc_mean = get_mean(RT_perc_df)
+        RR_perc_mean = get_mean(RR_perc_df)
+        AB_perc_mean = get_mean(AB_perc_df)
+        RB_perc_mean = get_mean(RB_perc_df)
+        RTonly_perc_mean = get_mean(RTonly_perc_df)
+        RRonly_perc_mean = get_mean(RRonly_perc_df)
+        Motion_perc_mean = get_mean(Motion_perc_df)
+        Phys_Freq_perc_mean = get_mean(Phys_Freq_perc_df)
+        Phys_Var_perc_mean = get_mean(Phys_Var_perc_df)
+        WM_CSF_perc_mean = get_mean(WM_CSF_perc_df)
+
+        # get mean & plot average percent signif components - denoted with a 'dashed' '--' line
+        means = [RT_perc_mean, RR_perc_mean, AB_perc_mean, RB_perc_mean, RTonly_perc_mean, RRonly_perc_mean, Motion_perc_mean, Phys_Freq_perc_mean, Phys_Var_perc_mean, WM_CSF_perc_mean]
+        for midx, m in enumerate(means):
+            plt.plot([m, m], [0, ylim], color=colors[midx], linestyle='dashed')
             
-        return row_idx
-    
-    def return_counts_of_significant_fits_per_run(self, start:int, end:int, task:str, dtype:str):
-        """
-        Returns a Pandas Dataframe containing:
-        - the percentage OR count of components that were significantly fitted to each model
-        * Also returns the general output dir
-        """
-        # Make counts of significant fits per run
-        df = pd.DataFrame(columns=['Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model'],
-                                    index = np.arange(end*3))
-        reg_cat = ['Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model']
-        row_idx=0
+        plt.legend([f"{c[0]}: {round(c[1],2)}%" for c in zip(subtitles,means)])
+        print("Zipped list: ", print(list(zip(subtitles, means, colors))))
 
-        for subject in np.arange(start, end+1):
-            for run in np.arange(1,4):
-                obj = extr.obj(subject, task, run)
-                print(f"Sub-{subject}, task {task}, run {run}")
-                # extract the percentage of significant components & append to df
-                row_idx = self.extract_signif_components(obj, df, reg_cat, row_idx, dtype=dtype)
-                print("Run count [row]: ", row_idx)
-                
-        outdir = obj.set_outdir()
+         # save the KDE plot
+        if mode == 'save':
+            plt.savefig(f"{group_outdir}{prefix}Fit_KDEs_{task}.svg")
+        else:
+            plt.show()
+            
+    # a function for creating a boxplot of the counts of signif components per model
+    def whisker_boxplot(self, task:str, mode:str):
+        """
+        Returns number of signif components per model with whisker box plot (median) & 1st/3rd quartiles
+        """
+        # get the appropriate dataframes
+        RT_counts_list, RR_counts_list, AB_counts_list, RB_counts_list, RTonly_counts_list, RRonly_counts_list, Motion_counts_list, Phys_Freq_counts_list, Phys_Var_counts_list, WM_CSF_counts_list = [], [], [], [], [], [], [], [], [], []
+        RT_var_list, RR_var_list, AB_var_list, RB_var_list, RTonly_var_list, RRonly_var_list, Motion_var_list, Phys_Freq_var_list, Phys_Var_var_list, WM_CSF_var_list = [], [], [], [], [], [], [], [], [], []
+
+        def gather_components(file_obj, run_idx):
+            total_counts, RT_counts, RR_counts, AB_counts, RB_counts, RTonly_counts, \
+            RRonly_counts, Motion_counts, Phys_Freq_counts, Phys_Var_counts, WM_CSF_counts = subject_statistics(file_obj, mode='counts')
+
+            total_var, RT_var, RR_var, AB_var, RB_var, RTonly_var, \
+            RRonly_var, Motion_var, Phys_Freq_var, Phys_Var_var, WM_CSF_var = subject_statistics(file_obj, mode='variance')
+
+            RT_counts_list.append(RT_counts)
+            RR_counts_list.append(RR_counts)
+            AB_counts_list.append(AB_counts)
+            RB_counts_list.append(RB_counts)
+            RTonly_counts_list.append(RTonly_counts)
+            RRonly_counts_list.append(RRonly_counts)
+            Motion_counts_list.append(Motion_counts)
+            Phys_Freq_counts_list.append(Phys_Freq_counts)
+            Phys_Var_counts_list.append(Phys_Var_counts)
+            WM_CSF_counts_list.append(WM_CSF_counts)
+
+            RT_var_list.append(RT_var)
+            RR_var_list.append(RR_var)
+            AB_var_list.append(AB_var)
+            RB_var_list.append(RB_var)
+            RTonly_var_list.append(RTonly_var)
+            RRonly_var_list.append(RRonly_var)
+            Motion_var_list.append(Motion_var)
+            Phys_Freq_var_list.append(Phys_Freq_var)
+            Phys_Var_var_list.append(Phys_Var_var)
+            WM_CSF_var_list.append(WM_CSF_var)
         
-        # remove the extra rows of NaNs in the df
-        boolean_nans_mask = (pd.isnull(df.loc[:,df.columns]) != True)
-        signif_minus_nans = [df[boolean_nans_mask[dcol]] for dcol in df.columns][-1]
-        
-        return signif_minus_nans, outdir
-    
-    def return_counts_of_signif_comps_classified(self, start:int, end:int, task:str):
-        """
-        returns dataframes of classified signif components per run (signif comps ONLY in those categories)
-        """
-        columns=['Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model']
-        accum_counts_rb = pd.DataFrame(columns=columns,index = np.arange(end*3))
-        accum_counts_rt = pd.DataFrame(columns=columns,index = np.arange(end*3))
-        accum_counts_rr = pd.DataFrame(columns=columns,index = np.arange(end*3))
-        accum_counts_aa = pd.DataFrame(columns=columns,index = np.arange(end*3))
+        subject_loop(1,25,task,gather_components)
 
-        ridx = -1
-        for subject in np.arange(start, end+1):
-            for run in np.arange(1,4):
-                ridx +=1 
+        def center_around_mean(n_arr):
+            mean = np.mean(n_arr, axis=0)
+            step = 0.3
+            centered_arr = []
+            for nidx, n in enumerate(n_arr):
+                if n > mean:
+                    n=n-step
+                elif n < mean:
+                    n=n+step
+                if len(n_arr) == 2:
+                    if nidx == 0:       # catching first values for 2-length array
+                        n=n-step
+                elif len(n_arr) != 2:
+                    if nidx == 1:   # catching middle values for longer (>2) arrays
+                        n=n-(step/2)
+                    elif nidx == 2:
+                        n=n+(step/2)
+                centered_arr.append(n)
+            return centered_arr
 
-                obj = extr.obj(subject, task, run)
-                print(f"subj: {subject}, task: {task}, run: {run}")
-                class_df = obj.combined_metrics()
-                pval_df = obj.combined_p()
+        outdir = DataFinder(None,None,None).set_outdir()
+        grouped_positions = [np.arange(1,3),np.arange(3,7),np.arange(7,11)]     # grouping the corresponding categories together
+        centered_grouped_positions = center_around_mean(grouped_positions[0])+center_around_mean(grouped_positions[1])+center_around_mean(grouped_positions[2])       # centering those corresponding groups around their tick value mean
 
-                if class_df != None and pval_df != None:
-                    class_df = pd.read_csv(class_df)
-                    pval_df = pd.read_csv(pval_df)
-                    kappas = class_df['kappa']
-                    rej_both_signif, rej_tedonly_signif, rej_regonly_signif, acc_all_signif = calc.get_classification_categories_per_model(class_df, pval_df, kappas)
+        subtitles=("Rejected by Tedana","Rejected by Regressors","Accepted by Both","Rejected by Both","Rejected by Tedana Only","Rejected by Regressors Only","Motion","Phys_Freq","Phys_Var","WM_CSF")
+        colors = ['brown','lightsalmon','lightgray']
 
-                    # sums for each of the classifications: [146, 39, 108, 708] = [rej both, rej ted-only, rej reg-only, acc all]
-                    
-                    print("\nRejected Both: ", rej_both_signif)
-                    print("\nRejected Ted-Only: ", rej_tedonly_signif)
-                    print("\nRejected Regressors-Only: ", rej_regonly_signif)
-                    print("\nAccepted All: ", acc_all_signif)
+        # PLOT 1: Counts
+        ylabel='Tukey Boxplot Distribution (1.5*(Q3-Q1)) with median'
+        subtitle='Median count across runs'
+        prefix='TedanaVsRegressors_BoxPlot_Counts'
 
-                    summary_stats = calc.return_summary_stats_significant_fits(rej_both_signif, rej_tedonly_signif, rej_regonly_signif, acc_all_signif, dtype='count')
+        # create new figure per plot
+        xlim=[0,7]
+        plt.rcParams['figure.figsize'] = [10, 10]
+        fig = plot_base(suptitle=f"{task} : {subtitle}", subtitles=None, xlabel="Models", ylabel=ylabel, xrange=xlim, yrange=None, plottype='single', dim=(1,1,1))
+        # subplots
+        plt.xlim([0,len(subtitles)+1])      # control edge of plot
+        plt.ylim([0,70])            # limit is 70 components (for some tedana runs)
 
-                    print(summary_stats)
+        bplot = plt.boxplot([RT_counts_list, RR_counts_list, AB_counts_list, RB_counts_list, RTonly_counts_list, \
+            RRonly_counts_list, Motion_counts_list, Phys_Freq_counts_list, Phys_Var_counts_list, WM_CSF_counts_list], positions=centered_grouped_positions, vert=True, patch_artist=True, labels=subtitles, widths=0.4)       # boxplot
+        for patch in bplot['boxes'][0:2]:       # Rejected by Tedana & Rejected by Regressors = brown
+            patch.set_facecolor(colors[0])
+        for patch in bplot['boxes'][2:6]:       # Accepted by Both, Rejected by Both, Rejected by Tedana Only, Rejected by Regressors Only = light salmon
+            patch.set_facecolor(colors[1])
+        for patch in bplot['boxes'][6:10]:       # Motion, Phys_Freq, Phys_Var, WM & CSF = light gray
+            patch.set_facecolor(colors[2])
+        for line in bplot['medians']:      # set median line to really dark blue
+            line.set_color('midnightblue')
+        # rest of figure parameters
+        plt.xticks(centered_grouped_positions, subtitles, rotation=45, ha='right')
 
-                    for model in columns:    # runs = rows, model = columns
-                        accum_counts_rb.loc[ridx, model] = summary_stats["Rej Both Sig"][model]['count']
-                        accum_counts_rt.loc[ridx, model] = summary_stats["Rej Ted-Only Sig"][model]['count']
-                        accum_counts_rr.loc[ridx, model] = summary_stats["Rej Reg-Only Sig"][model]['count']
-                        accum_counts_aa.loc[ridx, model] = summary_stats["Acc All Sig"][model]['count']
-        
-        return accum_counts_rb.dropna(axis=0), accum_counts_rt.dropna(axis=0), accum_counts_rr.dropna(axis=0), accum_counts_aa.dropna(axis=0)
-    
-calc = calculations()
+        # depending on the mode, save a .SVG file or show the plot
+        if mode == 'save':
+            plt.savefig(f"{outdir}{prefix}_{task}.svg")
+        else:
+            plt.show()
 
-class plot_production:
+        # PLOT 2: Variance explained
+        ylabel='Tukey Boxplot Distribution (1.5*(Q3-Q1)) with median'
+        subtitle='Median variance explained across runs'
+        prefix='TedanaVsRegressors_BoxPlot_VarExpl'
+
+        # create new figure per plot
+        xlim=[0,7]
+        plt.rcParams['figure.figsize'] = [10, 10]
+        fig = plot_base(suptitle=f"{task} : {subtitle}", subtitles=None, xlabel="Models", ylabel=ylabel, xrange=xlim, yrange=None, plottype='single', dim=(1,1,1))
+        # subplots
+        plt.xlim([0,len(subtitles)+1])      # control edge of plot
+        plt.ylim([0,100])
+        bplot = plt.boxplot([RT_var_list, RR_var_list, AB_var_list, RB_var_list, RTonly_var_list, \
+            RRonly_var_list, Motion_var_list, Phys_Freq_var_list, Phys_Var_var_list, WM_CSF_var_list], positions=centered_grouped_positions, vert=True, patch_artist=True, labels=subtitles, widths=0.4)       # boxplot
+        for patch in bplot['boxes'][0:2]:       # Rejected by Tedana & Rejected by Regressors = brown
+            patch.set_facecolor(colors[0])
+        for patch in bplot['boxes'][2:6]:       # Accepted by Both, Rejected by Both, Rejected by Tedana Only, Rejected by Regressors Only = light salmon
+            patch.set_facecolor(colors[1])
+        for patch in bplot['boxes'][6:10]:       # Motion, Phys_Freq, Phys_Var, WM & CSF = light gray
+            patch.set_facecolor(colors[2])
+        for line in bplot['medians']:      # set median line to black
+            line.set_color('midnightblue')
+        # rest of figure parameters
+        plt.xticks(centered_grouped_positions, subtitles, rotation=45, ha='right')
+        subtitles=("Rejected by Tedana","Rejected by Regressors","Accepted by Both","Rejected by Both","Rejected by Tedana Only","Rejected by Regressors Only","Motion","Phys_Freq","Phys_Var","WM_CSF")
+
+        # depending on the mode, save a .SVG file or show the plot
+        if mode == 'save':
+            plt.savefig(f"{outdir}{prefix}_{task}.svg")
+        else:
+            plt.show()
+
+# Single-component plots
+"""
+Choosing from just sub-24 (for visualization purposes):
+Rejected
+Motion-only: 9
+Phys_Freq-only: 8
+Phys_Var-only: None
+WM_CSF-only: None
+All_Mixed_Component: None
+Motion_x_Phys_Freq: 58
+Motion_x_Phys_Var: 7
+Motion_x_WM_CSF: 4
+Motion_x_Phys_Var_x_WM_CSF: 49, 66, 60
+"""
+
+# single-component plots
+class component_plots:
     def __init__(self):
         super().__init__()    # initiate the class object -> only 'instance' you're initializing since there are no arguments
 
-    # methods for summarizing the data in figures
+    def component_check(self, subject, task, run, cid):
+        """
+        Run a visual check of the components that were rejected by Combined Regressors
+        """
+        finder_obj = DataFinder(subject, task, run)
+        rej_comps_file = pd.read_csv(os.path.join(finder_obj.regressor_dir(), f"{finder_obj.subid()}_{finder_obj.task}_run-{run}_c70_kundu_Rejected_ICA_Components.csv"), sep=',')
+        comp_ts = rej_comps_file.loc[:, str(cid)]
+        plt.plot(comp_ts, '-k')
+        timepoints=list(comp_ts.index)
+        plt.xticks([timepoints[0],timepoints[-1]])     # timepoints
+        plt.title(f"Component {str(cid)}")
+        plt.xlabel("Time (TR volumes)")
+        plt.show()
+
+    def json_component_analysis(self):
+        """
+        Run an analysis among the .json files that look for components with
+        1) highest variance explained from 'rejected by regressors only'
+        2) from all subjects
+        3) cp the component maps to an outdir called 'component_analysis/'
+        """
+        highest_var_expl_RR_idx, highest_var_RR_expl, rrun_var_RR = [], [], []      # variance explained - highest value
+        highest_var_expl_RB_PhysVar_idx, highest_var_RB_PhysVar_expl, rrun_var_RB_PhysVar = [], [], []
+
+        # highest_kappa_vals_RR_idx, highest_kappa_RR_vals, rrun_kappa_RR = [], [], []    # kappa if you want it
+        # highest_kappa_vals_RB_PhysVar_idx, highest_kappa_RB_PhysVar_vals, rrun_kappa_RB_PhysVar = [], [], []
+        for s in np.arange(1,26):
+            for task in ['movie','breathing']:
+                for run in [1,2,3]:
+                    file_obj = DataFinder(s, task, run)
+                    print("Subject: ", s, "Task: ", task, "Run: ", run)
+                    # get the files for each category:
+                    if os.path.exists(file_obj.regressor_dir()):
+                        with open(file_obj.output_json(),'rb') as json_obj:
+                            jsonf = json.load(json_obj)
+                        # metrics
+                        metrics = pd.read_csv(file_obj.combined_metrics(), sep=',')
+                        # extract categories from .json file
+                        RRonly_indices = jsonf["component lists"]["rejected by regressors only"]    # RR_only
+                        RB_indices = jsonf["component lists"]["rejected by both regressors and tedana"]     # RB
+                        PhysVar_indices = jsonf["component lists"]["rejected by regressors with signif fit to"]["Phys_Variability"]     # PhysVar only
+                        RB_PhysVar_indices = np.intersect1d(RB_indices, PhysVar_indices)
+                        varexpl_RR = metrics.loc[RRonly_indices,'variance explained']       # extract the highest variance explained
+                        varexpl_RB_PhysVar = metrics.loc[RB_PhysVar_indices,'variance explained']
+                        # kappa_RR = metrics.loc[RRonly_indices,'kappa']      # also extract the kappa values, if you want 'kappa' stuff
+                        # kappa_RB_PhysVar = metrics.loc[RB_PhysVar_indices,'kappa']
+                        print("Variance Explained - RR: ", varexpl_RR)
+                        print("Variance Explained - RB PhysVar: ", varexpl_RB_PhysVar)
+                        if len(varexpl_RR) != 0:       # var explained loop - RR
+                            max_varexpl_RR = np.max(varexpl_RR)
+                            print("Max Variance Explained - RR: ", max_varexpl_RR)
+                            max_varexpl_RR_idx = varexpl_RR[varexpl_RR == max_varexpl_RR].index.values[0]
+                            print("Max Variance Explained Idx - RR: ", max_varexpl_RR_idx)
+                            highest_var_RR_expl.append(max_varexpl_RR)
+                            highest_var_expl_RR_idx.append(max_varexpl_RR_idx)
+                            rrun_var_RR.append((s, task, run))
+                        else:
+                            pass
+                        if len(varexpl_RB_PhysVar) != 0:       # var explained loop - RR
+                            max_varexpl_RB_PhysVar = np.max(varexpl_RB_PhysVar)
+                            print("Max Variance Explained - RB PhysVar: ", max_varexpl_RB_PhysVar)
+                            max_varexpl_RB_PhysVar_idx = varexpl_RB_PhysVar[varexpl_RB_PhysVar == max_varexpl_RB_PhysVar].index.values[0]
+                            print("Max Variance Explained Idx - RB PhysVar: ", max_varexpl_RB_PhysVar_idx)
+                            highest_var_RB_PhysVar_expl.append(max_varexpl_RB_PhysVar)
+                            highest_var_expl_RB_PhysVar_idx.append(max_varexpl_RB_PhysVar_idx)
+                            rrun_var_RB_PhysVar.append((s, task, run))
+                        else:
+                            pass
+                        ## Regressors Only -> rejected (kappa > 100)
+                        # kappa_over_100_vals = kappa[kappa > 100]
+                        # kappa_over_100_vals_idx = kappa_over_100_vals.index.values     # kappa loop
+                        # print("Kappa vals > 100: ", kappa_over_100_vals)
+                        # print("Kappa > 100 Idx: ", kappa_over_100_vals_idx)
+                        # if len(kappa_over_100_vals_idx) != 0:
+                        #     [highest_kappa_vals.append(k) for k in kappa_over_100_vals.tolist()]
+                        #     [highest_kappa_vals_idx.append(k) for k in kappa_over_100_vals_idx.tolist()]
+                        #     [rrun_kappa.append((s, task, run)) for k in kappa_over_100_vals.tolist()]
+                        # else:
+                        #     pass
+                    else:
+                        pass
+        varexpl_analysis_dict_RR = zip(highest_var_expl_RR_idx, highest_var_RR_expl, rrun_var_RR)
+        varexpl_analysis_dict_RB_PhysVar = zip(highest_var_expl_RB_PhysVar_idx, highest_var_RB_PhysVar_expl, rrun_var_RB_PhysVar)
+        # kappa_analysis_dict = zip(highest_kappa_vals_idx, highest_kappa_vals, rrun_kappa)
+        return varexpl_analysis_dict_RR, varexpl_analysis_dict_RB_PhysVar
+
     # a function for plotting beta & component timeseries overlays - ONLY for a single component
-    def plot_fit(self, subject, task, run, component, xloc=0.05, yloc=0.95):
+    def plot_beta_fit(self, subject, task, run, component, mode, suffix, xloc=0.05, yloc=0.95):
         """
         A component-specific function that creates a timeseries plot overlay with:
         1) Estimated component timeseries from Beta-Fit (Red)
-            - element-wise matrix multiplication of X (Full regressor model) * Betas (obtained through a 'least squares solution' Ax=b, the 'x' vector that minimizes the difference between the regressors and actual ICA components)
+            - element-wise matrix multiplication of X (Full regressor model of all regressors) * Betas (obtained through a 'least squares solution' Ax=b, the 'x' vector that minimizes the difference between the regressors and actual ICA components)
         2) Actual ICA component timeseries (Black)
             - the 'Y' from the Linear Model equation (Y = BX + E)
+        Full Regressor Model:
+            - 0 = intercept (of 1's)
+            - 1-27 = regressor time-series calculated from the existing data [Design Matrix] -> 26 regressors total
+        Betas:
+            - vectorized 'beta weight' values that minimize the difference between 1) the model regressor time-series and 2) the actual ICA component time-series
+            - beta = is typically the average amount by which dependent variable increases when independent variable increases by 1 stdev (with other IndVar's held constant)
+        - columns/models:
+            - 'polort0', 'polort1', 'polort2', 'polort3', 'roll_dmn',
+            'pitch_dmn', 'yaw_dmn', 'dS_dmn', 'dL_dmn', 'dP_dmn', 'roll_drv',
+            'pitch_drv', 'yaw_drv', 'dS_drv', 'dL_drv', 'dP_drv', 'cardiac_sin1',
+            'cardiac_cos1', 'cardiac_sin2', 'cardiac_cos2', 'resp_sin1',
+            'resp_cos1', 'resp_sin2', 'resp_cos2', 'ecg_hrv', 'resp_rvt', 'WM_e',
+            'Csf_vent'
+        Note: polynomial regressors (with order 0-4)
+            - polort0 = a horizontal straight line (a constant)     -> f(x) = c
+            - polort1 = a linear line (with order of 1, a slope)     -> f(x) = bx + c
+            - polort2 = a quadratic (u-shape) (with order of 2)     -> f(x) = ax2 + bx + c
+            - polort3 = a cubic function (sine-wave-like) (with order of 3)     -> f(x) = ax3 + bx2 + cx + d
+        Rationale: If the Beta is (the degree to which the dependent variable moves given independent variable increase by 1 stdev), then multiplying the Regressor Model by the Beta 'coefficients' (least squares solution 'x' betw regressors and actual ICA components) would move the Regressor Ts closer to the actual ICA component Ts
         """
 
         # obtaining the data
-        obj = extr.obj(subject, task, run)
-        Y = np.asarray(pd.read_csv(obj.mixing_matrix(), sep='\t'))
-        X_full = np.asarray(pd.read_csv(obj.full_model()))
-        betas = pd.read_csv(obj.combined_betas())
+        finder_obj = DataFinder(subject, task, run)
+        Y = np.asarray(pd.read_csv(finder_obj.mixing_matrix(), sep='\t'))
+        X_full = np.asarray(pd.read_csv(finder_obj.full_model()))
+        betas = pd.read_csv(finder_obj.betas())
 
         # Labelling whether the component was significantly correlated to the model type
-        metrics = pd.read_csv(obj.combined_metrics())
+        metrics = pd.read_csv(finder_obj.combined_metrics())
         kappa = np.round(metrics["kappa"].iloc[component],1)
         rho = np.round(metrics["rho"].iloc[component], 1)
         varex = np.round(metrics["variance explained"].iloc[component], 1)
@@ -511,6 +730,10 @@ class plot_production:
         ax = fig.add_subplot(1, 1, 1)
         ica = Y     # actual ICA component timeseries in black
         fit = np.asarray(np.matmul(X_full[:, 2:], betas.T))     # beta-fitted component timeseries in red
+            # full regressor model [ts of regressors from design matrix (299x29)] * individual beta values for all components (70x29)]
+                    # 1 beta for each component x regressor model
+            # Note: the beta values should be VERY low for the significantly-fitted/removed components (since the difference betw the model ts & actual ICA component ts would be small***)
+            # the "fit" is a reconstruction of the original ICA component ts obtained by multiplying the regressor model * the beta weights
 
         c = component
 
@@ -520,7 +743,7 @@ class plot_production:
         ax.plot(ica_ts, color='black')
         ax.plot(fit_ts, color='red')
         textstr = '\n'.join((
-            f"sub-{subject}, run {run}",
+            f"Comp {str(c).zfill(2)}: sub-{subject}, {task}, run {run}",
             f"kappa: {kappa}",
             f"rho: {rho}",
             f"var explained: {varex}",
@@ -530,373 +753,335 @@ class plot_production:
         # plot parameters
         plt.autoscale(enable=True, axis='x', tight=True)
         plt.autoscale(enable=True, axis='y', tight=True)
-        ax.text(xloc, yloc, textstr, transform=ax.transAxes, fontsize=14,font='DejaVu Sans',
-            verticalalignment='top')
+        ax.text(xloc, yloc, textstr, transform=ax.transAxes, fontsize=14,font='Baskerville',
+            verticalalignment='top', bbox=dict(facecolor='ivory', alpha=0.75))
         plt.tight_layout(pad=1.02)
 
-        # display the plot
+        outdir = DataFinder(None,None,None).set_outdir()
+        if mode == 'show':
+            plt.show()      # display the plot
+        else:
+            plt.savefig(f"{outdir}sub_{subject}_{task}_run-{run}_component_{c}_{suffix}.jpg")
+
+    def plot_all_components(self, mode):
+        """
+        Plot the components you found
+        """
+        outdir = DataFinder(None,None,None).set_outdir()
+        comp_arr1, comp_arr2 = self.json_component_analysis()
+        for comp in list(comp_arr1):        # plot highest variance explained components (per run) - RR
+            compid, compvar, rrun = comp[0], comp[1], comp[2]
+            subject, task, run = rrun[0], rrun[1], rrun[2]
+            print(subject, task, run)
+            self.plot_beta_fit(subject, task, run, compid, mode, 'RR', xloc=0.05, yloc=0.95)
+
+        for comp in list(comp_arr2):       # plot highest variance explained components (per run) - RB PhysVar
+            compid, compkappa, rrun = comp[0], comp[1], comp[2]
+            print(compid)
+            print(compkappa)
+            subject, task, run = rrun[0], rrun[1], rrun[2]
+            print(subject, task, run)
+            self.plot_beta_fit(subject, task, run, compid, mode, 'RB_PhysVar', xloc=0.05, yloc=0.95)
+
+# Extra plots (for the group maps)
+class statistic_plots:
+    def __init__(self):
+        super().__init__()    # initiate the class object -> only 'instance' you're initializing since there are no arguments
+    def return_mean_signal_values(self):
+        # just hardcoding the values into memory since reading .txt files
+        within_dir = "/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupISC/Group_Ttest/"       # Within-subject T-stat Means
+        between_dir = "/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupISC/Group_3dISC"       # Between-subject ISC Means
+        # for d in [within_dir, between_dir]:
+        for d in [within_dir]:
+            with open(f"{d}positive_signal_means.txt") as f:
+                pos_flist = [f[:-1] for f in f.readlines()]
+            with open(f"{d}negative_signal_means.txt") as f:
+                neg_flist = [f[:-1] for f in f.readlines()]
+            pfnames, pfvalues = [], []
+            nfnames, nfvalues = [], []
+            for pidx, p in enumerate(pos_flist):
+                if pidx%2 == 0 or pidx == 0:   # 0, 2, 4, 6, even indices
+                    pfnames.append(pos_flist[pidx])
+                else:
+                    pfvalues.append(float(pos_flist[pidx]))     # 1, 3, 5, 7, 9 odd indices
+            for pidx, p in enumerate(neg_flist):
+                if pidx%2 == 0 or pidx == 0:   # 0, 2, 4, 6, even indices
+                    nfnames.append(neg_flist[pidx])
+                else:
+                    nfvalues.append(float(neg_flist[pidx]))     # 1, 3, 5, 7, 9 odd indices
+            print(pfnames, pfvalues)
+            print(nfnames, nfvalues)
+        
+    def plot_means(self):
+
+        # Within-Subject T-stat mean plot
+        fig, ax = plt.subplots(2,2,figsize=(15,30))
+        plt.subplots_adjust(left=0.1,
+                    bottom=0.1,
+                    right=0.9,
+                    top=0.9,
+                    wspace=0.4,
+                    hspace=0.1)
+        
+        conditions = ['tedana-denoised','combined regressors','reg_only regressors','rej_both regressors']
+        xtick_range = np.arange(0,len(conditions))
+        # movie A x movie B
+        pos_cond1 = [0.888264, 0.789584, 0.811316, 0.843085]
+        # movie A x resp A1
+        pos_cond2 = [0.485616, 0.451561, 0.471379, 0.470628]
+
+        # movie A x movie B
+        neg_cond1 = [-0.332158, -0.344848, -0.334643, -0.338799]
+        # movie A x resp A1
+        neg_cond2 = [-0.354595, -0.376641, -0.364265, -0.360582]
+
+        ax[0,0].plot(pos_cond1, 'Dr')       # movie A x movie B
+        ax[0,1].plot(neg_cond1, 'Db')
+        ax[0,0].legend(['positive'], loc='upper right')     # keep legends for top
+        ax[0,1].legend(['negative'], loc='upper right')
+        ax[0,0].set_xticks([])
+        ax[0,1].set_xticks([])
+
+        ax[1,0].plot(pos_cond2, 'Dr')       # movie A x resp A1
+        ax[1,1].plot(neg_cond2, 'Db')
+        ax[1,0].set_xticks(xtick_range, labels=conditions, rotation=25, ha='right')     # keep bottom x-tick labels
+        ax[1,1].set_xticks(xtick_range, labels=conditions, rotation=25, ha='right')
+
+        plt.suptitle('Average T-stat Activation')
+
         plt.show()
 
-    def plot_certain_components(self, component_list, x_loc_adj:float, y_loc_adj:float):
-        """
-        Allows you to feed in a tupled list of (subjects,tasks,runs,component_ID) to plot the components that represent the fitting mechanism
-            - solely for visualization purposes (i.e., Poster or Abstract)
-        Adjustable parameters: -> adjusts the text label location on the x & y axises
-            - x_loc_adj
-            - y_loc_adj
-        """
-        # loop through the list of special components that you found
-        for c in component_list:
-            s = c[0], t = c[1], r = c[2], cid = c[3]
-            obj = extr.obj(s, t, r)
-            outdir = obj.set_outdir()
-            self.plot_fit(subject=s, task=t, run=r, component=cid, outdir=outdir, xloc=x_loc_adj, yloc=y_loc_adj)
 
-            # get user input to see if they are happy with the plot
-            def user_initiated_loop():
-                keypress = input("Happy with this plot? If yes, type 'y', if not, type 'n': ")
-                if keypress == 'y':
-                    # saving the component-specific file as an SVG
-                    plt.savefig(f"{outdir}FitTS_sub-{s}_task-{t}_run-{r}_comp-{cid}.svg")
-                elif keypress == 'n':
-                    print("Rerun the command with 1) another component, or 2) adjust the x-loc or y-loc of text label")
-                    plt.close()
-                else:
-                    print("Response requires a 'yes' or 'no'")
-                    user_initiated_loop()
-            
-    def scatter_cme(self, ax, fname: str, to_plot) -> None:
-        """
-        A 4-subplot scatterplot of components within the following categories:
-        1) Rejected Both (rejected by both Tedana & Linear Model)
-        2) Rejected Tedana Only
-        3) Rejected by Linear Model Only
-        4) Accepted by All (accepted by both Tedana & Linear Model)
-        
-        size of each scatterpoint is scaled by the variance explained of the component
-        """
-        # extracting the Kappa/Rho/Variance explained metric values from the new TSV file
-        df, df_metrics = extr.extract_metrics(fname, "kappa", "rho", "variance explained")
-        kappas = df_metrics["kappa"]
-        rhos = df_metrics["rho"]
-        varex = df_metrics["variance explained"]
+        # Between-Subject T-stat mean plot
 
-        # size of each component is modulated by the square root of the variance explained (standardized), which is weighted by a value of 20 for perceivable differences in VE
-        size = np.sqrt(varex) * 20
-        
-        # extract the color-denoted classification categories
-        colors, rej_both, rej_tedonly, rej_regonly, acc_all = calc.get_classification_categories(df, kappas, to_plot)
 
-        # plot the scatterplot
-        sme = ax.scatter(kappas, rhos, s=size, c=colors)
-        
-    def multi_subplot_base_plot_parameters(self, title:str, xlabel:str, ylabel:str, x_range:np.ndarray, y_range:np.ndarray, type:str):
-        """
-        4 or 5-subplot space for categories (ie. "Accepted"...) or models (ie. "Full Model"...)
-        """
-        
-        # figure basis
-        fig = plt.figure(figsize=[10,10])
-        fig.suptitle(title)
-        ax = fig.add_subplot(1, 1, 1)
-        ax.spines['top'].set_color('none')
-        ax.spines['bottom'].set_color('none')
-        ax.spines['left'].set_color('none')
-        ax.spines['right'].set_color('none')
-        ax.tick_params(labelcolor='w', top=False, bottom=False, left=False, right=False)
-
-        # set the X/Y ranges
-        if x_range != None and y_range != None:
-            ax.set_xticks(x_range)
-            ax.set_yticks(y_range)
-
-        if type == 'classification':
-            # subplot titles & other parameters
-            subplots = [fig.add_subplot(2, 2, i + 1) for i in range(4)]
-            titles = ("Accepted All", "Rejected Both", "Non-Bold Only", "Motion/Phys Only")
-            top = [False for i in range(4)]
-        elif type == 'models':
-            # subplot titles & other parameters
-            subplots = [fig.add_subplot(2, 3, i + 1) for i in range(5)]
-            titles = ('Full Model','Motion Model','Phys_Freq Model','Phys_Variability Model','WM & CSF Model')
-            top = [False for i in range(5)]
-        title_size = 24
-        label_size = 12
-        tick_size = 6
-        
-        # Set common labels for the entire plot
-        ax.set_xlabel(xlabel, size=label_size, font='DejaVu Sans', labelpad=20)
-        ax.set_ylabel(ylabel, size=label_size, font='DejaVu Sans', labelpad=20)
-        
-        return subplots, tick_size, top, titles, title_size 
-
-    # a function for looping through all subjects and combining all of these plots into an SVG file
-    def scatter_svg(self, start:int, end:int, task:str, mode:str):
-        """
-        1) Loops through all subjects, tasks, and runs
-        2) Combines all subplotted scatterplots within a single saved SVG file that can be viewed on the web
-        """
-        
-        # Create base plot
-        title=f"Kappa-Rho Space for Classified Components - {task}"
-        xlabel='kappa'
-        ylabel='rho'
-        x_range=np.arange(0,200,20)
-        y_range=np.arange(0,200,20)
-        subplots, tick_size, top, titles, title_size = self.multi_subplot_base_plot_parameters(title, xlabel, ylabel, x_range, y_range, 'classification')
-        
-        # initialize the datafinder obj
-        obj = extr.obj(1, 'wnw', 1)
-        
-        for subject in np.arange(start, end+1):
-            for run in np.arange(1,4):
-                obj = extr.obj(subject, task, run)
-                print(f"Sub-{subject}, task {task}, run {run}")
-                combined_metrics = obj.combined_metrics()
-                if combined_metrics != None:
-                    for p in range(4):
-                        subplots[p].set_title(titles[p], y=0.75, size=title_size, font='DejaVu Sans')
-                        top[p] = True
-                        self.scatter_cme(subplots[p], combined_metrics, top)
-                        top[p] = False
-                        subplots[p].tick_params(labelsize=tick_size)
-                else:
-                    pass
-        
-        outdir = obj.set_outdir()
-
-        # plt.savefig(f"/data/holnessmn/Combined_kappa_rho_plots.svg")
-        
-        if mode == 'save':
-            plt.savefig(f"{outdir}Combined_kappa_rho_plots_{task}.svg")
-        else:
-            plt.show()
-    
-    def single_base_plot_parameters(self, task:str, ylabel:str, xlim:list):      # dtype = '%' or 'num'
-        """
-        1) Sets up the main plot parameters for plotting each distribution of the percentage of significantly fitted components per model
-        2) Calculates the average percentage of significant components per model and concatenates into an array
-        """
-        
-        # plot parameters - main: figure titles & colors/fonts
-        font = font_manager.FontProperties(family='DejaVu Sans',
-                                        style='normal', size=16)
-        colorlist=['blue', 'orange', 'green', 'red', 'purple']
-        fig = plt.figure(figsize=(10,7))
-        fig.suptitle(f"{task.upper()}", font='DejaVu Sans', fontsize=24)
-        linehand=['', '', '', '', '']
-                        
-        # plot parameters - additional: X/Y axises and ticks
-        plt.xticks(font='DejaVu Sans', fontsize=10)
-        plt.yticks(font='DejaVu Sans', fontsize=10)
-        plt.ylabel(ylabel, fontsize=13, font='DejaVu Sans', labelpad=10)
-        plt.xlim(xlim)
-        plt.autoscale(enable=True, axis='y', tight=True)
-        plt.tight_layout(pad=1.01)
-        
-        return colorlist, linehand, font
-
-    def fit_histograms_plot(self, start:int, end:int, task:str, mode:str):
-        """
-        Generates a histogram plot that summarizes:
-        1) X-axis: the percentage of components that were significantly fitted to each model
-        2) Y-axis: the number of runs from which these sig-components came from
-        Includes ALL subject runs for the specified task
-            I.E., from 5 runs (inclusive across all subjects), 20% of the components sig-fit the WM/CSF model
-        """
-        # pull in base plot and the data to plot
-        signif_minus_nans, outdir = calc.return_counts_of_significant_fits_per_run(start, end, task, dtype='%')
-        model_distr_means = calc.return_summary_stats_significant_fits(signif_minus_nans, 'mean')
-        colorlist, linehand, font = self.single_base_plot_parameters(task, ylabel="# of runs with signif components", xlim=[0,100])
-
-        # plot average percent signif components & denote with a 'dashed' line
-        for midx, mmeans in enumerate(model_distr_means):
-            plt.plot([mmeans, mmeans], [0, 4], color=colorlist[midx], linestyle='dashed')
-            
-        # create a histogram that bins the number of runs by percentage of signif components as a single distribution for each model
-        for regidx, reg in enumerate(signif_minus_nans.columns):
-            count, bins = np.histogram(signif_minus_nans[reg], bins=np.linspace(0,100,20))
-            bin_centers = 0.5*(bins[1:]+bins[:-1])
-            # plot the line over the distribution
-            linehand[regidx] = plt.plot(bin_centers, count, color=colorlist[regidx])
-            
-        # the plot legend containing the printed averages - very important!
-        plt.legend([f"{c[0]} : Avg = {c[1]}%" for c in zip(signif_minus_nans.columns, model_distr_means)],prop=font)
-        plt.xlabel(f"% of components with significant fit to regressors", fontsize=13, font='DejaVu Sans', labelpad=10)
-
-        # save the histogram
-        if mode == 'save':
-            plt.savefig(f"{outdir}Regressor_Fit_Histograms_{task}.svg")
-        else:
-            plt.show()
-        
-    def kde_density_plot(self, start:int, end:int, task:str, mode:str):     # mode can be 'save' or 'show'
-        """
-        Kernel density estimation (KDE) plot:
-        What it does:
-        - 1) places a Gaussian kernel (tiny kernel with normal distribution) over each data point (x)
-        - 2) then sums these non-negative Gaussian kernels (K) together to get the "density" or number of kernels involved in the summation of these distributions (xi...xn)
-        - 3) the "bandwidth" (h) is a free parameter that determines how much to smooth the waveform (after summation)
-        KDE Equation: f(x) = (np.sum(K (x-xi) / h)) / n*h   ->  for each datapoint (x), calculate the difference betw the mean (x) and the normal distribution centered on that datapoint (xi), 
-        feed it through a non-negative kernel function (K) that is scaled by the smoothing factor (h), and then scale that distribution by the number of normal distributions (n) * the smoothing factor (h)
-        The result is a scaled distribution that is smoothed by the parameter 'h'
-        """
-        
-        # pull in base plot and the data to plot
-        signif_minus_nans, outdir = calc.return_counts_of_significant_fits_per_run(start, end, task, dtype='%')
-        model_distr_means = calc.return_summary_stats_significant_fits(signif_minus_nans, 'mean')
-        colorlist, linehand, font = self.single_base_plot_parameters(task, ylabel="KDE density", xlim=[-1,101])
-        
-        # plot the Kernel Density Estimate Distribution
-        for reg in signif_minus_nans.columns:
-            signif_minus_nans[reg].plot.kde(bw_method=0.3, ind=50)
-            
-        # the plot legend containing the printed averages - very important!
-        plt.legend([f"{c[0]} : Avg = {c[1]}%" for c in zip(signif_minus_nans.columns, model_distr_means)],prop=font)
-        plt.xlabel(f"% of components with significant fit to regressors", fontsize=13, font='DejaVu Sans', labelpad=10)
-        
-        # save the KDE plot
-        if mode == 'save':
-            plt.savefig(f"{outdir}Regressor_Fit_KDEs_{task}.svg")
-        else:
-            plt.show()
-            
-    # a function for creating a boxplot of the counts of signif components per model
-    def fit_whisker_box_n_barplot(self, start:int, end:int, task:str, plot:str, mode:str):
-        """
-        Returns number of signif components per model with mean [point] & stdev error bars
-        """
-
-        # calculate the accumulated counts just once
-        accum_counts_rb, accum_counts_rt, accum_counts_rr, accum_counts_aa = calc.return_counts_of_signif_comps_classified(start, end, task)
-        print(np.sum(accum_counts_rb), "\n\n", np.sum(accum_counts_rt), "\n\n", np.sum(accum_counts_rr), "\n\n", np.sum(accum_counts_aa))
-
-        # for plottype in ['barplot_total', 'barplot_avg', 'boxplot']:
-        #     # Create base plot & parameters
-        #     xlabel='Model'
-        #     if plottype == 'barplot_total':
-        #         ylabel='Total count with standard deviation'
-        #         subtitle='Summed counts across runs'
-        #     elif plottype == 'barplot_avg':
-        #         ylabel='Average count with standard deviation'
-        #         subtitle='Averaged counts across runs'
-        #     elif plottype == 'boxplot':
-        #         ylabel='Tukey Boxplot Distribution (1.5*(Q3-Q1)) with median'
-        #         subtitle='Median count across runs'
-        #     title=f"Significant components fit per model by run - {task} \n {subtitle}"    # subtitle
-
-        #     classes = ["Rejected by Both", "Rejected by Tedana-Only", "Rejected by Combined Regressors-Only", "Accepted by Both"]
-        #     models = ["Full Model", "Motion Model", "Phys_Freq Model", "Phys_Variability Model", "WM & CSF Model"]
-        #     class_list = [accum_counts_rb, accum_counts_rt, accum_counts_rr, accum_counts_aa]
-        #     print("COUNTS OF SIGNIFICANT COMPONENTS: \n")
-            
-        #     # Concatenate data into a dataframe
-        #     df = {}
-        #     for cidx, c in enumerate(class_list):
-        #         # append to dataframe
-        #         # get class parameters & dataframe - for classification plots
-        #         class_name = classes[cidx]
-        #         print(f"{class_name}: \n")
-        #         df[class_name] = {}
-        #         # remove the nans from the dataframe before doing any calculations
-        #         print("Count: \n", np.sum(class_list[cidx]))
-        #         print("Stdev: \n", round(np.std(class_list[cidx]),1))
-        #         print("Average: \n", round(np.mean(class_list[cidx]),1))
-        #         print("Median: \n", np.median(class_list[cidx]))
-
-        #         for c in class_list[cidx].columns:
-        #             df[class_name]['count'] = np.sum(class_list[cidx][c]).tolist()
-        #             df[class_name]['standard deviation'] = round(np.std(class_list[cidx][c]),1).tolist()
-        #             df[class_name]['average'] = round(np.mean(class_list[cidx][c]),1).tolist()
-        #             df[class_name]['median'] = np.median(class_list[cidx][c]).tolist()
-        #         print(df)
-
-        #     if plot == 'classification':
-        #         subplots, tick_size, top, titles, title_size = self.multi_subplot_base_plot_parameters(title, xlabel, ylabel, None, None, 'classification')
-        #         subplot_dim = classes
-        #         x_dim = models
-        #         colors = ['red','green','blue','purple','orange']
-        #     elif plot == 'models':
-        #         subplots, tick_size, top, titles, title_size = self.multi_subplot_base_plot_parameters(title, xlabel, ylabel, None, None, 'models')
-        #         subplot_dim = models
-        #         x_dim = classes
-        #         colors = ['red','green','blue','purple','orange','purple']
-
-        #     for pidx, p in enumerate(subplot_dim):
-        #         print(pidx)
-        #         if plot == 'classification':
-        #             subplots[pidx].set_title(class_name)
-        #         elif plot == 'models':
-        #             model_name = models[pidx]
-        #             subplots[pidx].set_title(model_name)
-
-        #         # more plot parameters
-        #         subplots[pidx].set_xticks(np.arange(1,len(x_dim)+1))
-        #         subplots[pidx].set_xticklabels(x_dim, fontsize=8, rotation=20)
-        #         subplots[pidx].set_ylim(0,40)
-        #         plt.subplots_adjust(hspace=0.5)
-
-        #         # sum the data along the classification OR model axis
-        #         if plot == 'classification':
-        #             sum_axis = class_list[pidx]     # sum along models [x-ticks] x classification dfs [subplot]
-        #             labels = models
-        #         elif plot == 'models':
-        #             sum_axis = np.array([[c.iloc[:,pidx]] for c in class_list]).T      # sum along classification dfs [x-ticks] x model [subplot]
-        #             labels = classes
-        #         sum_axis = np.squeeze(sum_axis).astype(int)
-        #         print("TYPE: ", plot)
-        #         print("SHAPE OF ARRAY: ", sum_axis.shape)
-        #         print("ARRAY VALUES: ", sum_axis)
-        #         print("SUM: ", np.sum(sum_axis, axis=0))
-        #         print("TYPE: ", type(np.sum(sum_axis, axis=0)[0]))
-        #         print("LABELS: ", labels, len(labels))
-
-        #         # iterate through 3 different plot-types
-        #         if plottype == 'barplot_total':
-        #             subplots[pidx].set_ylim(0,2100)
-        #             subplots[pidx].bar(np.arange(1,len(x_dim)+1), height=np.sum(sum_axis, axis=0), ecolor='black', bottom=0, color=colors)
-        #         elif plottype == 'barplot_avg':
-        #             avg = np.round(np.mean(sum_axis, axis=0),1)
-        #             stdev = np.round(np.std(sum_axis, axis=0),1)
-        #             subplots[pidx].bar(np.arange(1,len(x_dim)+1), height=avg, yerr=stdev, ecolor='black', bottom=0, color=colors)
-        #         elif plottype == 'boxplot':
-        #             # whis = 1.5 -> Tukey's boxplot: whiskers = whis*(Q3-Q1) = 1.5*(Q3-Q1)
-        #             subplots[pidx].boxplot(sum_axis, whis=1.5, labels=labels, manage_ticks=True)
-
-        #     outdir = DataFinder(None,None,None).set_outdir()
-        #     # depending on the mode, save a .SVG file or show the plot
-        #     if mode == 'save':
-        #         plt.savefig(f"{outdir}Classified_signif_comps_per_model_{task}_{plottype}_{plot}.svg")
-        #     else:
-        #         plt.show()
-
-        # # save the summary statistics as a .JSON file
-        # with open(f"{outdir}Classified_signif_comps_per_model_{task}_summary_stats.json", "w") as open_file:
-        #     json.dump(df, open_file, indent=4)
+gp = group_plots()
+cp = component_plots()
+sp = statistic_plots()
 
 if __name__ == '__main__':
-    # Run the plots
-    pp = plot_production()
-    
-    # pp.scatter_svg(1,25,'wnw','show')        # the scatter plot containing new Kappa/Rho classifications
-    # pp.scatter_svg(1,25,'movie','show')
-    # pp.scatter_svg(1,25,'breathing','show')
-    
-    # pp.fit_histograms_plot(1,25,'wnw','show')      # a histogram containing the distribution of the percentage of runs included within each model type
-    # pp.fit_histograms_plot(1,25,'movie','show')
-    # pp.fit_histograms_plot(1,25,'breathing','show')
-    
-    # pp.kde_density_plot(1,25,'wnw','show')         # a kernel density estimation plot that estimates the PDF of a random variable within a distribution via Gaussian kernels
-    # pp.kde_density_plot(1,25,'movie','show')
-    # pp.kde_density_plot(1,25,'breathing','show')
 
-    pp.fit_whisker_box_n_barplot(1,25,'wnw','classification','show')        # a boxplot and barplot to show summary statistics for the significant & classified components per model
-    # pp.fit_whisker_box_n_barplot(1,25,'wnw','models','show')
-    # pp.fit_whisker_box_n_barplot(1,25,'movie','classification','show')
-    # pp.fit_whisker_box_n_barplot(1,25,'movie','models','show')
-    # pp.fit_whisker_box_n_barplot(1,25,'breathing','classification','show')
-    # pp.fit_whisker_box_n_barplot(1,25,'breathing','models','show')
+    # # Generate plots
+    # mode='save'
+    # for task in ['wnw','movie','breathing']:
+    #     gp.scatter_svg(1, 25, task, mode)
+    #     gp.kde_density_plot(task, mode)
+    #     gp.whisker_boxplot(task, mode)
     
+    gp.whisker_boxplot('movie', 'show')
+
+    # cp.plot_all_components('save')
+
+    # sp.plot_means()
+
+# show the components you like in AFNI (components.nii.gz)
+
+"""
+Possible components to look at:
+Comp 39: sub-2, breathing run 1 (kappa: 174.6, var explained: 9.0) -> Motion & Phys_Variability *
+Comp 44: sub-4, breathing run 1 (kappa: 93.4, var explained: 0.8) -> Motion, Phys_Variablity & WM/CSF *
+Comp 40: sub-8, breathing run 1 (kappa: 66.5, var explained: 2.9) -> Motion, Phys_Variability
+Comp 00: sub-12, breathing run 1 (kappa: 55.5, var explained: 5.6) -> Motion, WM/CSF
+Comp 36: sub-16, breathing run 1 (kappa: 57.6, var explained: 5.2) -> Motion
+Comp 13: sub-16, movie run 1 (kappa: 60.4, var explained: 7.6) -> Motion, Phys_Variability
+Comp 54: sub-17, breathing run 1 (kappa: 57.2, var explained: 5.6) -> Motion, Phys_Varability, & WM/CSF
+Comp 25: sub-17, movie run 1 (kappa: 62.5, var explained: 26.9) -> Motion, Phys_Variability, & WM/CSF
+Comp 01: sub-18, breathing run 1 (kappa: 78.3, var explained: 1.9) -> Motion, Phys_Variability
+Comp 45: sub-19, breathing run 1 (kappa: 85.1, var explained: 2.8) -> Motion, WM/CSF *
+Comp 59: sub-21, breathing run 1 (kappa: 66.5, var explained: 1.6) -> Motion, Phys_Variability, & WM/CSF
+Comp 45: sub-24, breathing run 1 (kappa: 61.6, var explained: 2.5) -> Motion
+Comp 04: sub-24, movie run 1 (kappa: 80.5, var explained: 6.8) -> Motion, WM/CSF *s
+"""
+
+
+
+
+
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# OLD COMPONENT ANALYSIS
+# rejected by both ---> pretty good fits
+    # for c in [1,8,14,16,25,33,39,43,48,58,64]:
+    #     cp.plot_beta_fit(24, 'movie', 1, c, mode, xloc=0.05, yloc=0.95)
+
+    # # rejected by regressors only ---> really high kappas (70 - 90 range), big gaps between fitted ICA component time-series and actual ICA component time-series (indicating variance not explained by model = BOLD)
+    # print("Rejected by Regressors Only")
+    # for c in [4,7,9,49,60,63,66]:
+    #     cp.plot_beta_fit(24, 'movie', 1, c, xloc=0.05, yloc=0.95)
+    #     regressors-only components were VERY high kappa with large gaps in fit estimations (BOLD), revealing that removing components simply by the linear model's decision criteria would remove both positive and negative activations in BOLD
+    #     if we included a Kappa threshold (<50), then the linear model component fits would be better (and probably more similar to Tedana)
+
+    # # rejected by tedana only ---> horrible fits (since these components were not captured by LM), Kappa-Rho ratios were mostly on  a 1:1 basis, other Kappa values were <=50
+    # print("Rejected by Tedana Only")
+    # for c in [0,6,17,19,20,22,23,37,47,52,53,55,56]:
+    #     cp.plot_beta_fit(24, 'movie', 1, c, xloc=0.05, yloc=0.95)
+
+# OLD PLOTS
+
+### Accepted vs Rejected by Tedana
+# colors=['green','red']     # green = accepted by tedana, red = rejected by tedana
+
+# # create new figure per plot
+# xlim=[0,7]
+# plt.rcParams['figure.figsize'] = [10, 10]
+# fig = plot_base(suptitle=f"{task} : {subtitle}", subtitles=None, xlabel="Models", ylabel=ylabel, xrange=xlim, yrange=None, plottype='single', dim=(1,1,1))
+
+# # subplots
+# plt.xlim([0,len(acc_ted_counts_df.columns)+1])      # control edge of plot
+# plt.ylim([0,100])
+# for iidx, i in enumerate(acc_ted_counts_df.columns):    # plot each column from each separate dataframe
+#     acc_ted = acc_ted_counts_df[np.isnan(acc_ted_counts_df.iloc[:,iidx]) == False]
+#     rej_ted = rej_ted_counts_df[np.isnan(rej_ted_counts_df.iloc[:,iidx]) == False]
+#     acc_ted_plt = acc_ted.iloc[:,iidx]
+#     rej_ted_plt = rej_ted.iloc[:,iidx]
+#     bp = plt.boxplot([acc_ted_plt, rej_ted_plt], positions=[(iidx+1)-0.23,(iidx+1)+0.23], widths=0.4)       # boxplot
+#     setp(bp['boxes'][0], color='green')
+#     setp(bp['medians'][0], color='green')       # acc_ted = green, rej_ted = red
+#     setp(bp['boxes'][1], color='red')
+#     setp(bp['medians'][1], color='red')
+# green_patch = mpatches.Patch(color='green', label='Accepted by Tedana')
+# red_patch = mpatches.Patch(color='red', label='Rejected by Tedana')
+# plt.legend(handles=[green_patch,red_patch])
+# # rest of figure parameters
+# plt.xticks(np.arange(1,len(acc_ted_counts_df.columns)+1), acc_ted_counts_df.columns, rotation=20)
+
+
+
+# # The plot bases for OLD single component plots
+# class plots:
+#     def __init__(self):
+#         super(plots, self).__init__()    # initiate the class object -> only 'instance' you're initializing since there are no arguments
+
+#     # methods for summarizing the data in figures
+#     # a function for plotting beta & component timeseries overlays - ONLY for a single component
+#     def plot_fit(self, subject, task, run, component, xloc=0.05, yloc=0.95):
+#         """
+#         A component-specific function that creates a timeseries plot overlay with:
+#         1) Estimated component timeseries from Beta-Fit (Red)
+#             - element-wise matrix multiplication of X (Full regressor model) * Betas (obtained through a 'least squares solution' Ax=b, the 'x' vector that minimizes the difference between the regressors and actual ICA components)
+#         2) Actual ICA component timeseries (Black)
+#             - the 'Y' from the Linear Model equation (Y = BX + E)
+#         """
+#         # obtaining the data
+#         obj = extr.obj(subject, task, run)
+#         Y = np.asarray(pd.read_csv(obj.mixing_matrix(), sep='\t'))
+#         X_full = np.asarray(pd.read_csv(obj.full_model()))
+#         betas = pd.read_csv(obj.combined_betas())
+
+#         # Labelling whether the component was significantly correlated to the model type
+#         metrics = pd.read_csv(obj.combined_metrics())
+#         kappa = np.round(metrics["kappa"].iloc[component],1)
+#         rho = np.round(metrics["rho"].iloc[component], 1)
+#         varex = np.round(metrics["variance explained"].iloc[component], 1)
+#         signif_types = ['Motion', 'Phys_Freq', 'Phys_Variability', 'WM & CSF']
+#         signif_label = 'Signif'
+#         signif_gap = ':'
+#         for signif in signif_types:
+#             tmp = metrics[f"Signif {signif}"].iloc[component]
+#             if tmp:
+#                 signif_label = f"{signif_label}{signif_gap} {signif}"
+#                 signif_gap=','
+#         betas.drop(
+#             columns=[betas.columns[0], betas.columns[1]],
+#             axis=1,
+#             inplace=True,
+#         )
+
+#         # creating the figure
+#         fig = plt.figure()
+#         ax = fig.add_subplot(1, 1, 1)
+#         ica = Y     # actual ICA component timeseries in black
+#         fit = np.asarray(np.matmul(X_full[:, 2:], betas.T))     # beta-fitted component timeseries in red
+
+#         c = component
+
+#         # plotting the component overlays with the attached metrics in a legend
+#         ica_ts = ica[:, c]
+#         fit_ts = fit[:, c]
+#         ax.plot(ica_ts, color='black')
+#         ax.plot(fit_ts, color='red')
+#         textstr = '\n'.join((
+#             f"sub-{subject}, run {run}",
+#             f"kappa: {kappa}",
+#             f"rho: {rho}",
+#             f"var explained: {varex}",
+#             f"{signif_label}"
+#         ))
+
+#         # plot parameters
+#         plt.autoscale(enable=True, axis='x', tight=True)
+#         plt.autoscale(enable=True, axis='y', tight=True)
+#         ax.text(xloc, yloc, textstr, transform=ax.transAxes, fontsize=14,font='DejaVu Sans',
+#             verticalalignment='top')
+#         plt.tight_layout(pad=1.02)
+
+#         # display the plot
+#         plt.show()
+
+#     def plot_certain_components(self, component_list, x_loc_adj:float, y_loc_adj:float):
+#         """
+#         Allows you to feed in a tupled list of (subjects,tasks,runs,component_ID) to plot the components that represent the fitting mechanism
+#             - solely for visualization purposes (i.e., Poster or Abstract)
+#         Adjustable parameters: -> adjusts the text label location on the x & y axises
+#             - x_loc_adj
+#             - y_loc_adj
+#         """
+#         # loop through the list of special components that you found
+#         for c in component_list:
+#             s = c[0], t = c[1], r = c[2], cid = c[3]
+#             obj = extr.obj(s, t, r)
+#             outdir = obj.set_outdir()
+#             self.plot_fit(subject=s, task=t, run=r, component=cid, outdir=outdir, xloc=x_loc_adj, yloc=y_loc_adj)
+
+#             # get user input to see if they are happy with the plot
+#             def user_initiated_loop():
+#                 keypress = input("Happy with this plot? If yes, type 'y', if not, type 'n': ")
+#                 if keypress == 'y':
+#                     # saving the component-specific file as an SVG
+#                     plt.savefig(f"{outdir}FitTS_sub-{s}_task-{t}_run-{r}_comp-{cid}.svg")
+#                 elif keypress == 'n':
+#                     print("Rerun the command with 1) another component, or 2) adjust the x-loc or y-loc of text label")
+#                     plt.close()
+#                 else:
+#                     print("Response requires a 'yes' or 'no'")
+#                     user_initiated_loop()
+
+
+
+
+
+#### OLD FUNCTIONS ####
 # #### A list of subjects, runs, component numbers, and kappa values for regressor only rejected components with high kappa values
 # #### These were identified by eye using the output from the above cell
 # - Sub 1 run 1: 68, 108
@@ -912,4 +1097,38 @@ if __name__ == '__main__':
 # cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-06/afniproc_orig/WNW/sub-06.results/tedana_c75_r02<BR>
 # 3drefit -view orig -space ORIG ica_components.nii.gz<BR>
 # afni ica_components.nii.gz ../anat_final.sub-??+orig.HEAD
+
+# def bonferroni_significance(self, obj, df, reg_cat, row_idx, dtype:str):
+#     """
+#     This is what was used to calculate the Full Model (which includes ONLY significant components fitted by the Combined Regressors Model)
+#     """
+#     # get p-values
+#     pvals = obj.combined_p()
+#     if pvals != None:
+#         pvals = pd.read_csv(pvals)
+#         numcomp = len(pvals)
+#         if dtype == '%':
+#             # calculate the percentage of signif components:
+#             # for the Full Model
+#             tmp_signif=pvals['Full Model']<(0.05/numcomp)       # 'significant' only includes Bonferroni-corrected p-values: orig_pval < (.05 / tot_comps) -> will be a boolean array of True/False (1/0)
+#             df['Full Model'].iloc[row_idx] = 100*np.sum(tmp_signif)/numcomp     # an average of summed sig-comps/tot_comps
+
+#             # for the other 'partial' models
+#             for reg in reg_cat:
+#                 df[reg].iloc[row_idx] = 100*np.sum((pvals[reg]<(0.05/numcomp)) * tmp_signif)/numcomp    # each Bonferroni-corrected p-value is weighted by the Bonferroni-corrected p-values from the Full Model
+
+#         elif dtype == 'num':       # option == 'num'
+#             # calculate the number of signif components:
+#             # for the Full Model
+#             tmp_signif=pvals['Full Model']<(0.05/numcomp)       # 'significant' only includes Bonferroni-corrected p-values: orig_pval < (.05 / tot_comps) -> will be a boolean array of True/False (1/0)
+#             df['Full Model'].iloc[row_idx] = np.sum(tmp_signif)     # summed sig-comps
+
+#             # for the other 'partial' models
+#             for reg in reg_cat:
+#                 df[reg].iloc[row_idx] = np.sum((pvals[reg]<(0.05/numcomp)) * tmp_signif)    # each Bonferroni-corrected p-value is weighted by the Bonferroni-corrected p-values from the Full Model
+        
+#         row_idx+=1      # index to next row 
+#     row_idx=row_idx     # return same index if pval file doesn't exist
+        
+#     return row_idx
 

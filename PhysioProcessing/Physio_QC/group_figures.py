@@ -50,7 +50,6 @@ def ideal_plotting():
     # reveal the entire plot
     plt.show()
 
-
 # Preprocessing the IDEAL respiration/rvt overlay
 def preproc(ts, type:str):
     # center time-series on zero
@@ -189,12 +188,13 @@ def group_plotting_ts_averaged():
 
     plt.show()
 
-# ideal time series
-ideal_plotting()
+if __name__ == '__main__':
+    # ideal time series
+    ideal_plotting()
 
-# individual subject time series plots
-group_plotting_ts_nonaveraged()
+    # individual subject time series plots
+    group_plotting_ts_nonaveraged()
 
-# group data - averaged/median across subject time series
-group_plotting_ts_averaged()
+    # group data - averaged/median across subject time series
+    group_plotting_ts_averaged()
 

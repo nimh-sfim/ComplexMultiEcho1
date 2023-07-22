@@ -35,7 +35,7 @@ def preproc(ts, type:str, scale:str, perc:int):
     if type == "real ts":
         # downsample real ts (by cutting out every 200th dp)
         """
-	Biopac Hz: 2000 samples/sec (2000 Hz)
+	    Biopac Hz: 2000 samples/sec (2000 Hz)
         PsychoPy sampling rate: 0.1 samples/sec (10 Hz)
         conversion: 2000*0.1 = 200dps difference
         """
@@ -136,15 +136,15 @@ def transfer_to_dataframe(subj_list, name:str):
     # save to Dataframe -> can call to plot each column/subject ts*
     arr_df = pd.DataFrame(marr_tp).to_csv(name, sep="\t", index=False)
 
-# Real TS
-transfer_to_dataframe(breathing_real, f"{out}Breathing_subjects_cols_real.tsv")
-transfer_to_dataframe(movie_A, f"{out}Movie_A_subjects_cols_real.tsv")
-transfer_to_dataframe(movie_B, f"{out}Movie_B_subjects_cols_real.tsv")
+# # Real TS
+# transfer_to_dataframe(breathing_real, f"{out}Breathing_subjects_cols_real.tsv")
+# transfer_to_dataframe(movie_A, f"{out}Movie_A_subjects_cols_real.tsv")
+# transfer_to_dataframe(movie_B, f"{out}Movie_B_subjects_cols_real.tsv")
 
-# RVT TS
-transfer_to_dataframe(breathing_rvt, f"{out}Breathing_subjects_cols_rvt.tsv")
-transfer_to_dataframe(movie_A_rvt, f"{out}Movie_A_subjects_cols_rvt.tsv")
-transfer_to_dataframe(movie_B_rvt, f"{out}Movie_B_subjects_cols_rvt.tsv")
+# # RVT TS
+# transfer_to_dataframe(breathing_rvt, f"{out}Breathing_subjects_cols_rvt.tsv")
+# transfer_to_dataframe(movie_A_rvt, f"{out}Movie_A_subjects_cols_rvt.tsv")
+# transfer_to_dataframe(movie_B_rvt, f"{out}Movie_B_subjects_cols_rvt.tsv")
 
 
 

@@ -21,6 +21,24 @@ import argparse
 from scipy.signal import savgol_filter, resample_poly, detrend, resample
 import sys
 from niphlem.events import compute_max_events
+from niphlem.models import RVPhysio
+sys.path.append('../')
+from niphlem_parameters import *
+
+droot="/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/"
+outpath=f"{droot}Regressor_Plots/"
+
+# organize group data:
+# breathing
+breathing=[str(num).zfill(2) for num in np.arange(1,26)]
+# movie - A
+task_A_run1=['01','02','06','08','10','12','13','16','18','20','22','24']
+task_A_run2=['03','04','05','07','09','11','15','17','19','21','23','25']
+# movie - B
+task_B_run1=['03','04','05','07','09','11','15','17','19','21','23','25']
+task_B_run2=['01','02','06','08','10','12','13','16','18','20','22','24']
+# movie - C
+task_C_run3=['05','11','12','16','18','21','24']
 
 sub = str(sys.argv[1])
 
@@ -36,24 +54,44 @@ for tidx, task in enumerate(['breathing','movie']):
 
             print(f"{sub}, {task}, run {run}")
             real_file = pd.read_csv(real_file, sep="\t")
-            ideal = input("Breathing Pattern (check ScanningNotes.txt): ")
+            # pulling from the organized .tsv file instead
+            if task == 'breathing':
+                ideal ='A'
+            elif task == 'movie':
+                if sub[:-2] in task_A_run1 and run == 1:
+                    ideal = 'A'
+                elif sub[:-2] in task_A_run2 and run == 2:
+                    ideal = 'A' 
+                elif sub[:-2] in task_B_run1 and run == 1:
+                    ideal = 'B' 
+                elif sub[:-2] in task_B_run2 and run == 2:
+                    ideal = 'B' 
+                elif sub[:-2] in task_C_run3 and run ==3:
+                    ideal = 'C'
+
             ideal_file = pd.read_csv(f"/data/holnessmn/ComplexMultiEcho1/PsychoPy/MovieRespiration/IdealBreathingPattern_Run{ideal}.tsv", sep="\t")
+
             rvt_file = pd.read_csv(f"/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/{sub}/Regressors/{sub}_RegressorModels_{task}_run-{run}.tsv", sep="\t")
             real_ts = real_file['Respiratory']
             ideal_ts = ideal_file['RespSize']
             rvt_ts = rvt_file['resp_rvt']
 
-            # standardize the real timeseries (for same scale) -> by 90% percentile
-            real_ts = real_ts - np.mean(real_ts) / np.percentile(real_ts, 90)
+            rvt_func = RVPhysio(physio_rate=ideal_Hz,t_r=tr,time_window=resp_time_window,low_pass=resp_low,high_pass=resp_high)        # ideal RVT
+            ideal_rvt = rvt_func.compute_regressors(signal=ideal_ts, time_scan=np.arange(299)*tr)
+            ideal_rvt = resample(ideal_rvt, 4553)       # movie/breathing lasted 455.3 seconds, at 10 samples/sec, so resulting time-series is 4553 dps long
+            xplane_ideal_rvt = np.arange(ideal_rvt.shape[0])
+
+            # standardize the real timeseries (for same scale across subjects) -> by 98th percentile
+            real_ts = real_ts - np.mean(real_ts) / np.percentile(real_ts, 98)
 
             # detrend real ts (for linear drift): scipy's method
             real_ts = detrend(real_ts)
 
-            # downsample real ts (by cutting out every 200th dp)
+            # downsample real ts (by collecting every 200th dp)
             """
             Biopac Hz: 2000 samples/sec
-            PsychoPy sampling rate: 0.1 samples/sec
-            conversion: 2000*0.1 = 200dps difference
+            PsychoPy sampling rate: 10 samples/sec
+            conversion: 2000/10 = 200dps difference
             """
             real_ts = real_ts[::200]
 
@@ -66,42 +104,51 @@ for tidx, task in enumerate(['breathing','movie']):
             # compute the session time interval in seconds (number of datapoints)
             x_plane_real = np.arange(real_ts.shape[0])
             x_plane_ideal = np.arange(ideal_ts.shape[0])
-            x_plane_rvt = np.arange(rvt_ts.shape[0])
+            x_plane_rvt = np.arange(rvt_ts.shape[0])        # x-plane for real rvt ts
 
-            # compute max events (peaks) by specifying delta (the minimum distance between the peaks)
-            """
-            Resp delta = 0.1Hz * 2
-            """
-            real_pks = compute_max_events(real_ts, delta=0.1*2, peak_rise=0.5)
-            ideal_pks = compute_max_events(ideal_ts, delta=0.1*2, peak_rise=0.5)
+            # compute max events (peaks) by specifying delta (the minimum distance in phase cycles between the peaks)
+            # Note: using 10 Hz, since we're plotting by the Ideal frequency (and the real ts is downsampled)
+            real_pks = compute_max_events(real_ts, delta=ideal_Hz*2, peak_rise=peak_rise)
+            ideal_pks = compute_max_events(ideal_ts, delta=ideal_Hz*2, peak_rise=peak_rise)
 
             # Ideal vs Real
             # plot data on same scale by creating twin axis
-            ax2 = ax[overlay_idx,0].twinx()
+            ax1 = ax[overlay_idx,0].twinx()     # ax1 = overlay
+            ax1.set_yticks([])               # turn off ideal ts y-ticks
+            ax2 = ax1.twinx()     # ax2 = real time-series
 
             # Plot - overlay
-            ax[overlay_idx,0].plot(x_plane_ideal, ideal_ts, 'red')
+            ax1.plot(x_plane_ideal, ideal_ts, 'red')        # ideal respiration time-series
             ax[overlay_idx,0].set_title(f"{task} run {run}")
-            ax2.plot(x_plane_real, real_ts, 'black')
+            ax2.plot(x_plane_real, real_ts, 'black')        # real respiration time-series
 
             # plot peaks as scatterpoints
-            ax[overlay_idx,0].scatter(x_plane_ideal[ideal_pks], ideal_ts[ideal_pks], c='red')
-            ax2.scatter(x_plane_real[real_pks], real_ts[real_pks], c='black')
+            ax1.scatter(x_plane_ideal[ideal_pks], ideal_ts[ideal_pks], c='red')     # ideal peaks
+            ax2.scatter(x_plane_real[real_pks], real_ts[real_pks], c='black')       # real peaks
             
             # Ideal vs RVT
             # plot data on same scale by creating twin axis
-            ax2 = ax[overlay_idx,1].twinx()
+            ax1 = ax[overlay_idx,1].twinx()     # ax1 = overlay
+            ax1.set_yticks([])               # turn off ideal ts y-ticks
+            ax2 = ax1.twinx()     # ax2 = real time-series
 
             # Plot - overlay
-            ax[overlay_idx,1].plot(x_plane_ideal, ideal_ts, 'red')
+            ax1.plot(xplane_ideal_rvt, ideal_rvt, 'red')        # ideal RVT time-series
             ax[overlay_idx,1].set_title(f"{task} run {run}")
-            ax2.plot(x_plane_rvt, rvt_ts, 'black')
+            ax2.plot(x_plane_rvt, rvt_ts, 'black')              # real RVT time-series
             ax[overlay_idx,1].legend([ideal], loc='lower right')
+
+            # change padding/margins for subplots
+            plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, hspace=0.7, wspace=0.2)
+
+            plt.suptitle(f"Respiration and RVT ideal vs real overlays - {sub}")
+
+            # Note: each time-series retains its own y-axis*** (only shares x-axis)
 
         else:
             pass
 
-plt.show()
+plt.savefig(f"{outpath}{sub}_task-{task}_run-{run}_resp_n_RVT_overlay.jpg")
 
 # ideal vs rvt length
 # (4553,) and (299,)

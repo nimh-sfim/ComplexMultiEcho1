@@ -71,4 +71,4 @@ def compare_BIDS_tsv_json():
 check_BIDS_to_trimmed()
 
 # compare BIDS .tsv/.json headers in the 'Unprocessed' directory
-ompare_BIDS_tsv_json()
+compare_BIDS_tsv_json()

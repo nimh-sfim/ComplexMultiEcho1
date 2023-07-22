@@ -27,7 +27,7 @@ Ttest() {
 
     echo "Running 3dTest on the following subjects: ${iter_list}"
 
-    for dset in '2nd_echo' 'OC' 'ted_DN'; do
+    for dset in '2nd_echo' 'OC' 'ted_DN' 'combined_regressors'; do
 
         data=();
 
@@ -43,41 +43,50 @@ Ttest() {
         echo $outfile
 
         # Uncomment the below lines to run the 3dTtest function:
-        # # make group maps for all Fisherz-warped subjects (within) per dset
-        # 3dttest++ -overwrite -dupe_ok -zskip     \
-        # -prefix ${out}${outfile} \
-        # -setA $data
+        # make group maps for all Fisherz-warped subjects (within) per dset
+        3dttest++ -overwrite -dupe_ok -zskip     \
+        -prefix ${out}${outfile} \
+        -setA $data
     done
 }
 
 # the ISC function to calculate the BOLD synchronization across between-subject correlation maps
+# NOTE: for this 3diSC function, you need to load both AFNI & R modules!!!
 ISC() {
 
     echo "Computing ISC on the following subjects: ${iter_list}"
 
     mkdir -p Group_3dISC/; out=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupISC/Group_3dISC/;
     cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupISC/IS_Correlations/Between_subjects/${condition}_between/;
+    pwd;
 
-    for dset in '2nd_echo' 'OC' 'ted_DN'; do
-            
+    for dset in '2nd_echo' 'OC' 'ted_DN' 'combined_regressors'; do
+
         # generate the commands for ISC
-        outfile=Group_ISC_Stats_Between_${condition}_${dset}_${filter}.nii
-        command="3dISC -overwrite -prefix ${out}${outfile} -jobs 12  \
-        -model  '1+(1|Subj1)+(1|Subj2)'         \
-        -dataTable  @${condition}_between_${dset}_isc_${filter}.txt       "
+        outfile=Group_ISC_Stats_Between_${condition}_${dset}_${filter}.nii;
 
-        echo $outfile
+        # remove outfile if it already exists
+        if [ -f $outfile ]; then
+            rm $outfile;
+        fi
+
+        command="3dISC -overwrite -prefix ${out}${outfile} -jobs 12  \
+        -model '1+(1|Subj1)+(1|Subj2)'                               \
+        -dataTable  @${condition}_between_${dset}_isc_${filter}.txt"
+
+        echo $outfile;
 
         # Uncomment the below line to run the ISC function:
-        # echo $command; command_file=groupISC_${condition}_${dset}_${filter}.txt; log_file=stdout_groupISC_${condition}_${dset}_${filter}.txt
-        # if [ -f $command_file ] || [ -f $log_file ]; then
-        #     rm $command_file $log_file
-        # fi
+        echo $command; 
+        command_file=groupISC_${condition}_${dset}_${filter}.txt; log_file=stdout_groupISC_${condition}_${dset}_${filter}.txt
+        if [ -f $command_file ] || [ -f $log_file ]; then
+            rm $command_file $log_file;
+            touch $command_file; touch $log_file;
+        fi
 
-        # echo $command > $command_file
-        # # execute the .txt file in tcsh and save log output in another .txt file to read later
-        # log_file=stdout_groupISC_${condition}_${dset}_${filter}.txt
-        # nohup tcsh -x $command_file > $log_file         
+        echo $command >> $command_file
+        # execute the .txt file in tcsh and save log output in another .txt file to read later
+        nohup tcsh -x ${command_file} >> $log_file         
     done
 }
 

@@ -5,9 +5,17 @@
 rootdir=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data
 # rootdir=/Volumes/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data
 
+<<<<<<< HEAD
 cd $rootdir
 
 
+=======
+runlist=(1 2 3)
+
+# timing the script - approximated time to process ALL subjects (~1 hr) -> ~2 mins per subject
+export SECONDS=0; echo "Start time: $SECONDS secs"
+for subj in sub-{01..25}; do
+>>>>>>> 78feb0d (Physiological Re-QC and subject-level inspection)
 
 swarmname=FitReg2ICA_swarm.txt
 if [ -f $swarmname ]; then
@@ -20,6 +28,7 @@ touch $swarmname
 numsbj=25
 
 
+<<<<<<< HEAD
 for subidx in $(seq -f "%02g" 1 $numsbj); do
   subj=sub-${subidx}
   rundir=( "${rootdir}/${subj}/afniproc_orig/WNW/${subj}.results"
@@ -36,6 +45,15 @@ for subidx in $(seq -f "%02g" 1 $numsbj); do
   regresslabeling=("wnw_run-1" "wnw_run-2" "wnw_run-3" \
                    "movie_run-1" "movie_run-2" "movie_run-3" \
                    "breathing_run-1" "breathing_run-2" "breathing_run-3")
+=======
+            command="python3 /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/PhysioProcessing/FitReg2ICA.py \
+                --rootdir  $usedir \
+                --regressors ${subj}_RegressorModels_${task}_run-${run}.tsv \
+                --ica_mixing ../afniproc_orig/${dir}/${subj}.results/tedana_v23_c70_kundu_r0${ted_run}/desc-ICA_mixing.tsv \
+                --ica_metrics ../afniproc_orig/${dir}/${subj}.results/tedana_v23_c70_kundu_r0${ted_run}/desc-ICA_status_table.tsv \
+                --outprefix RejectedComps/${subj}_${task}_r0${run}_CombinedRejected \
+                --p_thresh 0.05 --R2_thresh 0.5 --showplots"
+>>>>>>> 78feb0d (Physiological Re-QC and subject-level inspection)
 
   echo ${rundir[@]}
   echo "source ~/InitConda.sh; \\" >> $swarmname

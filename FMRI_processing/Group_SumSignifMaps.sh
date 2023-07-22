@@ -2,14 +2,13 @@
 
 # Calculate the significance maps per subject then add them together
 
-
 rootdir=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data
 GroupDir="${rootdir}/GroupResults/GroupMaps"
 
+sbjlist=`echo {01..25}`
 
-sbjlist=(01 02 03 04 05 06 07 08 09 10 11 12 13)
-
-GLMlist=(e2_mot_CSF OC_mot_CSF orthtedana_mot_csf combined_regressors)
+# GLMlist=(e2_mot_CSF OC_mot_CSF orthtedana_mot_csf combined_regressors)
+GLMlist=(CR_tedana_v23_c70_kundu_wnw RR_tedana_v23_c70_kundu_wnw RB_tedana_v23_c70_kundu_wnw reg_tedana_v23_c70_kundu_wnw)
 
 # for each subject and run make binarized maps of voxels above threshold
 # Warp those binarized maps to a common template space
@@ -18,33 +17,31 @@ for snum in ${sbjlist[@]}; do
   warp_path="${rootdir}/${sbj}/Proc_Anat/awpy"
   for GLM in ${GLMlist[@]}; do
 
-  cd ${rootdir}/${sbj}/GLMs/${GLM}
-  word_nword_thresh=`fdrval -qinput stats.${sbj}.${GLM}_REML+orig 31 0.05`
-  vis_aud_thresh=`fdrval -qinput stats.${sbj}.${GLM}_REML+orig 35 0.05`
+    cd ${rootdir}/${sbj}/GLMs/${GLM}
+    word_nword_thresh=`fdrval -qinput stats.${sbj}.${GLM}_REML+orig 31 0.05`
+    vis_aud_thresh=`fdrval -qinput stats.${sbj}.${GLM}_REML+orig 35 0.05`
 
-  3dcalc -prefix ${sbj}.${GLM}_WNW_signif.nii.gz \
-      -a stats.${sbj}.${GLM}_REML+orig'[31]' \
-      -expr "ispositive(abs(a)-${word_nword_thresh})*(ispositive(a)-isnegative(a))" \
-      -overwrite
+    3dcalc -prefix ${sbj}.${GLM}_WNW_signif.nii.gz \
+        -a stats.${sbj}.${GLM}_REML+orig'[31]' \
+        -expr "ispositive(abs(a)-${word_nword_thresh})*(ispositive(a)-isnegative(a))" \
+        -overwrite
 
-  3dcalc -prefix ${sbj}.${GLM}_VisAud_signif.nii.gz \
-      -a stats.${sbj}.${GLM}_REML+orig'[35]' \
-      -expr "ispositive(abs(a)-${vis_aud_thresh})*(ispositive(a)-isnegative(a))" \
-      -overwrite
+    3dcalc -prefix ${sbj}.${GLM}_VisAud_signif.nii.gz \
+        -a stats.${sbj}.${GLM}_REML+orig'[35]' \
+        -expr "ispositive(abs(a)-${vis_aud_thresh})*(ispositive(a)-isnegative(a))" \
+        -overwrite
 
+    3dNwarpApply -overwrite -nwarp "${warp_path}/anat.un.aff.qw_WARP.nii ${warp_path}/anat.un.aff.Xat.1D" \
+          -master ${GroupDir}/alignment_EPIgrid_template_sub-01.nii.gz \
+          -source ${sbj}.${GLM}_VisAud_signif.nii.gz \
+          -ainterp NN -short \
+          -prefix ${GroupDir}/sbj_maps/${sbj}.${GLM}_VisAud_signif_tlrc.nii.gz
 
-   3dNwarpApply -overwrite -nwarp "${warp_path}/anat.un.aff.qw_WARP.nii ${warp_path}/anat.un.aff.Xat.1D" \
-         -master ${GroupDir}/alignment_EPIgrid_template_sub-01.nii.gz \
-         -source ${sbj}.${GLM}_VisAud_signif.nii.gz \
-         -ainterp NN -short \
-         -prefix ${GroupDir}/sbj_maps/${sbj}.${GLM}_VisAud_signif_tlrc.nii.gz
-
-   3dNwarpApply -overwrite -nwarp "${warp_path}/anat.un.aff.qw_WARP.nii ${warp_path}/anat.un.aff.Xat.1D" \
-         -master ${GroupDir}/alignment_EPIgrid_template_sub-01.nii.gz \
-         -source ${sbj}.${GLM}_WNW_signif.nii.gz \
-         -ainterp NN -short \
-         -prefix ${GroupDir}/sbj_maps/${sbj}.${GLM}_WNW_signif_tlrc.nii.gz
-
+    3dNwarpApply -overwrite -nwarp "${warp_path}/anat.un.aff.qw_WARP.nii ${warp_path}/anat.un.aff.Xat.1D" \
+          -master ${GroupDir}/alignment_EPIgrid_template_sub-01.nii.gz \
+          -source ${sbj}.${GLM}_WNW_signif.nii.gz \
+          -ainterp NN -short \
+          -prefix ${GroupDir}/sbj_maps/${sbj}.${GLM}_WNW_signif_tlrc.nii.gz
   done
 done
 
@@ -85,7 +82,7 @@ for snum in ${sbjlist[@]}; do
       -expr "ispositive(c)*isnegative(b-0.05)*(ispositive(a)-isnegative(a))" \
       -overwrite \
       -prefix sm.${sbj}.${GLM}.VisAud_signif.nii.gz
-    done
+  done
 done
 
 
