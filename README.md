@@ -30,3 +30,17 @@ and generating the labelled ROIs-of-interest in EPI space.
 
 3. [FMRI_processing.md](FMRI_processing/FMRI_processing.md) contains instructions for processing the fMRI data
 starting with afni_proc.py
+
+4. [Physiological_Proc.md](PhysioProcessing/Physiological_Proc.md) have instructions for processing and analyzing the raw BIDS-converted respiration and cardiac traces.
+
+## Statistical Analysis
+
+1. [ISC_Group_Analyses.md](GroupStatistics/MovieRespiration_Stats/ISC_Group_Analyses.md) show you how to perform Inter-subject correlations (ISC) on the Movie and Respiration runs.
+
+2. [Statistics.md](GroupStatistics/WNW_Stats/Statistics.md) will show how to extract the Visual-Audio FisherZ statistics, Degrees of Freedom (DOF), and Contrast-to-Noise Ratio (CNR) maps for the Visual-Audio and Word-NonWord conditions.
+
+3. [WNW_Group_Map_Generation.md](FMRI_processing/WNW_Group_Map_Generation.md) shows you how to generate the final Vis-Aud and Word-Nonword group maps across the GLMs.
+
+## Visualization
+
+1. [Visualizations_for_Manuscript.md](Visualizations_for_Manuscript.md) gives you instructions on how to re-generate all of the figures, visual QC checks, and where to locate the figures after they've been generated.
