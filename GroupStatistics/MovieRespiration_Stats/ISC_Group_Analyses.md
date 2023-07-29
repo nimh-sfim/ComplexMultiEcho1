@@ -6,11 +6,6 @@
 * Maximum time to complete the processing (per subprocess) as well as what type of job to run is included
 * These times might increase depending on how many subjects you are analyzing
 
-<br>Mask the second echoes: sbatch (1 min)
-```
-bash GroupMask_MH.sh masking_second_echoes
-```
-
 <br>Warp the original files to the 1st subject's template: swarm (1 hr)
 ```
 bash warping_group_template.sh orig_warped sub-??

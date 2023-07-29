@@ -2,7 +2,7 @@
 
 subj_id=$1
 
-cd /Volumes/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/Proc_Anat
+cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${subj_id}/Proc_Anat
 mkdir StudyROIs
 cd StudyROIs
 ln -s ../aparc.a2009s+aseg_REN_gmrois.nii.gz ./
@@ -240,8 +240,8 @@ done
 # WNW functional clusters
 echo "LOOK TO MAKE SURE SUBBRIK IS word-nonword TSTAT"
 # 3dinfo -subbrick_info ../../GLMs/OC_mot/stats.${subj_id}.OC_mot_REML+orig'[31]'
-3dinfo -subbrick_info ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig'[31]'
-3dClusterize -inset ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig \
+3dinfo -subbrick_info ../../GLMs/optimally_combined_mot_csf_v23_c70_kundu_wnw/stats.${subj_id}.optimally_combined_mot_csf_v23_c70_kundu_wnw_REML+orig'[31]'
+3dClusterize -inset ../../GLMs/optimally_combined_mot_csf_v23_c70_kundu_wnw/stats.${subj_id}.optimally_combined_mot_csf_v23_c70_kundu_wnw_REML+orig \
    -mask_from_hdr -ithr 31 \
    -bisided p=0.01 \
    -NN 1 -clust_nvox 5 \
@@ -249,8 +249,8 @@ echo "LOOK TO MAKE SURE SUBBRIK IS word-nonword TSTAT"
 
 # Vis-Aud functional clusters
 echo "LOOK TO MAKE SURE SUBBRIK IS vis-aud TSTAT"
-3dinfo -subbrick_info ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig'[35]'
-3dClusterize -inset ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig \
+3dinfo -subbrick_info ../../GLMs/optimally_combined_mot_csf_v23_c70_kundu_wnw/stats.${subj_id}.optimally_combined_mot_csf_v23_c70_kundu_wnw_REML+orig'[35]'
+3dClusterize -inset ../../GLMs/optimally_combined_mot_csf_v23_c70_kundu_wnw/stats.${subj_id}.optimally_combined_mot_csf_v23_c70_kundu_wnw_REML+orig \
    -mask_from_hdr -ithr 35 \
    -bisided p=0.01 \
    -NN 1 -clust_nvox 5 \
@@ -263,20 +263,20 @@ echo "LOOK TO MAKE SURE SUBBRIK IS vis-aud TSTAT"
 # Audio contrast should be negative for vis-audio
 3dcalc -overwrite -prefix Aud_funcROI.${subj_id}.nii.gz \
    -a Aud_d2_${dset_anatEPI} -b VisAud_Clusters+orig \
-   -c ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig'[35]' \
+   -c ../../GLMs/optimally_combined_mot_csf_v23_c70_kundu_wnw/stats.${subj_id}.optimally_combined_mot_csf_v23_c70_kundu_wnw_REML+orig'[35]' \
    -expr 'int(0.5+a*ispositive(b)*isnegative(c))' -short
 
 # visual constrast should be positive for vis-audio
 3dcalc -overwrite -prefix Vis_funcROI.${subj_id}.nii.gz \
    -a Vis_d2_${dset_anatEPI} -b VisAud_Clusters+orig \
-   -c ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig'[35]' \
+   -c ../../GLMs/optimally_combined_mot_csf_v23_c70_kundu_wnw/stats.${subj_id}.optimally_combined_mot_csf_v23_c70_kundu_wnw_REML+orig'[35]' \
    -expr 'int(0.5+a*ispositive(b)*ispositive(c))' -short
 
 
 # Only for word>nonword voxels
 3dcalc -overwrite -prefix WNWfuncROI.${subj_id}.nii.gz \
    -a WNW_d2_${dset_anatEPI} -b WNW_Clusters+orig \
-   -c ../../GLMs/OC_mot_CSF/stats.${subj_id}.OC_mot_CSF_REML+orig'[31]' \
+   -c ../../GLMs/optimally_combined_mot_csf_v23_c70_kundu_wnw/stats.${subj_id}.optimally_combined_mot_csf_v23_c70_kundu_wnw_REML+orig'[31]' \
    -expr 'int(0.5+a*ispositive(b)*ispositive(c))' -short
 
 

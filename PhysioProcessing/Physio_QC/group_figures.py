@@ -8,6 +8,11 @@ import pandas as pd
 from scipy import stats
 from scipy.signal import resample, detrend
 from niphlem.models import RVPhysio
+import sys
+sys.path.append('../')
+from niphlem_parameters import *
+
+outpath="/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/Figures_for_Manuscript/"
 
 # 1) plot ideal patterns (A, B)
 def ideal_plotting():
@@ -17,9 +22,8 @@ def ideal_plotting():
     font = matplotlib.font_manager.FontProperties(weight='bold')
 
     # ideal breathing pattern
-    ax[0,0].set_title("Ideal Respiration Time Series")
-    ax[1,0].set_xlabel("Time (s)")
-    ax[0,0].set_ylabel("Respiration Amplitude")
+    ax[0,0].set_title("Ideal Respiration Time Series", fontsize=14)
+    ax[1,0].set_xlabel("Time (s)", fontsize=12)
 
     for iidx, ideal in enumerate(list(zip(['A','B'],['r','blue']))):
         ts = pd.read_csv(f"/data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/PsychoPy/MovieRespiration/IdealBreathingPattern_Run{ideal[0]}.tsv", sep='\t')['RespSize']
@@ -28,9 +32,8 @@ def ideal_plotting():
         ax[iidx,0].legend([f"Ideal {ideal[0]}"], loc="upper right", prop=font)
 
     # ideal rvt pattern
-    ax[0,1].set_title("Ideal Respiration Volume/Time (RVT) Series")
-    ax[1,1].set_xlabel("Time (s)")
-    ax[0,1].set_ylabel("Respiration Volume/Time - low_pass=0.5Hz, high_pass=0.1Hz")
+    ax[0,1].set_title("Ideal Respiration Volume/Time (RVT) Series", fontsize=14)
+    ax[1,1].set_xlabel("Time (s)", fontsize=12)
 
     """
     How RVT is calculated: calculating the stdev of the respiration trace over a time window (usually 3 TRs), then this stdev (variation between the signal cycles) is convolved into a respiratory waveform by Birn's respiratory response function
@@ -39,18 +42,15 @@ def ideal_plotting():
     for iidx, ideal in enumerate(list(zip(['A','B'],['r','blue']))):
         ts = pd.read_csv(f"/data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/PsychoPy/MovieRespiration/IdealBreathingPattern_Run{ideal[0]}.tsv", sep='\t')['RespSize']
         ideal_plane = pd.read_csv(f"/data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/PsychoPy/MovieRespiration/IdealBreathingPattern_Run{ideal[0]}.tsv", sep='\t')['Sec']
-        # the time window is the period in seconds, across which the standard deviation (variation) is calculated
-        # this time window has 4 TRs: CAUTION (it has a window that is 2 TRs longer than the real rvt regressors.)
-        # doesn't change much, but might need to recalculate rvt
-        rvt_func = RVPhysio(physio_rate=10,t_r=1.5,time_window=6,low_pass=0.5,high_pass=0.1)
-        ideal_rvt = rvt_func.compute_regressors(signal=ts, time_scan=np.arange(299)*1.5)
-        ax[iidx,1].plot(np.arange(299)*1.5, ideal_rvt, ideal[1])
+        rvt_func = RVPhysio(physio_rate=ideal_Hz,t_r=tr,time_window=resp_time_window,low_pass=resp_low,high_pass=resp_high)
+        ideal_rvt = rvt_func.compute_regressors(signal=ts, time_scan=np.arange(299)*tr)
+        ax[iidx,1].plot(np.arange(299)*tr, ideal_rvt, ideal[1])
         ax[iidx,1].legend([f"Ideal {ideal[0]}"], loc="upper right", prop=font)
     
     # reveal the entire plot
-    plt.show()
+    plt.savefig(f"{outpath}Ideal_Respiration_n_RVT_A_B.svg")
 
-# Preprocessing the IDEAL respiration/rvt overlay
+# Preprocessing the IDEAL and REAL respiration/rvt overlays (for plotting purposes)
 def preproc(ts, type:str):
     # center time-series on zero
     ts = ts - np.mean(ts)
@@ -95,7 +95,7 @@ def group_plotting_ts_nonaveraged():
 
     # real respiration pattern - (group comparison)
     ax[0,0].set_title(f"Respiration - 98th percentile scaled")
-    ax[2,0].set_xlabel("Datapoints across time (.1 seconds)")
+    ax[2,0].set_xlabel("Time (.1 s)")
     ax[1,0].set_ylabel("Respiration Amplitude")
 
     # A
@@ -114,7 +114,7 @@ def group_plotting_ts_nonaveraged():
 
     # ideal RVT pattern - (group comparison)
     ax[0,1].set_title(f"Respiration Volume/Time (RVT) - 98th percentile scaled")
-    ax[2,1].set_xlabel("Datapoints across time (.1 seconds)")
+    ax[2,1].set_xlabel("Time (.1 s)")
     ax[1,1].set_ylabel("Respiration Volume - low_pass=0.5Hz, high_pass=0.1Hz")
 
     # A
@@ -132,7 +132,8 @@ def group_plotting_ts_nonaveraged():
     # ax[3,1].legend(['movie C'], loc="upper right")
 
     # reveal the entire plot
-    plt.show()
+    plt.savefig(f"{outpath}Individual_Subject_Plots_Respiration_n_RVT_Group.svg")
+    
 
 # calculate mean/variance time series (from real ts)
 mean_ts_breathing, percentile_25_breathing, percentile_75_breathing = calc_mean_variance(pd.read_csv(f"{root_dir}Breathing_subjects_cols_real.tsv", sep='\t'))
@@ -156,24 +157,25 @@ def group_plotting_ts_averaged():
     fig, ax = plt.subplots(3,2,figsize=(20,10))
     plt.subplots_adjust(wspace=0.25)  
     font = matplotlib.font_manager.FontProperties(weight='bold')
-    fig.suptitle("Group Average Time Series", fontsize=18)
+    fig.suptitle("Group Average Time Series", fontsize=15)
 
     def average_variance_plot(ax1,ax2,mean_ts,perc25,perc75,idealx,idealts,legend,tstype):
         ax[ax1,ax2].fill_between(np.arange(0,len(mean_ts)), mean_ts-np.abs(perc25), mean_ts+np.abs(perc75), alpha=.5, linewidth=0)
         ax[ax1,ax2].plot(np.arange(0,len(mean_ts)), mean_ts, linewidth=2)
         ax_tw=ax[ax1,ax2].twinx()
         ax_tw.plot(idealx, idealts, '--')
+        ax_tw.set_yticks([])
         ax[ax1,ax2].legend([legend], loc="upper right", prop=font)
         ax_tw.legend([f"Ideal {tstype}"], loc="lower right", prop=font)
 
     # real respiration pattern - (group comparison)
-    ax[0,0].set_title(f"Average Respiration - 25th and 75th percentile variance", fontsize=12)
-    ax[2,0].set_xlabel("Averaged Datapoints across time (.1 seconds)", fontsize=14)
-    ax[1,0].set_ylabel("Respiration Amplitude - averaged across subjects", fontsize=14)
+    ax[0,0].set_title(f"Average Respiration", fontsize=12)
+    ax[2,0].set_xlabel("Time (.1 s)", fontsize=10)
+    ax[1,0].set_ylabel("Respiration Amplitude - averaged across subjects", fontsize=10)
 
-    ax[0,1].set_title(f"Median Respiration Volume/Time (RVT) - 25th and 75th percentile variance", fontsize=12)
-    ax[2,1].set_xlabel("Median Datapoints across time (.1 seconds)", fontsize=14)
-    ax[1,1].set_ylabel("Respiration Volume - median across subjects", fontsize=14)
+    ax[0,1].set_title(f"Median Respiration Volume/Time (RVT)", fontsize=12)
+    ax[2,1].set_xlabel("Time (.1 s)", fontsize=10)
+    ax[1,1].set_ylabel("Respiration Volume - median across subjects", fontsize=10)
 
     # plot accordingly -> group-averaged '-', ideal denoted by '--', and 25th/75th percentile shaded +/- mean ts
     # raw time series
@@ -186,7 +188,7 @@ def group_plotting_ts_averaged():
     average_variance_plot(1,1,median_ts_A_rvt,percentile_25_A_rvt,percentile_75_A_rvt,ideal_A_rvt_xplane,ideal_A_rvt,'movie A','RVT')
     average_variance_plot(2,1,median_ts_B_rvt,percentile_25_B_rvt,percentile_75_B_rvt,ideal_B_rvt_xplane,ideal_B_rvt,'movie B','RVT')
 
-    plt.show()
+    plt.savefig(f"{outpath}Group-Averaged_Plots_Respiration_n_RVT_Median_and_Mean.svg")
 
 if __name__ == '__main__':
     # ideal time series

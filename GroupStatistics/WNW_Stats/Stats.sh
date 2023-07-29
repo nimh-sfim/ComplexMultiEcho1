@@ -1,36 +1,33 @@
-# zsh or not
+#!/bin/bash
 
 # Graphs & Visualization:
 
-# call: zsh Stats.sh sub-01 wnw
-
-# zsh
+# call: bash Stats.sh sub-01 wnw
 
 sub=$1
 task=$2
-# GLMs=(combined_regressors e2_mot_CSF OC_mot OC_mot_CSF orthtedana_mot orthtedana_mot_csf septedana_mot septedana_mot_csf)
-GLMs=(reg_tedana_v23_c70_kundu_wnw CR_tedana_v23_c70_kundu_wnw RR_tedana_v23_c70_kundu_wnw)
+GLMs=( tedana_mot_csf_v23_c70_kundu_wnw second_echo_mot_csf_v23_c70_kundu_wnw optimally_combined_mot_csf_v23_c70_kundu_wnw combined_regressors_v23_c70_kundu_wnw )
 
 root=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/
 
-for g in $GLMs; do
+for g in ${GLMs[@]}; do
     cd ${root}GLMs/$g/; if [ -d Stats/ ]; then rm -r Stats/; fi
     if [[ $task == 'wnw' ]]; then
         # make Stats dir
-        mkdir Stats/; cd Stats/
+        mkdir Stats/; cd Stats/; chmod g+x ../noise.all*;
 
         # Concatenate all the stats you need into 1 file (Vis-Aud, Word-NonWord)
-        3dTcat -prefix Coefficients ../stats.${sub}.${g}_REML+tlrc'[2..$(4)]'
-        3dTcat -prefix R2 ../stats.${sub}.${g}_REML+tlrc'[4..$(4)]'
+        3dTcat -prefix Coefficients ../stats.${sub}.${g}_REML+orig'[2..$(4)]'
+        3dTcat -prefix R2 ../stats.${sub}.${g}_REML+orig'[4..$(4)]'
         # 'Word-NonWord' = [7], 'Vis-Aud' = [8]
 
         # calculate Coef / stdev residual
-        3dcalc -a Coefficients+tlrc'[7]' -b ../noise.all+tlrc -expr 'a/b' -prefix CNR_WNW
-        3dcalc -a Coefficients+tlrc'[8]' -b ../noise.all+tlrc -expr 'a/b' -prefix CNR_VisAud
+        3dcalc -a Coefficients+orig'[7]' -b ../noise.all+orig -expr 'a/b' -prefix CNR_WNW
+        3dcalc -a Coefficients+orig'[8]' -b ../noise.all+orig -expr 'a/b' -prefix CNR_VisAud
 
         # Transform R2 to Fisher Z-score
-        3dcalc -overwrite -a R2+tlrc'[7]' -b Coefficients+tlrc'[7]' -expr 'atanh(sqrt(a))*(ispositive(b)-isnegative(b))' -prefix FisherZ_WNW
-        3dcalc -overwrite -a R2+tlrc'[8]' -b Coefficients+tlrc'[8]' -expr 'atanh(sqrt(a))*(ispositive(b)-isnegative(b))' -prefix FisherZ_VisAud
+        3dcalc -overwrite -a R2+orig'[7]' -b Coefficients+orig'[7]' -expr 'atanh(sqrt(a))*(ispositive(b)-isnegative(b))' -prefix FisherZ_WNW
+        3dcalc -overwrite -a R2+orig'[8]' -b Coefficients+orig'[8]' -expr 'atanh(sqrt(a))*(ispositive(b)-isnegative(b))' -prefix FisherZ_VisAud
         
         # Get average Fisher Z-scores (for the ROIs in each condition) (by overlaying entire ROI mask over each Fisher-Z condition dataset)
         3dROIstats -nzvoxels -nobriklab -mask ${root}Proc_Anat/StudyROIs/${sub}.FuncROIs.nii.gz FisherZ_WNW+orig >> Avg_FisherZROIs_WNW.1D

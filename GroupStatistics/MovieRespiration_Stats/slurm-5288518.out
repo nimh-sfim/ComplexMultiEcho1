@@ -1,0 +1,122 @@
+/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupISC/warped_files/orig_warped
+second_echo
+++ 3dNwarpApply: AFNI version=AFNI_23.1.10 (Jun 29 2023) [64-bit]
+++ Authored by: Zhark the Warped
+++ -master dataset is '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupMaps/alignment_EPIgrid_template_sub-01.nii.gz'
+++ output grid size = 2 mm
+++ opened source dataset '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-10/GLMs/second_echo_mot_csf_v23_c70_kundu_breathing_run-1/errts.sub-10.second_echo_mot_csf_v23_c70_kundu_breathing_run-1_REML+orig.HEAD'
+++ Processing -nwarp 
+++ Warping:.[R].................................................Z
+++ Output dataset ./Nwarp_sub-10_task-breathing_run-1_2nd_echo.nii
+++ total Elapsed time = 286.3 sec
+OC
+++ 3dNwarpApply: AFNI version=AFNI_23.1.10 (Jun 29 2023) [64-bit]
+++ Authored by: Zhark the Warped
+++ -master dataset is '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupMaps/alignment_EPIgrid_template_sub-01.nii.gz'
+++ output grid size = 2 mm
+++ opened source dataset '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-10/GLMs/optimally_combined_mot_csf_v23_c70_kundu_breathing_run-1/errts.sub-10.optimally_combined_mot_csf_v23_c70_kundu_breathing_run-1_REML+orig.HEAD'
+++ Processing -nwarp 
+++ Warping:.[R].................................................Z
+++ Output dataset ./Nwarp_sub-10_task-breathing_run-1_OC.nii
+++ total Elapsed time = 281.3 sec
+ted_DN
+++ 3dNwarpApply: AFNI version=AFNI_23.1.10 (Jun 29 2023) [64-bit]
+++ Authored by: Zhark the Warped
+++ -master dataset is '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupMaps/alignment_EPIgrid_template_sub-01.nii.gz'
+++ output grid size = 2 mm
+++ opened source dataset '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-10/GLMs/tedana_mot_csf_v23_c70_kundu_breathing_run-1/errts.sub-10.tedana_mot_csf_v23_c70_kundu_breathing_run-1_REML+orig.HEAD'
+++ Processing -nwarp 
+++ Warping:.[R].................................................Z
+++ Output dataset ./Nwarp_sub-10_task-breathing_run-1_ted_DN.nii
+++ total Elapsed time = 284.9 sec
+combined_regressors
+++ 3dNwarpApply: AFNI version=AFNI_23.1.10 (Jun 29 2023) [64-bit]
+++ Authored by: Zhark the Warped
+++ -master dataset is '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupMaps/alignment_EPIgrid_template_sub-01.nii.gz'
+++ output grid size = 2 mm
+++ opened source dataset '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-10/GLMs/combined_regressors_v23_c70_kundu_breathing_run-1/errts.sub-10.combined_regressors_v23_c70_kundu_breathing_run-1_REML+orig.HEAD'
+++ Processing -nwarp 
+++ Warping:.[R].................................................Z
+++ Output dataset ./Nwarp_sub-10_task-breathing_run-1_combined_regressors.nii
+++ total Elapsed time = 286.0 sec
+second_echo
+++ 3dNwarpApply: AFNI version=AFNI_23.1.10 (Jun 29 2023) [64-bit]
+++ Authored by: Zhark the Warped
+++ -master dataset is '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupMaps/alignment_EPIgrid_template_sub-01.nii.gz'
+++ output grid size = 2 mm
+++ opened source dataset '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-10/GLMs/second_echo_mot_csf_v23_c70_kundu_movie_run-1/errts.sub-10.second_echo_mot_csf_v23_c70_kundu_movie_run-1_REML+orig.HEAD'
+++ Processing -nwarp 
+++ Warping:.[R].................................................Z
+++ Output dataset ./Nwarp_sub-10_task-movie_run-1_2nd_echo.nii
+++ total Elapsed time = 288.4 sec
+OC
+++ 3dNwarpApply: AFNI version=AFNI_23.1.10 (Jun 29 2023) [64-bit]
+++ Authored by: Zhark the Warped
+++ -master dataset is '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupMaps/alignment_EPIgrid_template_sub-01.nii.gz'
+++ output grid size = 2 mm
+++ opened source dataset '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-10/GLMs/optimally_combined_mot_csf_v23_c70_kundu_movie_run-1/errts.sub-10.optimally_combined_mot_csf_v23_c70_kundu_movie_run-1_REML+orig.HEAD'
+++ Processing -nwarp 
+++ Warping:.[R].................................................Z
+++ Output dataset ./Nwarp_sub-10_task-movie_run-1_OC.nii
+++ total Elapsed time = 280.4 sec
+ted_DN
+++ 3dNwarpApply: AFNI version=AFNI_23.1.10 (Jun 29 2023) [64-bit]
+++ Authored by: Zhark the Warped
+++ -master dataset is '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupMaps/alignment_EPIgrid_template_sub-01.nii.gz'
+++ output grid size = 2 mm
+++ opened source dataset '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-10/GLMs/tedana_mot_csf_v23_c70_kundu_movie_run-1/errts.sub-10.tedana_mot_csf_v23_c70_kundu_movie_run-1_REML+orig.HEAD'
+++ Processing -nwarp 
+++ Warping:.[R].................................................Z
+++ Output dataset ./Nwarp_sub-10_task-movie_run-1_ted_DN.nii
+++ total Elapsed time = 284.6 sec
+combined_regressors
+++ 3dNwarpApply: AFNI version=AFNI_23.1.10 (Jun 29 2023) [64-bit]
+++ Authored by: Zhark the Warped
+++ -master dataset is '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupMaps/alignment_EPIgrid_template_sub-01.nii.gz'
+++ output grid size = 2 mm
+++ opened source dataset '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-10/GLMs/combined_regressors_v23_c70_kundu_movie_run-1/errts.sub-10.combined_regressors_v23_c70_kundu_movie_run-1_REML+orig.HEAD'
+++ Processing -nwarp 
+++ Warping:.[R].................................................Z
+++ Output dataset ./Nwarp_sub-10_task-movie_run-1_combined_regressors.nii
+++ total Elapsed time = 286.3 sec
+second_echo
+++ 3dNwarpApply: AFNI version=AFNI_23.1.10 (Jun 29 2023) [64-bit]
+++ Authored by: Zhark the Warped
+++ -master dataset is '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupMaps/alignment_EPIgrid_template_sub-01.nii.gz'
+++ output grid size = 2 mm
+++ opened source dataset '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-10/GLMs/second_echo_mot_csf_v23_c70_kundu_movie_run-2/errts.sub-10.second_echo_mot_csf_v23_c70_kundu_movie_run-2_REML+orig.HEAD'
+++ Processing -nwarp 
+++ Warping:.[R].................................................Z
+++ Output dataset ./Nwarp_sub-10_task-movie_run-2_2nd_echo.nii
+++ total Elapsed time = 283.3 sec
+OC
+++ 3dNwarpApply: AFNI version=AFNI_23.1.10 (Jun 29 2023) [64-bit]
+++ Authored by: Zhark the Warped
+++ -master dataset is '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupMaps/alignment_EPIgrid_template_sub-01.nii.gz'
+++ output grid size = 2 mm
+++ opened source dataset '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-10/GLMs/optimally_combined_mot_csf_v23_c70_kundu_movie_run-2/errts.sub-10.optimally_combined_mot_csf_v23_c70_kundu_movie_run-2_REML+orig.HEAD'
+++ Processing -nwarp 
+++ Warping:.[R].................................................Z
+++ Output dataset ./Nwarp_sub-10_task-movie_run-2_OC.nii
+++ total Elapsed time = 283.9 sec
+ted_DN
+++ 3dNwarpApply: AFNI version=AFNI_23.1.10 (Jun 29 2023) [64-bit]
+++ Authored by: Zhark the Warped
+++ -master dataset is '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupMaps/alignment_EPIgrid_template_sub-01.nii.gz'
+++ output grid size = 2 mm
+++ opened source dataset '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-10/GLMs/tedana_mot_csf_v23_c70_kundu_movie_run-2/errts.sub-10.tedana_mot_csf_v23_c70_kundu_movie_run-2_REML+orig.HEAD'
+++ Processing -nwarp 
+++ Warping:.[R].................................................Z
+++ Output dataset ./Nwarp_sub-10_task-movie_run-2_ted_DN.nii
+++ total Elapsed time = 287.6 sec
+combined_regressors
+++ 3dNwarpApply: AFNI version=AFNI_23.1.10 (Jun 29 2023) [64-bit]
+++ Authored by: Zhark the Warped
+++ -master dataset is '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/GroupMaps/alignment_EPIgrid_template_sub-01.nii.gz'
+++ output grid size = 2 mm
+++ opened source dataset '/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-10/GLMs/combined_regressors_v23_c70_kundu_movie_run-2/errts.sub-10.combined_regressors_v23_c70_kundu_movie_run-2_REML+orig.HEAD'
+++ Processing -nwarp 
+++ Warping:.[R].................................................Z
+++ Output dataset ./Nwarp_sub-10_task-movie_run-2_combined_regressors.nii
+++ total Elapsed time = 291.5 sec
+Process completed successfully

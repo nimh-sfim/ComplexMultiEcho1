@@ -464,7 +464,7 @@ def convert():
 if ARG.plots:
     if not os.path.isdir(f"{droot}Regressor_Plots/"):
         os.mkdir(f"{droot}Regressor_Plots/")
-    outpath=f"{droot}Regressor_Plots/"
+    outpath=f"{droot}Figures_for_Manuscript/"
     regressor_models()      # plot the regressor models & create design matrix
 
 else:

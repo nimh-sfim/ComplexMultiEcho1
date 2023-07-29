@@ -23,22 +23,22 @@ individual_masks() {
 # Apply each subject's mask to its own 2nd echo data - native
 masking_second_echoes() {
     out=${rootdir}GroupResults/GroupISC/group_mask/
+    tasks=( 'WNW' 'breathing_run-1' 'breathing_run-2' 'breathing_run-3' 'movie_run-1' 'movie_run-2' 'movie_run-3' )
     for sub in {01..25}; do
         currdir=${rootdir}sub-${sub}/afniproc_orig/
         cd $currdir;
-        for task in 'WNW'; do
-        #'breathing_run-1' 'breathing_run-2' 'breathing_run-3' 'movie_run-1' 'movie_run-2' 'movie_run-3'; do
+        for task in ${tasks[@]}; do
             if [ -d ${task} ]; then
                 if [[ ${task} == 'WNW' ]]; then
                     files=`ls ${task}/sub-${sub}.results/pb0?.sub-${sub}.r0?.e02.volreg+orig.HEAD`
                     run=0;
                     for f in $files; do
                         run=$((run+1));
-                        3dcalc -overwrite -a ${f::-5} -b ${out}sub-${sub}_mask.nii.gz -expr 'a*bool(b)' -prefix ${out}sub-${sub}_task-${task}_run-${run}_2nd_echo_masked.nii.gz
+                        3dcalc -overwrite -a ${f::-5} -b ${out}sub-${sub}_mask.nii.gz -expr 'a*bool(b)' -prefix ${f::-10}_masked.nii.gz
                     done
                 else
                     file=`ls ${task}/sub-${sub}.results/pb0?.sub-${sub}.r01.e02.volreg+orig.HEAD`
-                    3dcalc -overwrite -a ${file::-5} -b ${out}sub-${sub}_mask.nii.gz -expr 'a*bool(b)' -prefix ${out}sub-${sub}_task-${task}_2nd_echo_masked.nii.gz
+                    3dcalc -overwrite -a ${file::-5} -b ${out}sub-${sub}_mask.nii.gz -expr 'a*bool(b)' -prefix ${file::-10}_masked.nii.gz
                 fi
             fi
         done
@@ -91,7 +91,7 @@ blurring_between_correlations() {
         files_to_blur=`ls ./*.nii`;
         for f in ${files_to_blur}; do
             if ! [ -f ${f::-4}_blurred.nii ]; then
-                3dBlurToFWHM -input $f -prefix ${f::-4}_blurred.nii -FWHM 4
+                3dBlurToFWHM -overwrite -input $f -prefix $f -FWHM 4
             fi
         done
     done

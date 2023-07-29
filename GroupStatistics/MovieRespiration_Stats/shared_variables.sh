@@ -51,3 +51,18 @@ function call_function {
         ;;
     esac
 }
+
+function get_suffix {
+    if [ $suffix_f1 == $suffix_f2 ]; then
+        # rename suffix
+        if [ "$dtype" == 2nd-echo ]; then
+            suffix_f="2nd_echo"
+        elif [ "$dtype" == OC ]; then 
+            suffix_f="OC"
+        elif [ "$dtype" == tedana-denoised ]; then 
+            suffix_f="ted_DN"
+        elif [ "$dtype" == combined_regressors ]; then 
+            suffix_f="combined_regressors"
+        fi
+    fi
+}

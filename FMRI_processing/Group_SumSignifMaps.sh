@@ -4,16 +4,10 @@
 
 rootdir=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data
 GroupDir="${rootdir}/GroupResults/GroupMaps"
+GLMlist=(second_echo_mot_csf_v23_c70_kundu_wnw optimally_combined_mot_csf_v23_c70_kundu_wnw tedana_mot_csf_v23_c70_kundu_wnw combined_regressors_v23_c70_kundu_wnw)
 
-sbjlist=`echo {01..25}`
-
-# GLMlist=(e2_mot_CSF OC_mot_CSF orthtedana_mot_csf combined_regressors)
-GLMlist=(CR_tedana_v23_c70_kundu_wnw RR_tedana_v23_c70_kundu_wnw RB_tedana_v23_c70_kundu_wnw reg_tedana_v23_c70_kundu_wnw)
-
-# for each subject and run make binarized maps of voxels above threshold
-# Warp those binarized maps to a common template space
-for snum in ${sbjlist[@]}; do
-  sbj=sub-${snum}
+# for each subject and GLM make binarized maps of voxels above threshold & then Warp those binarized maps to a common template space
+for sbj in sub-{01..25}; do
   warp_path="${rootdir}/${sbj}/Proc_Anat/awpy"
   for GLM in ${GLMlist[@]}; do
 
@@ -60,8 +54,7 @@ done
 
 # Trying on the spatially smoothed stat maps
 cd $GroupDir/sbj_maps
-for snum in ${sbjlist[@]}; do
-  sbj=sub-${snum}
+for sbj in sub-{01..25}; do
   for GLM in ${GLMlist[@]}; do
     3dFDR -input sm.stats.${sbj}.${GLM}_REML_tlrc.nii.gz'[30,31]' -mask ../GroupMask.nii.gz \
       -prefix sm.${sbj}.${GLM}.WNW_qvals.nii.gz -overwrite -qval

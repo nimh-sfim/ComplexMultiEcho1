@@ -13,7 +13,7 @@ cd ${rootdir}GroupResults/GroupISC/
 # Ttest (within) conditions: movie_A_x_movie_B, movie_A_x_resp_A1, movie_B_x_resp_A1, resp_A1_x_resp_A2
 # ISC (Between) conditions: movie_A_x_movie_B, movie_B_x_movie_A, resp_A1_x_resp_A1, resp_A2_x_resp_A2
 condition=$2     
-# what types of subjects to process: all, motion, task_compliant
+# what types of subjects to process: all, special_group
 filter=$3
 
 # filter the subjects you process & iterate through the list
@@ -113,3 +113,12 @@ function=ISC; call_function
 # EX:
 # bash GroupStats_Corrs.sh ISC movie_A_x_movie_B motion
 # bash GroupStats_Corrs.sh ISC movie_A_x_movie_B task_compliant
+
+# bash GroupStats_Corrs.sh Ttest movie_A_x_movie_B all;
+# bash GroupStats_Corrs.sh Ttest movie_A_x_resp_A1 all;
+# bash GroupStats_Corrs.sh Ttest movie_B_x_resp_A1 all;
+# bash GroupStats_Corrs.sh Ttest resp_A1_x_resp_A2 all;
+# bash GroupStats_Corrs.sh Ttest movie_A_x_movie_B special_group;
+# bash GroupStats_Corrs.sh Ttest movie_A_x_resp_A1 special_group;
+# bash GroupStats_Corrs.sh Ttest movie_B_x_resp_A1 special_group;
+# bash GroupStats_Corrs.sh Ttest resp_A1_x_resp_A2 special_group;

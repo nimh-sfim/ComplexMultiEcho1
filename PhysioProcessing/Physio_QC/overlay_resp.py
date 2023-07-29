@@ -26,7 +26,7 @@ sys.path.append('../')
 from niphlem_parameters import *
 
 droot="/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/"
-outpath=f"{droot}Regressor_Plots/"
+outpath=f"{droot}Figures_for_Manuscript/"
 
 # organize group data:
 # breathing

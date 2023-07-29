@@ -6,8 +6,8 @@
 
 . ./shared_variables.sh
 
-GroupDir=${rootdir}/GroupResults/GroupMaps
-cd ${rootdir}/GroupResults/;
+GroupDir=${rootdir}GroupResults/GroupMaps
+cd ${rootdir}GroupResults/;
 if ! [ -d GroupISC/warped_files/ ]; then
     mkdir GroupISC/warped_files/
 fi
@@ -24,14 +24,14 @@ orig_warped() {
             dir=${rootdir}${subject}/afniproc_orig/${task}_run-${run}/
             if [ -d ${dir} ]; then 
                 # All files = middle echo (2nd echo), OC, and tedana denoised datasets for all movie/breathing runs (should be run thru the GLM first)
-                second_echo=`ls ${rootdir}${subject}/GLMs/second_echo_mot_csf_v23_c70_kundu_${task}_run-${run}/errts.${subject}.second_echo_mot_csf_v23_c70_kundu_${task}_run-${run}_REML.nii`
-                OC=`ls ${rootdir}${subject}/GLMs/optimally_combined_mot_csf_v23_c70_kundu_${task}_run-${run}/errts.${subject}.optimally_combined_mot_csf_v23_c70_kundu_${task}_run-${run}_REML.nii`
-                ted_DN=`ls ${rootdir}${subject}/GLMs/tedana_mot_csf_v23_c70_kundu_${task}_run-${run}/errts.${subject}.tedana_mot_csf_v23_c70_kundu_${task}_run-${run}_REML.nii`
-                combined_regressors=`ls ${rootdir}${subject}/GLMs/combined_regressors_v23_c70_kundu_${task}_run-${run}/errts.${subject}.combined_regressors_v23_c70_kundu_${task}_run-${run}_REML.nii`
+                second_echo=`ls ${rootdir}${subject}/GLMs/second_echo_mot_csf_v23_c70_kundu_${task}_run-${run}/errts.${subject}.second_echo_mot_csf_v23_c70_kundu_${task}_run-${run}_REML+orig.HEAD`
+                OC=`ls ${rootdir}${subject}/GLMs/optimally_combined_mot_csf_v23_c70_kundu_${task}_run-${run}/errts.${subject}.optimally_combined_mot_csf_v23_c70_kundu_${task}_run-${run}_REML+orig.HEAD`
+                ted_DN=`ls ${rootdir}${subject}/GLMs/tedana_mot_csf_v23_c70_kundu_${task}_run-${run}/errts.${subject}.tedana_mot_csf_v23_c70_kundu_${task}_run-${run}_REML+orig.HEAD`       # note: tedana outputs files in .tlrc space, so make sure these are converted to orig space
+                combined_regressors=`ls ${rootdir}${subject}/GLMs/combined_regressors_v23_c70_kundu_${task}_run-${run}/errts.${subject}.combined_regressors_v23_c70_kundu_${task}_run-${run}_REML+orig.HEAD`
 
                 # 1 source map for each dtype (2nd echo, OC, and tedana DN)
                 for dtype in 'second_echo' 'OC' 'ted_DN' 'combined_regressors'; do
-
+                # for dtype in 'ted_DN'; do
                     echo $dtype
 
                     # create the source list & prefix list

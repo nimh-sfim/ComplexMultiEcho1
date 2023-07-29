@@ -36,7 +36,7 @@ class DataFinder:
         )
         self.outdir = op.join(
             self.projectdir,
-            "Component_Plots_UPDATED/"
+            "Figures_for_Manuscript/"
         )
         self.subject = subject
         self.run = run
@@ -177,7 +177,7 @@ def subject_statistics(file_obj, mode:str):
     """
     This is the main function that will separate the components by 2 categories
     1st category: Rej_Both, Rej_TedOnly, Rej_RegOnly, Acc_All, Acc_Ted
-    2nd category: Full_Model_Rej, Full_Model_Acc, Sig_Motion, Sig_Phys_Freq, Sig_Phys_Var, Sig_WM_CSF
+    2nd category: Full_Model_Rej, Full_Model_Acc, Sig_Motion, Sig_Phys_Freq, Sig_Phys_Var, Sig_CSF
 
     Full Model = components that were rejected by the Combined Regressors model (and NOT rejected by Tedana)
     Sig = significantly fit to the partial model  (model = the regressor in the design matrix)
@@ -198,7 +198,7 @@ def subject_statistics(file_obj, mode:str):
     Motion_indices = jsonf["component lists"]["rejected by regressors with signif fit to"]["Motion"]
     Phys_Freq_indices = jsonf["component lists"]["rejected by regressors with signif fit to"]["Phys_Freq"]
     Phys_Var_indices = jsonf["component lists"]["rejected by regressors with signif fit to"]["Phys_Variability"]
-    WM_CSF_indices = jsonf["component lists"]["rejected by regressors with signif fit to"]["WM & CSF"]
+    CSF_indices = jsonf["component lists"]["rejected by regressors with signif fit to"]["CSF"]
 
     total_var = jsonf["variance"]["total"]       # variance
     RT_var = jsonf["variance"]["rejected by tedana"]
@@ -210,7 +210,7 @@ def subject_statistics(file_obj, mode:str):
     Motion_var = jsonf["variance"]["rejected by regressors with signif fit to"]["Motion"]
     Phys_Freq_var = jsonf["variance"]["rejected by regressors with signif fit to"]["Phys_Freq"]
     Phys_Var_var = jsonf["variance"]["rejected by regressors with signif fit to"]["Phys_Variability"]
-    WM_CSF_var = jsonf["variance"]["rejected by regressors with signif fit to"]["WM & CSF"]
+    CSF_var = jsonf["variance"]["rejected by regressors with signif fit to"]["CSF"]
 
     total_counts = jsonf["component counts"]["total"]        # counts
     RT_counts = jsonf["component counts"]["rejected by tedana"]
@@ -222,7 +222,7 @@ def subject_statistics(file_obj, mode:str):
     Motion_counts = jsonf["component counts"]["rejected by regressors with signif fit to"]["Motion"]
     Phys_Freq_counts = jsonf["component counts"]["rejected by regressors with signif fit to"]["Phys_Freq"]
     Phys_Var_counts = jsonf["component counts"]["rejected by regressors with signif fit to"]["Phys_Variability"]
-    WM_CSF_counts = jsonf["component counts"]["rejected by regressors with signif fit to"]["WM & CSF"]
+    CSF_counts = jsonf["component counts"]["rejected by regressors with signif fit to"]["CSF"]
 
     RB_kappa = metrics.loc[RB_indices,"kappa"]      # kappa
     RRonly_kappa = metrics.loc[RRonly_indices,"kappa"]
@@ -230,7 +230,7 @@ def subject_statistics(file_obj, mode:str):
     Motion_kappa = metrics.loc[Motion_indices,"kappa"]
     Phys_Freq_kappa = metrics.loc[Phys_Freq_indices,"kappa"]
     Phys_Var_kappa = metrics.loc[Phys_Var_indices,"kappa"]
-    WM_CSF_kappa = metrics.loc[WM_CSF_indices,"kappa"]
+    CSF_kappa = metrics.loc[CSF_indices,"kappa"]
 
     RB_rho = metrics.loc[RB_indices,"rho"]          # rho
     RRonly_rho = metrics.loc[RRonly_indices,"rho"]
@@ -238,7 +238,7 @@ def subject_statistics(file_obj, mode:str):
     Motion_rho = metrics.loc[Motion_indices,"rho"]
     Phys_Freq_rho = metrics.loc[Phys_Freq_indices,"rho"]
     Phys_Var_rho = metrics.loc[Phys_Var_indices,"rho"]
-    WM_CSF_rho = metrics.loc[WM_CSF_indices,"rho"]
+    CSF_rho = metrics.loc[CSF_indices,"rho"]
 
     RB_varex = metrics.loc[RB_indices,"variance explained"]          # variance explained
     RRonly_varex = metrics.loc[RRonly_indices,"variance explained"]
@@ -246,16 +246,16 @@ def subject_statistics(file_obj, mode:str):
     Motion_varex = metrics.loc[Motion_indices,"variance explained"]
     Phys_Freq_varex = metrics.loc[Phys_Freq_indices,"variance explained"]
     Phys_Var_varex = metrics.loc[Phys_Var_indices,"variance explained"]
-    WM_CSF_varex = metrics.loc[WM_CSF_indices,"variance explained"]
+    CSF_varex = metrics.loc[CSF_indices,"variance explained"]
 
     if mode == 'variance':
-        return total_var, RT_var, RR_var, AB_var, RB_var, RTonly_var, RRonly_var, Motion_var, Phys_Freq_var, Phys_Var_var, WM_CSF_var
+        return total_var, RT_var, RR_var, AB_var, RB_var, RTonly_var, RRonly_var, Motion_var, Phys_Freq_var, Phys_Var_var, CSF_var
     elif mode == 'counts':
-        return total_counts, RT_counts, RR_counts, AB_counts, RB_counts, RTonly_counts, RRonly_counts, Motion_counts, Phys_Freq_counts, Phys_Var_counts, WM_CSF_counts
+        return total_counts, RT_counts, RR_counts, AB_counts, RB_counts, RTonly_counts, RRonly_counts, Motion_counts, Phys_Freq_counts, Phys_Var_counts, CSF_counts
     elif mode == 'kappa-rho':
-        return RB_kappa, RRonly_kappa, RTonly_kappa, Motion_kappa, Phys_Freq_kappa, Phys_Var_kappa, WM_CSF_kappa, \
-                RB_rho, RRonly_rho, RTonly_rho, Motion_rho, Phys_Freq_rho, Phys_Var_rho, WM_CSF_rho, \
-                RB_varex, RRonly_varex, RTonly_varex, Motion_varex, Phys_Freq_varex, Phys_Var_varex, WM_CSF_varex
+        return RB_kappa, RRonly_kappa, RTonly_kappa, Motion_kappa, Phys_Freq_kappa, Phys_Var_kappa, CSF_kappa, \
+                RB_rho, RRonly_rho, RTonly_rho, Motion_rho, Phys_Freq_rho, Phys_Var_rho, CSF_rho, \
+                RB_varex, RRonly_varex, RTonly_varex, Motion_varex, Phys_Freq_varex, Phys_Var_varex, CSF_varex
 
 def plot_base(suptitle, subtitles:list, xlabel, ylabel, xrange, yrange, plottype:str, dim:tuple):
     """
@@ -308,7 +308,7 @@ class group_plots:
         yrange=[0,200]
 
         dim=(4,3,7)
-        subtitles=("Rejected by Both", "Rejected by Regressors Only", "Rejected by Tedana Only", "Rejected by Motion","Rejected by Phys_Freq","Rejected by Phys_Var","Rejected by WM & CSF")
+        subtitles=("Rejected by Both", "Rejected by Regressors Only", "Rejected by Tedana Only", "Rejected by Motion","Rejected by Phys_Freq","Rejected by Phys_Var","Rejected by CSF")
         prefix="TedanaVsRegressors_"
         fig, subplots = plot_base(suptitle, subtitles, xlabel, ylabel, xrange, yrange, 'multi', dim=dim)
 
@@ -317,9 +317,9 @@ class group_plots:
             Plot the kappa/rho categories
             size of each scatterpoint is scaled by the variance explained of the component
             """
-            RB_kappa, RRonly_kappa, RTonly_kappa, Motion_kappa, Phys_Freq_kappa, Phys_Var_kappa, WM_CSF_kappa, \
-                RB_rho, RRonly_rho, RTonly_rho, Motion_rho, Phys_Freq_rho, Phys_Var_rho, WM_CSF_rho, \
-                RB_varex, RRonly_varex, RTonly_varex, Motion_varex, Phys_Freq_varex, Phys_Var_varex, WM_CSF_varex = subject_statistics(file_obj, mode='kappa-rho')
+            RB_kappa, RRonly_kappa, RTonly_kappa, Motion_kappa, Phys_Freq_kappa, Phys_Var_kappa, CSF_kappa, \
+                RB_rho, RRonly_rho, RTonly_rho, Motion_rho, Phys_Freq_rho, Phys_Var_rho, CSF_rho, \
+                RB_varex, RRonly_varex, RTonly_varex, Motion_varex, Phys_Freq_varex, Phys_Var_varex, CSF_varex = subject_statistics(file_obj, mode='kappa-rho')
 
             sme_RB = subplots[0].scatter(RB_kappa, RB_rho, s=np.sqrt(RB_varex) * 20, c="red")
             sme_RRonly = subplots[1].scatter(RRonly_kappa, RRonly_rho, s=np.sqrt(RRonly_varex) * 20, c="orange")
@@ -327,7 +327,7 @@ class group_plots:
             sme_Motion = subplots[3].scatter(Motion_kappa, Motion_rho, s=np.sqrt(Motion_varex) * 20, c="magenta")
             sme_Phys_Freq = subplots[4].scatter(Phys_Freq_kappa, Phys_Freq_rho, s=np.sqrt(Phys_Freq_varex) * 20, c="blue")
             sme_Phys_Var = subplots[5].scatter(Phys_Var_kappa, Phys_Var_rho, s=np.sqrt(Phys_Var_varex) * 20, c="pink")
-            sme_WM_CSF = subplots[6].scatter(WM_CSF_kappa, WM_CSF_rho, s=np.sqrt(WM_CSF_varex) * 20, c="grey")
+            sme_CSF = subplots[6].scatter(CSF_kappa, CSF_rho, s=np.sqrt(CSF_varex) * 20, c="grey")
         
         # implement subject loop
         subject_loop(start, end, task, scatter_cat)
@@ -352,12 +352,12 @@ class group_plots:
         # pull in base plot and the data to plot
         group_outdir = DataFinder(None,None,None).set_outdir()
 
-        RT_perc_list, RR_perc_list, AB_perc_list, RB_perc_list, RTonly_perc_list, RRonly_perc_list, Motion_perc_list, Phys_Freq_perc_list, Phys_Var_perc_list, WM_CSF_perc_list = [], [], [], [], [], [], [], [], [], []
-        subtitles=("Rejected by Tedana","Rejected by Regressors","Accepted by Both","Rejected by Both","Rejected by Tedana Only","Rejected by Regressors Only","Motion","Phys_Freq","Phys_Var","WM_CSF")
+        RT_perc_list, RR_perc_list, AB_perc_list, RB_perc_list, RTonly_perc_list, RRonly_perc_list, Motion_perc_list, Phys_Freq_perc_list, Phys_Var_perc_list, CSF_perc_list = [], [], [], [], [], [], [], [], [], []
+        subtitles=("Rejected by Tedana","Rejected by Regressors","Accepted by Both","Rejected by Both","Rejected by Tedana Only","Rejected by Regressors Only","Motion","Phys_Freq","Phys_Var","CSF")
 
         def perc_components(file_obj, run_idx):
             total_counts, RT_counts, RR_counts, AB_counts, RB_counts, RTonly_counts, \
-            RRonly_counts, Motion_counts, Phys_Freq_counts, Phys_Var_counts, WM_CSF_counts = subject_statistics(file_obj, mode='counts')
+            RRonly_counts, Motion_counts, Phys_Freq_counts, Phys_Var_counts, CSF_counts = subject_statistics(file_obj, mode='counts')
 
             def return_perc(counts):
                 return (counts/total_counts)*100
@@ -371,7 +371,7 @@ class group_plots:
             Motion_perc_list.append(return_perc(Motion_counts))
             Phys_Freq_perc_list.append(return_perc(Phys_Freq_counts))
             Phys_Var_perc_list.append(return_perc(Phys_Var_counts))
-            WM_CSF_perc_list.append(return_perc(WM_CSF_counts))
+            CSF_perc_list.append(return_perc(CSF_counts))
 
         subject_loop(1,25,task,perc_components)
         
@@ -388,7 +388,7 @@ class group_plots:
         Motion_perc_df = transform_to_dataframe(Motion_perc_list, "Motion")
         Phys_Freq_perc_df = transform_to_dataframe(Phys_Freq_perc_list, "Phys_Freq")
         Phys_Var_perc_df = transform_to_dataframe(Phys_Var_perc_list, "Phys_Var")
-        WM_CSF_perc_df = transform_to_dataframe(WM_CSF_perc_list, "WM_CSF")
+        CSF_perc_df = transform_to_dataframe(CSF_perc_list, "CSF")
 
         xrange=[-1,101]
         xlabel = "percentage of removed components (pval<.05,Bonf & R2>.5) fit to model"
@@ -402,7 +402,7 @@ class group_plots:
         prefix="TedanaVsRegressors_"
     
         # plot the Kernel Density Estimate Distribution
-        for didx, df in enumerate([RT_perc_df, RR_perc_df, AB_perc_df, RB_perc_df, RTonly_perc_df, RRonly_perc_df, Motion_perc_df, Phys_Freq_perc_df, Phys_Var_perc_df, WM_CSF_perc_df]):
+        for didx, df in enumerate([RT_perc_df, RR_perc_df, AB_perc_df, RB_perc_df, RTonly_perc_df, RRonly_perc_df, Motion_perc_df, Phys_Freq_perc_df, Phys_Var_perc_df, CSF_perc_df]):
             linestyle='-'
             df[df.columns[0]].plot.kde(bw_method=0.3, ind=50, color=colors[didx], linestyle=linestyle)
 
@@ -418,10 +418,10 @@ class group_plots:
         Motion_perc_mean = get_mean(Motion_perc_df)
         Phys_Freq_perc_mean = get_mean(Phys_Freq_perc_df)
         Phys_Var_perc_mean = get_mean(Phys_Var_perc_df)
-        WM_CSF_perc_mean = get_mean(WM_CSF_perc_df)
+        CSF_perc_mean = get_mean(CSF_perc_df)
 
         # get mean & plot average percent signif components - denoted with a 'dashed' '--' line
-        means = [RT_perc_mean, RR_perc_mean, AB_perc_mean, RB_perc_mean, RTonly_perc_mean, RRonly_perc_mean, Motion_perc_mean, Phys_Freq_perc_mean, Phys_Var_perc_mean, WM_CSF_perc_mean]
+        means = [RT_perc_mean, RR_perc_mean, AB_perc_mean, RB_perc_mean, RTonly_perc_mean, RRonly_perc_mean, Motion_perc_mean, Phys_Freq_perc_mean, Phys_Var_perc_mean, CSF_perc_mean]
         for midx, m in enumerate(means):
             plt.plot([m, m], [0, ylim], color=colors[midx], linestyle='dashed')
             
@@ -440,15 +440,15 @@ class group_plots:
         Returns number of signif components per model with whisker box plot (median) & 1st/3rd quartiles
         """
         # get the appropriate dataframes
-        RT_counts_list, RR_counts_list, AB_counts_list, RB_counts_list, RTonly_counts_list, RRonly_counts_list, Motion_counts_list, Phys_Freq_counts_list, Phys_Var_counts_list, WM_CSF_counts_list = [], [], [], [], [], [], [], [], [], []
-        RT_var_list, RR_var_list, AB_var_list, RB_var_list, RTonly_var_list, RRonly_var_list, Motion_var_list, Phys_Freq_var_list, Phys_Var_var_list, WM_CSF_var_list = [], [], [], [], [], [], [], [], [], []
+        RT_counts_list, RR_counts_list, AB_counts_list, RB_counts_list, RTonly_counts_list, RRonly_counts_list, Motion_counts_list, Phys_Freq_counts_list, Phys_Var_counts_list, CSF_counts_list = [], [], [], [], [], [], [], [], [], []
+        RT_var_list, RR_var_list, AB_var_list, RB_var_list, RTonly_var_list, RRonly_var_list, Motion_var_list, Phys_Freq_var_list, Phys_Var_var_list, CSF_var_list = [], [], [], [], [], [], [], [], [], []
 
         def gather_components(file_obj, run_idx):
             total_counts, RT_counts, RR_counts, AB_counts, RB_counts, RTonly_counts, \
-            RRonly_counts, Motion_counts, Phys_Freq_counts, Phys_Var_counts, WM_CSF_counts = subject_statistics(file_obj, mode='counts')
+            RRonly_counts, Motion_counts, Phys_Freq_counts, Phys_Var_counts, CSF_counts = subject_statistics(file_obj, mode='counts')
 
             total_var, RT_var, RR_var, AB_var, RB_var, RTonly_var, \
-            RRonly_var, Motion_var, Phys_Freq_var, Phys_Var_var, WM_CSF_var = subject_statistics(file_obj, mode='variance')
+            RRonly_var, Motion_var, Phys_Freq_var, Phys_Var_var, CSF_var = subject_statistics(file_obj, mode='variance')
 
             RT_counts_list.append(RT_counts)
             RR_counts_list.append(RR_counts)
@@ -459,7 +459,7 @@ class group_plots:
             Motion_counts_list.append(Motion_counts)
             Phys_Freq_counts_list.append(Phys_Freq_counts)
             Phys_Var_counts_list.append(Phys_Var_counts)
-            WM_CSF_counts_list.append(WM_CSF_counts)
+            CSF_counts_list.append(CSF_counts)
 
             RT_var_list.append(RT_var)
             RR_var_list.append(RR_var)
@@ -470,7 +470,7 @@ class group_plots:
             Motion_var_list.append(Motion_var)
             Phys_Freq_var_list.append(Phys_Freq_var)
             Phys_Var_var_list.append(Phys_Var_var)
-            WM_CSF_var_list.append(WM_CSF_var)
+            CSF_var_list.append(CSF_var)
         
         subject_loop(1,25,task,gather_components)
 
@@ -498,7 +498,7 @@ class group_plots:
         grouped_positions = [np.arange(1,3),np.arange(3,7),np.arange(7,11)]     # grouping the corresponding categories together
         centered_grouped_positions = center_around_mean(grouped_positions[0])+center_around_mean(grouped_positions[1])+center_around_mean(grouped_positions[2])       # centering those corresponding groups around their tick value mean
 
-        subtitles=("Rejected by Tedana","Rejected by Regressors","Accepted by Both","Rejected by Both","Rejected by Tedana Only","Rejected by Regressors Only","Motion","Phys_Freq","Phys_Var","WM_CSF")
+        subtitles=("Rejected by Tedana","Rejected by Regressors","Accepted by Both","Rejected by Both","Rejected by Tedana Only","Rejected by Regressors Only","Motion","Phys_Freq","Phys_Var","CSF")
         colors = ['brown','lightsalmon','lightgray']
 
         # PLOT 1: Counts
@@ -515,12 +515,12 @@ class group_plots:
         plt.ylim([0,70])            # limit is 70 components (for some tedana runs)
 
         bplot = plt.boxplot([RT_counts_list, RR_counts_list, AB_counts_list, RB_counts_list, RTonly_counts_list, \
-            RRonly_counts_list, Motion_counts_list, Phys_Freq_counts_list, Phys_Var_counts_list, WM_CSF_counts_list], positions=centered_grouped_positions, vert=True, patch_artist=True, labels=subtitles, widths=0.4)       # boxplot
+            RRonly_counts_list, Motion_counts_list, Phys_Freq_counts_list, Phys_Var_counts_list, CSF_counts_list], positions=centered_grouped_positions, vert=True, patch_artist=True, labels=subtitles, widths=0.4)       # boxplot
         for patch in bplot['boxes'][0:2]:       # Rejected by Tedana & Rejected by Regressors = brown
             patch.set_facecolor(colors[0])
         for patch in bplot['boxes'][2:6]:       # Accepted by Both, Rejected by Both, Rejected by Tedana Only, Rejected by Regressors Only = light salmon
             patch.set_facecolor(colors[1])
-        for patch in bplot['boxes'][6:10]:       # Motion, Phys_Freq, Phys_Var, WM & CSF = light gray
+        for patch in bplot['boxes'][6:10]:       # Motion, Phys_Freq, Phys_Var, & CSF = light gray
             patch.set_facecolor(colors[2])
         for line in bplot['medians']:      # set median line to really dark blue
             line.set_color('midnightblue')
@@ -546,39 +546,24 @@ class group_plots:
         plt.xlim([0,len(subtitles)+1])      # control edge of plot
         plt.ylim([0,100])
         bplot = plt.boxplot([RT_var_list, RR_var_list, AB_var_list, RB_var_list, RTonly_var_list, \
-            RRonly_var_list, Motion_var_list, Phys_Freq_var_list, Phys_Var_var_list, WM_CSF_var_list], positions=centered_grouped_positions, vert=True, patch_artist=True, labels=subtitles, widths=0.4)       # boxplot
+            RRonly_var_list, Motion_var_list, Phys_Freq_var_list, Phys_Var_var_list, CSF_var_list], positions=centered_grouped_positions, vert=True, patch_artist=True, labels=subtitles, widths=0.4)       # boxplot
         for patch in bplot['boxes'][0:2]:       # Rejected by Tedana & Rejected by Regressors = brown
             patch.set_facecolor(colors[0])
         for patch in bplot['boxes'][2:6]:       # Accepted by Both, Rejected by Both, Rejected by Tedana Only, Rejected by Regressors Only = light salmon
             patch.set_facecolor(colors[1])
-        for patch in bplot['boxes'][6:10]:       # Motion, Phys_Freq, Phys_Var, WM & CSF = light gray
+        for patch in bplot['boxes'][6:10]:       # Motion, Phys_Freq, Phys_Var, & CSF = light gray
             patch.set_facecolor(colors[2])
         for line in bplot['medians']:      # set median line to black
             line.set_color('midnightblue')
         # rest of figure parameters
         plt.xticks(centered_grouped_positions, subtitles, rotation=45, ha='right')
-        subtitles=("Rejected by Tedana","Rejected by Regressors","Accepted by Both","Rejected by Both","Rejected by Tedana Only","Rejected by Regressors Only","Motion","Phys_Freq","Phys_Var","WM_CSF")
+        subtitles=("Rejected by Tedana","Rejected by Regressors","Accepted by Both","Rejected by Both","Rejected by Tedana Only","Rejected by Regressors Only","Motion","Phys_Freq","Phys_Var","CSF")
 
         # depending on the mode, save a .SVG file or show the plot
         if mode == 'save':
             plt.savefig(f"{outdir}{prefix}_{task}.svg")
         else:
             plt.show()
-
-# Single-component plots
-"""
-Choosing from just sub-24 (for visualization purposes):
-Rejected
-Motion-only: 9
-Phys_Freq-only: 8
-Phys_Var-only: None
-WM_CSF-only: None
-All_Mixed_Component: None
-Motion_x_Phys_Freq: 58
-Motion_x_Phys_Var: 7
-Motion_x_WM_CSF: 4
-Motion_x_Phys_Var_x_WM_CSF: 49, 66, 60
-"""
 
 # single-component plots
 class component_plots:
@@ -690,8 +675,8 @@ class component_plots:
             'pitch_dmn', 'yaw_dmn', 'dS_dmn', 'dL_dmn', 'dP_dmn', 'roll_drv',
             'pitch_drv', 'yaw_drv', 'dS_drv', 'dL_drv', 'dP_drv', 'cardiac_sin1',
             'cardiac_cos1', 'cardiac_sin2', 'cardiac_cos2', 'resp_sin1',
-            'resp_cos1', 'resp_sin2', 'resp_cos2', 'ecg_hrv', 'resp_rvt', 'WM_e',
-            'Csf_vent'
+            'resp_cos1', 'resp_sin2', 'resp_cos2', 'ecg_hrv', 'resp_rvt',
+            'csf1', 'csf2', 'csf3'
         Note: polynomial regressors (with order 0-4)
             - polort0 = a horizontal straight line (a constant)     -> f(x) = c
             - polort1 = a linear line (with order of 1, a slope)     -> f(x) = bx + c
@@ -711,7 +696,7 @@ class component_plots:
         kappa = np.round(metrics["kappa"].iloc[component],1)
         rho = np.round(metrics["rho"].iloc[component], 1)
         varex = np.round(metrics["variance explained"].iloc[component], 1)
-        signif_types = ['Motion', 'Phys_Freq', 'Phys_Variability', 'WM & CSF']
+        signif_types = ['Motion', 'Phys_Freq', 'Phys_Variability', 'CSF']
         signif_label = 'Signif'
         signif_gap = ':'
         for signif in signif_types:
@@ -861,37 +846,16 @@ sp = statistic_plots()
 
 if __name__ == '__main__':
 
-    # # Generate plots
-    # mode='save'
-    # for task in ['wnw','movie','breathing']:
-    #     gp.scatter_svg(1, 25, task, mode)
-    #     gp.kde_density_plot(task, mode)
-    #     gp.whisker_boxplot(task, mode)
-    
-    gp.whisker_boxplot('movie', 'show')
+    # Generate plots
+    mode='save'
+    for task in ['wnw','movie','breathing']:
+         gp.scatter_svg(1, 25, task, mode)
+         gp.kde_density_plot(task, mode)
+         gp.whisker_boxplot(task, mode)
 
-    # cp.plot_all_components('save')
+    cp.plot_all_components('save')
 
     # sp.plot_means()
-
-# show the components you like in AFNI (components.nii.gz)
-
-"""
-Possible components to look at:
-Comp 39: sub-2, breathing run 1 (kappa: 174.6, var explained: 9.0) -> Motion & Phys_Variability *
-Comp 44: sub-4, breathing run 1 (kappa: 93.4, var explained: 0.8) -> Motion, Phys_Variablity & WM/CSF *
-Comp 40: sub-8, breathing run 1 (kappa: 66.5, var explained: 2.9) -> Motion, Phys_Variability
-Comp 00: sub-12, breathing run 1 (kappa: 55.5, var explained: 5.6) -> Motion, WM/CSF
-Comp 36: sub-16, breathing run 1 (kappa: 57.6, var explained: 5.2) -> Motion
-Comp 13: sub-16, movie run 1 (kappa: 60.4, var explained: 7.6) -> Motion, Phys_Variability
-Comp 54: sub-17, breathing run 1 (kappa: 57.2, var explained: 5.6) -> Motion, Phys_Varability, & WM/CSF
-Comp 25: sub-17, movie run 1 (kappa: 62.5, var explained: 26.9) -> Motion, Phys_Variability, & WM/CSF
-Comp 01: sub-18, breathing run 1 (kappa: 78.3, var explained: 1.9) -> Motion, Phys_Variability
-Comp 45: sub-19, breathing run 1 (kappa: 85.1, var explained: 2.8) -> Motion, WM/CSF *
-Comp 59: sub-21, breathing run 1 (kappa: 66.5, var explained: 1.6) -> Motion, Phys_Variability, & WM/CSF
-Comp 45: sub-24, breathing run 1 (kappa: 61.6, var explained: 2.5) -> Motion
-Comp 04: sub-24, movie run 1 (kappa: 80.5, var explained: 6.8) -> Motion, WM/CSF *s
-"""
 
 
 
