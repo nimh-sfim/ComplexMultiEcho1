@@ -122,3 +122,12 @@ function=ISC; call_function
 # bash GroupStats_Corrs.sh Ttest movie_A_x_resp_A1 special_group;
 # bash GroupStats_Corrs.sh Ttest movie_B_x_resp_A1 special_group;
 # bash GroupStats_Corrs.sh Ttest resp_A1_x_resp_A2 special_group;
+
+# bash GroupStats_Corrs.sh ISC movie_A_x_movie_B all;
+# bash GroupStats_Corrs.sh ISC movie_B_x_movie_A all;
+# bash GroupStats_Corrs.sh ISC resp_A1_x_resp_A1 all;
+# bash GroupStats_Corrs.sh ISC resp_A2_x_resp_A2 all;
+# bash GroupStats_Corrs.sh ISC movie_A_x_movie_B special_group;
+# bash GroupStats_Corrs.sh ISC movie_B_x_movie_A special_group;
+# bash GroupStats_Corrs.sh ISC resp_A1_x_resp_A1 special_group;
+# bash GroupStats_Corrs.sh ISC resp_A2_x_resp_A2 special_group;

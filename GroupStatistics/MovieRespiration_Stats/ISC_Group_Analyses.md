@@ -25,7 +25,7 @@ bash ISC_correlations.sh movie_B_x_resp_A1
 bash ISC_correlations.sh resp_A1_x_resp_A2
 ```
 
-<br>Between-Subject Correlations: swarm (4 hrs)
+<br>Between-Subject Correlations: swarm (< 12 hrs)
 <br>Correlates all of the runs across subjects by datatype (2nd echo, OC, TedDN, combined regressors, lm regressors)
 ```
 bash ISC_correlations.sh movie_A_x_movie_B_between
@@ -60,7 +60,7 @@ bash GroupStats_Corrs.sh ISC resp_A1_x_resp_A1 all
 bash GroupStats_Corrs.sh ISC resp_A2_x_resp_A2 all
 ```
 
-<br>(Optional): If you'd like to compare performance across certain groups of subjects (i.e., good task performance or low motion), you can call "motion" or "task_compliant"
+<br>(Optional): If you'd like to compare performance across certain groups of subjects (i.e., good task performance or low motion or 'sepcial_group' - low motion and task compliant), you can call "motion" or "task_compliant" or "special_group"
 <br>(Example)
 ```
 bash quick_script.sh isc_dataframe motion

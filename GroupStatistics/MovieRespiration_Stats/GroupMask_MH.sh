@@ -90,9 +90,7 @@ blurring_between_correlations() {
         cd $dir;
         files_to_blur=`ls ./*.nii`;
         for f in ${files_to_blur}; do
-            if ! [ -f ${f::-4}_blurred.nii ]; then
-                3dBlurToFWHM -overwrite -input $f -prefix $f -FWHM 4
-            fi
+            3dBlurToFWHM -overwrite -input $f -prefix $f -FWHM 4
         done
     done
 }

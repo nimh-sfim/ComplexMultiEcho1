@@ -16,31 +16,22 @@ echo "Subjects to feed through ISC: " $iter_list
 # a function to create a unique list of subjects & echo subjects into isc dataframe
 function unique_list() {
     # gather the corresponding files (these are the blurred correlation files)
-    files=`ls ./Between_*_${dset}_blurred.nii`;
-
-    # create array
-    array=();
+    files=`ls ./Between_Tcorr_sub-??_x_sub-??_task-${d::-9}_${dset}.nii`;
+    catch_array=();
 
     for f in $files; do
-        basef=`basename $f`; 
-        older_files=( '2nd_echo' 'OC' );        # these older between-correlation files will be named differently
-        if [[ ${older_files[*]} =~ (^|[[:space:]])"${dset}"($|[[:space:]]) ]]; then     # if dset in older_files...
-            sub1=`echo $basef | awk -F"_" '{print $3}'`;
-            sub2=`echo $basef | awk -F"_" '{print $7}'`;
-        else                                    # these are the newer files: ted_DN, and the combined regressors....
-            sub1=`echo $basef | awk -F"_" '{print $3}'`;
-            sub2=`echo $basef | awk -F"_" '{print $5}'`;
-        fi
+        basef=`basename $f`;                         
+        sub1=`echo $basef | awk -F"_" '{print $3}'`;
+        sub2=`echo $basef | awk -F"_" '{print $5}'`;
 
-        # echo ONLY UNIQUE PAIRS (no repeats) entries into the outfile
-        if ! [[ ${array[*]} =~ (^|[[:space:]])"${sub1}"($|[[:space:]]) ]]; then
-            # append into the tmp array (this is to process 1 subject at a time - i.e., sub-01xsub-02, sub-01xsub-??, etc...)
-            # so the first entry would be: sub-01..., then sub-02..., etc.
-            array+=" $sub1 ";
-        fi
+        # identify file and reverse file
+        basef=Between_Tcorr_${sub1}_x_${sub2}_task-${d::-9}_${dset}.nii  
+        reverse_file=Between_Tcorr_${sub2}_x_${sub1}_task-${d::-9}_${dset}.nii
 
-        # check if sub1 and sub2 in tmp list -> once they are both in the tmp list, then this pair will be processed and never run again ***
-        if [[ ${array[*]} =~ (^|[[:space:]])"${sub1}"($|[[:space:]]) ]] && [[ ${array[*]} =~ (^|[[:space:]])"${sub2}"($|[[:space:]]) ]]; then
+        catch_array+=( "$reverse_file" )        # append reverse files to the catch array
+
+        # check if the current file (basef) is in the catch_array [of reverse files not to be processed]; if so, then file is not appended to outfile
+        if ! [[ ${catch_array[*]} =~ (^|[[:space:]])"${basef}"($|[[:space:]]) ]]; then
             # filter subjects by iter_list -> check if both of these subjects are in the 'all' 'motion' or 'task compliant' condition lists
             if [[ ${iter_list[*]} =~ (^|[[:space:]])"${sub1}"($|[[:space:]]) ]] && [[ ${iter_list[*]} =~ (^|[[:space:]])"${sub2}"($|[[:space:]]) ]]; then 
                 echo -e "$sub1   $sub2   $basef" >> $outfile;
@@ -67,20 +58,20 @@ isc_dataframe() {
         ### NOTE: the Between-correlation files for ted_DN vs the other regressors are named differently***
         for dset in '2nd_echo' 'OC' 'ted_DN' 'combined_regressors'; do
 
-            echo ${condition}_${dset}_isc_${filter}.txt
+            echo ${condition}_between_${dset}_isc_${filter}.txt
 
             # check if file exists and remove if it does
-            if [ -f ${condition}_${dset}_isc_${filter}.txt ]; then rm ${condition}_${dset}_isc_${filter}.txt; fi
+            if [ -f ${condition}_between_${dset}_isc_${filter}.txt ]; then rm ${condition}_between_${dset}_isc_${filter}.txt; fi
 
             # create file & echo the header
-            touch ./${condition}_${dset}_isc_${filter}.txt; outfile=./${condition}_${dset}_isc_${filter}.txt
+            touch ./${condition}_between_${dset}_isc_${filter}.txt; outfile=./${condition}_between_${dset}_isc_${filter}.txt
             echo -e "Subj1    Subj2    InputFile" >> $outfile;
 
             # echo the filtered, unique (no repeats) between-subject pairs into the isc dataframe
             unique_list;
 
             # print outfile name & show contents of file
-            echo $outfile; cat $outfile
+            echo "Output file: $outfile"; cat $outfile
 
             # dset=0;         # again really important to reset the variables at end of loop
 

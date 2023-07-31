@@ -65,18 +65,23 @@ function correlation_loop {
                 if [ "$subject" != "$subject2" ]; then
                     subject_f=$subject; subject2_f=$subject2; fname1_f=$fname1; fname2_f=$fname2; suffix_f1=${file: -6}; suffix_f2=${file2: -6}; get_suffix;
                     outfile=${corr_type}_Tcorr_${subject_f}_x_${subject2_f}_task-${fname1_f}_x_${fname2_f}_${suffix_f}.nii
+                    reversefile=${corr_type}_Tcorr_${subject2_f}_x_${subject_f}_task-${fname1_f}_x_${fname2_f}_${suffix_f}.nii      # the reverse file is a duplicate correlation that doesn't need to be generated, since 3dISC doesn't read in duplicates
                 fi
             fi
 
             # runs correlation only if the output file does not already exist within an output_list -> avoids repetitious correlations from the nested "for" loops
             # this will greatly save on computation time for "correlations"
+            # For Between correlations, the reverse file will be added to the output_list, so if the outfile matches the reverse file, it will be ignored -> also cuts down on repetitious correlations
             if ! [[ ${output_list[*]} =~ (^|[[:space:]])"${outfile}"($|[[:space:]]) ]]; then
                 echo $subject_f, $subject2_f, $fname1_f, $fname2_f, $suffix_f
-                # Uncomment the line below to do the correlations:
                 echo $outfile
                 3dTcorrelate -overwrite -pearson -Fisher -polort 4 -prefix ${outfile} $file $file2
             fi
-            output_list+=( $outfile )
+            if [ $corr_type == Within ]; then
+                output_list+=( $outfile )
+            elif [ $corr_type == Between ]; then
+                output_list+=( $outfile $reversefile )
+            fi
         done
     done
     # reset the output_list (to remove any lingering values)

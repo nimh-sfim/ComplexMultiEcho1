@@ -15,7 +15,7 @@ low_motion=(sub-01 sub-04 sub-05 sub-08 sub-10 sub-11 sub-15 sub-16 sub-19 sub-2
 task_compliant=(sub-01 sub-02 sub-03 sub-04 sub-05 sub-07 sub-08 sub-09 sub-10 sub-12 sub-15 sub-19 sub-21 sub-23 sub-24 sub-25);
 
 # array of low-motion and task-compliant subjects: 9
-special_group=(sub-01 sub-04 sub-05 sub-08 sub-10 sub-15 sub-19 sub-23)
+special_group=(sub-01 sub-04 sub-05 sub-08 sub-10 sub-15 sub-19 sub-21 sub-23)
 
 # a function to iterate through specified filter list: all subjects, low motion, task compliant
 function iter_func {
