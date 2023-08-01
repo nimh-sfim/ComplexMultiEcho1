@@ -17,7 +17,7 @@ bash Physio_Proc.sh sub-?? convert
 Enter task run:
 wnw 1
 Enter date:
-2022-04-07T09_35_21
+2022-01-01T09_00_00
 ```
 
 <br>Trim the physiological files with [Physio_Proc.sh](Physio_Proc.sh) and enter 'trim' at the 'process to call' prompt. The trimmed files will be dropped in the 'Unprocessed/func/' directory.
