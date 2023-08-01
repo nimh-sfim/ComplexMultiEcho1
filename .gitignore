@@ -11,6 +11,8 @@ TestWNW*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
+PhysioProcessing/Physio_QC/__pycache__/
+PhysioProcessing/__pycache__/
 *.py[cod]
 *$py.class
 

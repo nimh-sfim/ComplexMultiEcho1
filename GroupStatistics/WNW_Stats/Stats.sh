@@ -1,22 +1,20 @@
-# zsh or not
+#!/bin/bash
 
 # Graphs & Visualization:
 
-# call: zsh Stats.sh sub-01 wnw
-
-# zsh
+# call: bash Stats.sh sub-01 wnw
 
 sub=$1
 task=$2
-GLMs=(combined_regressors e2_mot_CSF OC_mot OC_mot_CSF orthtedana_mot orthtedana_mot_csf septedana_mot septedana_mot_csf)
+GLMs=( tedana_mot_csf_v23_c70_kundu_wnw second_echo_mot_csf_v23_c70_kundu_wnw optimally_combined_mot_csf_v23_c70_kundu_wnw combined_regressors_v23_c70_kundu_wnw )
 
 root=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sub}/
 
-for g in $GLMs; do
+for g in ${GLMs[@]}; do
     cd ${root}GLMs/$g/; if [ -d Stats/ ]; then rm -r Stats/; fi
     if [[ $task == 'wnw' ]]; then
         # make Stats dir
-        mkdir Stats/; cd Stats/
+        mkdir Stats/; cd Stats/; chmod g+x ../noise.all*;
 
         # Concatenate all the stats you need into 1 file (Vis-Aud, Word-NonWord)
         3dTcat -prefix Coefficients ../stats.${sub}.${g}_REML+orig'[2..$(4)]'
@@ -50,9 +48,7 @@ for g in $GLMs; do
         cat CNR_ROIs_WNW.1D CNR_ROIs_VisAud.1D >> CNR_ROIs_all.1D
 
     fi
-    # if [[ $task == 'movie' ]]; then 
-    # if [[ $task == 'breathing' ]]; then
 done
 
-chgrp -R SFIM /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-0?/GLMs/*/Stats/
-chmod -R 2770 /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-0?/GLMs/*/Stats/
+# chgrp -R SFIM /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-??/GLMs/*/Stats/
+# chmod -R 2770 /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/sub-??/GLMs/*/Stats/

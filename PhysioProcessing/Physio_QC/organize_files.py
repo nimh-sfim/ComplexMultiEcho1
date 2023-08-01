@@ -35,7 +35,7 @@ def preproc(ts, type:str, scale:str, perc:int):
     if type == "real ts":
         # downsample real ts (by cutting out every 200th dp)
         """
-	Biopac Hz: 2000 samples/sec (2000 Hz)
+	    Biopac Hz: 2000 samples/sec (2000 Hz)
         PsychoPy sampling rate: 0.1 samples/sec (10 Hz)
         conversion: 2000*0.1 = 200dps difference
         """

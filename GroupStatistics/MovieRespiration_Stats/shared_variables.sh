@@ -14,12 +14,16 @@ low_motion=(sub-01 sub-04 sub-05 sub-08 sub-10 sub-11 sub-15 sub-16 sub-19 sub-2
 # array of task-compliant subjects (followed breathing cue amplitude/depth well with minimal missed cycles)
 task_compliant=(sub-01 sub-02 sub-03 sub-04 sub-05 sub-07 sub-08 sub-09 sub-10 sub-12 sub-15 sub-19 sub-21 sub-23 sub-24 sub-25);
 
+# array of low-motion and task-compliant subjects: 9
+special_group=(sub-01 sub-04 sub-05 sub-08 sub-10 sub-15 sub-19 sub-21 sub-23)
+
 # a function to iterate through specified filter list: all subjects, low motion, task compliant
 function iter_func {
 
     if [[ $filter == all ]]; then iter_list=${all_subjects[*]};
     elif [[ $filter == motion ]]; then iter_list=${low_motion[*]};
     elif [[ $filter == task_compliant ]]; then iter_list=${task_compliant[*]};
+    elif [[ $filter == special_group ]]; then iter_list=${special_group[*]};
     fi
 
     echo $iter_list
@@ -48,17 +52,17 @@ function call_function {
     esac
 }
 
-# a function to check if file suffices match and to return a string of the re-named suffix
-function get_suffixes {
+function get_suffix {
     if [ $suffix_f1 == $suffix_f2 ]; then
         # rename suffix
-        if [ "$suffix_f1" == ho.nii ]; then
+        if [ "$dtype" == 2nd-echo ]; then
             suffix_f="2nd_echo"
-        elif [ "$suffix_f1" == OC.nii ]; then 
+        elif [ "$dtype" == OC ]; then 
             suffix_f="OC"
-        elif [ "$suffix_f1" == DN.nii ]; then 
+        elif [ "$dtype" == tedana-denoised ]; then 
             suffix_f="ted_DN"
+        elif [ "$dtype" == combined_regressors ]; then 
+            suffix_f="combined_regressors"
         fi
     fi
-    echo $suffix_f
 }

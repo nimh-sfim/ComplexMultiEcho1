@@ -28,12 +28,16 @@ fi
 
 function condition_directories {
     outdir="${cond1_str}_x_${cond2_str}";
-    mk_dir=${rootdir}GroupResults/GroupISC/IS_Correlations/${corr_type}_subjects/$outdir
-    if ! [ -d $mk_dir ]; then
-        mkdir $mk_dir; 
+    if [ "$corr_type" == 'Within' ]; then
+        curr_dir=${rootdir}GroupResults/GroupISC/IS_Correlations/${corr_type}_subjects/${outdir}
+    elif [ "$corr_type" == 'Between' ]; then
+        curr_dir=${rootdir}GroupResults/GroupISC/IS_Correlations/${corr_type}_subjects/${outdir}_between
     fi
-    cd $mk_dir;
-    #pwd
+    if ! [ -d $curr_dir ]; then
+        mkdir $curr_dir; 
+    fi
+    cd $curr_dir;
+    pwd
 }
 
 function correlation_loop {
@@ -52,27 +56,32 @@ function correlation_loop {
             if [ $corr_type == Within ]; then
                 # check if subjects are equal
                 if [ "$subject" == "$subject2" ]; then
-                    subject_f=$subject; subject2_f=$subject2; fname1_f=$fname1; fname2_f=$fname2; suffix_f1=${file: -6}; suffix_f2=${file2: -6}
+                    subject_f=$subject; subject2_f=$subject2; fname1_f=$fname1; fname2_f=$fname2; suffix_f1=${file: -6}; suffix_f2=${file2: -6}; get_suffix;
                     outfile=${corr_type}_Tcorr_${subject_f}_task-${fname1_f}_x_${fname2_f}_${suffix_f}.nii
                 fi
+            # Note: the Between-subject analyses will be blurred POST-correlation
             elif [ $corr_type == Between ]; then
                 # check if subjects are NOT equal
                 if [ "$subject" != "$subject2" ]; then
-                    subject_f=$subject; subject2_f=$subject2; fname1_f=$fname1; fname2_f=$fname2; suffix_f1=${file: -6}; suffix_f2=${file2: -6}
+                    subject_f=$subject; subject2_f=$subject2; fname1_f=$fname1; fname2_f=$fname2; suffix_f1=${file: -6}; suffix_f2=${file2: -6}; get_suffix;
                     outfile=${corr_type}_Tcorr_${subject_f}_x_${subject2_f}_task-${fname1_f}_x_${fname2_f}_${suffix_f}.nii
+                    reversefile=${corr_type}_Tcorr_${subject2_f}_x_${subject_f}_task-${fname1_f}_x_${fname2_f}_${suffix_f}.nii      # the reverse file is a duplicate correlation that doesn't need to be generated, since 3dISC doesn't read in duplicates
                 fi
             fi
 
-            suffix_f=$(get_suffixes)
-
             # runs correlation only if the output file does not already exist within an output_list -> avoids repetitious correlations from the nested "for" loops
             # this will greatly save on computation time for "correlations"
+            # For Between correlations, the reverse file will be added to the output_list, so if the outfile matches the reverse file, it will be ignored -> also cuts down on repetitious correlations
             if ! [[ ${output_list[*]} =~ (^|[[:space:]])"${outfile}"($|[[:space:]]) ]]; then
                 echo $subject_f, $subject2_f, $fname1_f, $fname2_f, $suffix_f
-                # Uncomment the line below to do the correlations:
-                # 3dTcorrelate -overwrite -pearson -Fisher -polort 4 -prefix ${outfile} $file $file2
+                echo $outfile
+                3dTcorrelate -overwrite -pearson -Fisher -polort 4 -prefix ${outfile} $file $file2
             fi
-            output_list+=( $outfile )
+            if [ $corr_type == Within ]; then
+                output_list+=( $outfile )
+            elif [ $corr_type == Between ]; then
+                output_list+=( $outfile $reversefile )
+            fi
         done
     done
     # reset the output_list (to remove any lingering values)
@@ -88,9 +97,10 @@ movie_A_x_movie_B() {
     cond1_str=movie_A;
     cond2_str=movie_B;
     
+    condition1=$movie_A_warped_2nd_echo; condition2=$movie_B_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
     condition1=$movie_A_warped_OC; condition2=$movie_B_warped_OC; condition_directories; dtype=OC; correlation_loop
     condition1=$movie_A_warped_ted_DN; condition2=$movie_B_warped_ted_DN; condition_directories; dtype=tedana-denoised; correlation_loop
-    condition1=$movie_A_warped_2nd_echo; condition2=$movie_B_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
+    condition1=$movie_A_warped_combined_regressors; condition2=$movie_B_warped_combined_regressors; condition_directories; dtype=combined_regressors; correlation_loop
 }
 
 movie_A_x_resp_A1() {
@@ -99,9 +109,10 @@ movie_A_x_resp_A1() {
     cond1_str=movie_A;
     cond2_str=resp_A1;
 
+    condition1=$movie_A_warped_2nd_echo; condition2=$breathing_files_r1_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
     condition1=$movie_A_warped_OC; condition2=$breathing_files_r1_warped_OC; condition_directories; dtype=OC; correlation_loop
     condition1=$movie_A_warped_ted_DN; condition2=$breathing_files_r1_warped_ted_DN; condition_directories; dtype=tedana-denoised; correlation_loop
-    condition1=$movie_A_warped_2nd_echo; condition2=$breathing_files_r1_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
+    condition1=$movie_A_warped_combined_regressors; condition2=$breathing_files_r1_warped_combined_regressors; condition_directories; dtype=combined_regressors; correlation_loop
 }
 
 movie_B_x_resp_A1() {
@@ -110,9 +121,10 @@ movie_B_x_resp_A1() {
     cond1_str=movie_B;
     cond2_str=resp_A1;
 
+    condition1=$movie_B_warped_2nd_echo; condition2=$breathing_files_r1_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
     condition1=$movie_B_warped_OC; condition2=$breathing_files_r1_warped_OC; condition_directories; dtype=OC; correlation_loop
     condition1=$movie_B_warped_ted_DN; condition2=$breathing_files_r1_warped_ted_DN; condition_directories; dtype=tedana-denoised; correlation_loop
-    condition1=$movie_B_warped_2nd_echo; condition2=$breathing_files_r1_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
+    condition1=$movie_B_warped_combined_regressors; condition2=$breathing_files_r1_warped_combined_regressors; condition_directories; dtype=combined_regressors; correlation_loop
 }
 
 resp_A1_x_resp_A2() {
@@ -121,9 +133,10 @@ resp_A1_x_resp_A2() {
     cond1_str=resp_A1;
     cond2_str=resp_A2;
 
+    condition1=$breathing_files_r1_warped_2nd_echo; condition2=$breathing_files_r2_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
     condition1=$breathing_files_r1_warped_OC; condition2=$breathing_files_r2_warped_OC; condition_directories; dtype=OC; correlation_loop
     condition1=$breathing_files_r1_warped_ted_DN; condition2=$breathing_files_r2_warped_ted_DN; condition_directories; dtype=tedana-denoised; correlation_loop
-    condition1=$breathing_files_r1_warped_2nd_echo; condition2=$breathing_files_r2_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
+    condition1=$breathing_files_r1_warped_combined_regressors; condition2=$breathing_files_r2_warped_combined_regressors; condition_directories; dtype=combined_regressors; correlation_loop
 }
 
 # Between-subject analyses
@@ -133,9 +146,10 @@ movie_A_x_movie_B_between() {
     cond1_str=movie_A;
     cond2_str=movie_B;
 
+    condition1=$movie_A_warped_2nd_echo; condition2=$movie_B_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
     condition1=$movie_A_warped_OC; condition2=$movie_B_warped_OC; condition_directories; dtype=OC; correlation_loop
     condition1=$movie_A_warped_ted_DN; condition2=$movie_B_warped_ted_DN; condition_directories; dtype=tedana-denoised; correlation_loop
-    condition1=$movie_A_warped_2nd_echo; condition2=$movie_B_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
+    condition1=$movie_A_warped_combined_regressors; condition2=$movie_B_warped_combined_regressors; condition_directories; dtype=combined_regressors; correlation_loop
 }
 
 movie_B_x_movie_A_between() {
@@ -144,9 +158,10 @@ movie_B_x_movie_A_between() {
     cond1_str=movie_B;
     cond2_str=movie_A;
 
+    condition1=$movie_B_warped_2nd_echo; condition2=$movie_A_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
     condition1=$movie_B_warped_OC; condition2=$movie_A_warped_OC; condition_directories; dtype=OC; correlation_loop
     condition1=$movie_B_warped_ted_DN; condition2=$movie_A_warped_ted_DN; condition_directories; dtype=tedana-denoised; correlation_loop
-    condition1=$movie_B_warped_2nd_echo; condition2=$movie_A_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
+    condition1=$movie_B_warped_combined_regressors; condition2=$movie_A_warped_combined_regressors; condition_directories; dtype=combined_regressors; correlation_loop
 }
 
 resp_A1_x_resp_A1_between() {
@@ -155,9 +170,10 @@ resp_A1_x_resp_A1_between() {
     cond1_str=resp_A1;
     cond2_str=resp_A1;
 
+    condition1=$breathing_files_r1_warped_2nd_echo; condition2=$breathing_files_r1_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
     condition1=$breathing_files_r1_warped_OC; condition2=$breathing_files_r1_warped_OC; condition_directories; dtype=OC; correlation_loop
     condition1=$breathing_files_r1_warped_ted_DN; condition2=$breathing_files_r1_warped_ted_DN; condition_directories; dtype=tedana-denoised; correlation_loop
-    condition1=$breathing_files_r1_warped_2nd_echo; condition2=$breathing_files_r1_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
+    condition1=$breathing_files_r1_warped_combined_regressors; condition2=$breathing_files_r1_warped_combined_regressors; condition_directories; dtype=combined_regressors; correlation_loop
 }
 
 resp_A2_x_resp_A2_between() {
@@ -166,9 +182,10 @@ resp_A2_x_resp_A2_between() {
     cond1_str=resp_A2;
     cond2_str=resp_A2;
 
+    condition1=$breathing_files_r2_warped_2nd_echo; condition2=$breathing_files_r2_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
     condition1=$breathing_files_r2_warped_OC; condition2=$breathing_files_r2_warped_OC; condition_directories; dtype=OC; correlation_loop
     condition1=$breathing_files_r2_warped_ted_DN; condition2=$breathing_files_r2_warped_ted_DN; condition_directories; dtype=tedana-denoised; correlation_loop
-    condition1=$breathing_files_r2_warped_2nd_echo; condition2=$breathing_files_r2_warped_2nd_echo; condition_directories; dtype=2nd-echo; correlation_loop
+    condition1=$breathing_files_r2_warped_combined_regressors; condition2=$breathing_files_r2_warped_combined_regressors; condition_directories; dtype=combined_regressors; correlation_loop
 }
 
 # THEN 3dISC
@@ -185,18 +202,19 @@ function=movie_B_x_movie_A_between; call_function
 function=resp_A1_x_resp_A1_between; call_function
 function=resp_A2_x_resp_A2_between; call_function
 
-# Run below analyses in swarm file
-# Within
+# # Run below analyses in swarm file
+# # Within
 # bash ISC_correlations.sh movie_A_x_movie_B
 # bash ISC_correlations.sh movie_A_x_resp_A1
 # bash ISC_correlations.sh movie_B_x_resp_A1
 # bash ISC_correlations.sh resp_A1_x_resp_A2
 
-# Between
+# # Between
 # bash ISC_correlations.sh movie_A_x_movie_B_between
 # bash ISC_correlations.sh movie_B_x_movie_A_between
 # bash ISC_correlations.sh resp_A1_x_resp_A1_between
 # bash ISC_correlations.sh resp_A2_x_resp_A2_between
+
 
 
 

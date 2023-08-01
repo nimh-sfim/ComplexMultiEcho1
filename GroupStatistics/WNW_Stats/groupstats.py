@@ -12,8 +12,8 @@ Call command: python3 groupstats.py wnw
 def gather_data():
     out="/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/GroupResults/ROIstats/"
 
-    num=13
-    glms=["combined_regressors","e2_mot_CSF","OC_mot","OC_mot_CSF","orthtedana_mot","orthtedana_mot_csf","septedana_mot","septedana_mot_csf"]
+    num=25
+    glms=['second_echo_mot_csf_v23_c70_kundu_wnw','optimally_combined_mot_csf_v23_c70_kundu_wnw','tedana_mot_csf_v23_c70_kundu_wnw','combined_regressors_v23_c70_kundu_wnw']
 
     # subjects -> df indices start at 1
     indices=np.arange(1,num+1,1)

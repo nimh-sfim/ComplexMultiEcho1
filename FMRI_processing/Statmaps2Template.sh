@@ -5,9 +5,7 @@
 # Then run the mean mask calculation.
 # Then run the swarm for smoothing
 
-sbjlist=(01 02 03 04 05 06 07 08 09 10 11 12 13)
-
-GLMlist=(e2_mot_CSF OC_mot_CSF orthtedana_mot_csf combined_regressors)
+GLMlist=(second_echo_mot_csf_v23_c70_kundu_wnw optimally_combined_mot_csf_v23_c70_kundu_wnw tedana_mot_csf_v23_c70_kundu_wnw combined_regressors_v23_c70_kundu_wnw)
 
 rootdir=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data
 
@@ -38,8 +36,8 @@ if [ -f WarpStats2Group.txt ]; then
 fi
 touch WarpStats2Group.txt
 
-for snum in ${sbjlist[@]}; do
-  sbj=sub-${snum}
+# warp stats files (and their full masks) to the EPI grid template
+for sbj in sub-{01..25}; do
   warp_path="${rootdir}/${sbj}/Proc_Anat/awpy"
   for GLM in ${GLMlist[@]}; do
 cat << EOF >> WarpStats2Group.txt
@@ -63,19 +61,19 @@ swarm --partition=quick --time=00:15:00 -g 12 -t 8 -b 8 -m afni --merge-output -
 
 
 cd $GroupDir
-# after the above swarm finishes, make a mask across all the subject's stat maps
+# after the above swarm finishes, make a mask across all the subject's stat maps (by calling 3dMean across all of the individual subject masks)
 # This mask currently seems to big. May want to also restrict by anatomical
 3dMean -mask_inter -overwrite -prefix GroupMask.nii.gz \
   ./sbj_maps/full_mask.sub-??_tlrc.nii.gz
 
 
+# using the group mask you just made, smooth the statistical maps per subject and GLM by blurring within the mask
 if [ -f SmoothStats.txt ]; then
     echo Deleting and recreating SmoothStats.txt
     rm SmoothStats.txt
 fi
 touch SmoothStats.txt
-for snum in ${sbjlist[@]}; do
-  sbj=sub-${snum}
+for sbj in sub-{01..25}; do
   for GLM in ${GLMlist[@]}; do
 cat << EOF >> SmoothStats.txt
     cd ${GroupDir}/sbj_maps; module load afni;  \
