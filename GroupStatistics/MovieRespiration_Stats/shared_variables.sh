@@ -63,6 +63,14 @@ function get_suffix {
             suffix_f="ted_DN"
         elif [ "$dtype" == combined_regressors ]; then 
             suffix_f="combined_regressors"
+            
+        # no motion/csf correction
+        elif [ "$dtype" == 2nd-echo_no_correction ]; then
+            suffix_f="2nd_echo_no_correction"
+        elif [ "$dtype" == OC_no_correction ]; then 
+            suffix_f="OC_no_correction"
+        elif [ "$dtype" == tedana-denoised_no_correction ]; then 
+            suffix_f="ted_DN_no_correction"
         fi
     fi
 }
