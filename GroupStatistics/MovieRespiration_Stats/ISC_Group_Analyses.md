@@ -6,7 +6,7 @@
 * Maximum time to complete the processing (per subprocess) as well as what type of job to run is included
 * These times might increase depending on how many subjects you are analyzing
 
-<br>Warp the original files to a common template MNI152_2009_template: swarm (1 hr)
+<br>Warp the original files to the 1st subject's template: swarm (1 hr)
 ```
 bash warping_group_template.sh orig_warped sub-??
 ```
@@ -26,7 +26,7 @@ bash ISC_correlations.sh resp_A1_x_resp_A2
 ```
 
 <br>Between-Subject Correlations: swarm (< 12 hrs)
-<br>Correlates all of the runs across subjects by datatype (2nd echo, OC, TedDN, combined regressors, lm regressors)
+<br>Correlates all of the runs across subjects by datatype (2nd echo, OC, TedDN, combined regressors)
 ```
 bash ISC_correlations.sh movie_A_x_movie_B_between
 bash ISC_correlations.sh movie_B_x_movie_A_between
