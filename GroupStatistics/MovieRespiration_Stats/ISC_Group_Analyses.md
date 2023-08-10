@@ -41,7 +41,7 @@ bash GroupMask_MH.sh blurring_between_correlations
 
 <br>Create the .txt files that contain the table for the 'blurred' between-subject correlations (< 1 min)
 ```
-bash quick_script.sh isc_dataframe all
+bash Create_ISC_datatables.sh isc_dataframe all
 ```
 
 <br>Group T-test for Within-Subject Correlations: swarm (10 mins)
@@ -63,9 +63,9 @@ bash GroupStats_Corrs.sh ISC resp_A2_x_resp_A2 all
 <br>(Optional): If you'd like to compare performance across certain groups of subjects (i.e., good task performance or low motion or 'sepcial_group' - low motion and task compliant), you can call "motion" or "task_compliant" or "special_group"
 <br>(Example)
 ```
-bash quick_script.sh isc_dataframe motion
-bash quick_script.sh isc_dataframe task_compliant
-bash quick_script.sh isc_dataframe special_group
+bash Create_ISC_datatables.sh isc_dataframe motion
+bash Create_ISC_datatables.sh isc_dataframe task_compliant
+bash Create_ISC_datatables.sh isc_dataframe special_group
 Ttest movie_A_x_movie_B task_compliant
 Ttest movie_A_x_movie_B motion
 ISC movie_A_x_movie_B motion
