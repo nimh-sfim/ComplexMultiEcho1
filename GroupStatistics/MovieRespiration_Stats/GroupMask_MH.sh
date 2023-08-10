@@ -69,7 +69,8 @@ group_mask_generation() {
 
 # masking note: DO NOT mask the FisherZ-correlation files (will only mask between high-intensity voxels, not giving the entire brain, basically the equivalent of calling 3dTcorrelate -automask)
 masking_warped_files() {
-    original_warped=`ls warped_files/orig_warped/*.nii`
+    # original_warped=`ls warped_files/orig_warped/*.nii`
+    original_warped=`ls warped_files/orig_warped/*2nd_echo_no_correction.nii`
     for orig in $original_warped; do
         3dAutomask -overwrite -apply_prefix $orig $orig;
     done

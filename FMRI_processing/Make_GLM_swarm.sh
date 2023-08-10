@@ -12,8 +12,7 @@ if ! [ -d './GLMs']; then
 fi
 cd GLMs
 
-# txt_files=( ${sbj}_GLM_sbatch_2nd_echo.txt ${sbj}_GLM_sbatch_OC.txt ${sbj}_GLM_sbatch_ted.txt ${sbj}_GLM_sbatch_CR.txt );
-txt_files=( ${sbj}_GLM_sbatch_2nd_echo.txt ${sbj}_GLM_sbatch_ted.txt );
+txt_files=( ${sbj}_GLM_sbatch_2nd_echo.txt ${sbj}_GLM_sbatch_OC.txt ${sbj}_GLM_sbatch_ted.txt ${sbj}_GLM_sbatch_CR.txt );
 for f in ${txt_files[@]}; do
   if [ -f $f ]; then
     echo Deleting and recreating $f
@@ -24,9 +23,6 @@ done
 
 rootdir=`pwd`
 
-rest_ted_dir=tedana_v23_c70_kundu_r01;
-task_ted_dir=tedana_v23_c70_kundu_r0?;
-
 ############################################
 # 2nd echo with Mot/CSF (regular) #
 ############################################
@@ -34,49 +30,49 @@ cat << EOF > ${sbj}_GLM_sbatch_2nd_echo.txt
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/WNW/${sbj}.results/ second_echo_mot_csf_v23_c70_kundu_wnw \
+    $sbj ./ ../afniproc_orig/WNW/${sbj}.results/ second_echo_mot_csf_wnw \
     --inputfiles pb0?.${sbj}.r0?.e02.volreg+orig.HEAD --scale_ts \
     --include_motion --include_CSF \
     --task wnw
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/movie_run-1/${sbj}.results/ second_echo_mot_csf_v23_c70_kundu_movie_run-1 \
+    $sbj ./ ../afniproc_orig/movie_run-1/${sbj}.results/ second_echo_mot_csf_movie_run-1 \
     --inputfiles pb0?.${sbj}.r0?.e02.volreg+orig.HEAD --scale_ts \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/movie_run-2/${sbj}.results/ second_echo_mot_csf_v23_c70_kundu_movie_run-2 \
+    $sbj ./ ../afniproc_orig/movie_run-2/${sbj}.results/ second_echo_mot_csf_movie_run-2 \
     --inputfiles pb0?.${sbj}.r0?.e02.volreg+orig.HEAD --scale_ts \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/movie_run-3/${sbj}.results/ second_echo_mot_csf_v23_c70_kundu_movie_run-3 \
+    $sbj ./ ../afniproc_orig/movie_run-3/${sbj}.results/ second_echo_mot_csf_movie_run-3 \
     --inputfiles pb0?.${sbj}.r0?.e02.volreg+orig.HEAD --scale_ts \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/breathing_run-1/${sbj}.results/ second_echo_mot_csf_v23_c70_kundu_breathing_run-1 \
+    $sbj ./ ../afniproc_orig/breathing_run-1/${sbj}.results/ second_echo_mot_csf_breathing_run-1 \
     --inputfiles pb0?.${sbj}.r0?.e02.volreg+orig.HEAD --scale_ts \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/breathing_run-2/${sbj}.results/ second_echo_mot_csf_v23_c70_kundu_breathing_run-2 \
+    $sbj ./ ../afniproc_orig/breathing_run-2/${sbj}.results/ second_echo_mot_csf_breathing_run-2 \
     --inputfiles pb0?.${sbj}.r0?.e02.volreg+orig.HEAD --scale_ts \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/breathing_run-3/${sbj}.results/ second_echo_mot_csf_v23_c70_kundu_breathing_run-3 \
+    $sbj ./ ../afniproc_orig/breathing_run-3/${sbj}.results/ second_echo_mot_csf_breathing_run-3 \
     --inputfiles pb0?.${sbj}.r0?.e02.volreg+orig.HEAD --scale_ts \
     --include_motion --include_CSF \
     --task rest
@@ -89,49 +85,49 @@ cat << EOF > ${sbj}_GLM_sbatch_OC.txt
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/WNW/${sbj}.results/ optimally_combined_mot_csf_v23_c70_kundu_wnw \
+    $sbj ./ ../afniproc_orig/WNW/${sbj}.results/ optimally_combined_mot_csf_wnw \
     --inputfiles ${task_ted_dir}/desc-optcom_bold.nii.gz --scale_ts \
     --include_motion --include_CSF \
     --task wnw
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/movie_run-1/${sbj}.results/ optimally_combined_mot_csf_v23_c70_kundu_movie_run-1 \
+    $sbj ./ ../afniproc_orig/movie_run-1/${sbj}.results/ optimally_combined_mot_csf_movie_run-1 \
     --inputfiles ${rest_ted_dir}/desc-optcom_bold.nii.gz --scale_ts \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/movie_run-2/${sbj}.results/ optimally_combined_mot_csf_v23_c70_kundu_movie_run-2 \
+    $sbj ./ ../afniproc_orig/movie_run-2/${sbj}.results/ optimally_combined_mot_csf_movie_run-2 \
     --inputfiles ${rest_ted_dir}/desc-optcom_bold.nii.gz --scale_ts \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/movie_run-3/${sbj}.results/ optimally_combined_mot_csf_v23_c70_kundu_movie_run-3 \
+    $sbj ./ ../afniproc_orig/movie_run-3/${sbj}.results/ optimally_combined_mot_csf_movie_run-3 \
     --inputfiles ${rest_ted_dir}/desc-optcom_bold.nii.gz --scale_ts \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/breathing_run-1/${sbj}.results/ optimally_combined_mot_csf_v23_c70_kundu_breathing_run-1 \
+    $sbj ./ ../afniproc_orig/breathing_run-1/${sbj}.results/ optimally_combined_mot_csf_breathing_run-1 \
     --inputfiles ${rest_ted_dir}/desc-optcom_bold.nii.gz --scale_ts \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/breathing_run-2/${sbj}.results/ optimally_combined_mot_csf_v23_c70_kundu_breathing_run-2 \
+    $sbj ./ ../afniproc_orig/breathing_run-2/${sbj}.results/ optimally_combined_mot_csf_breathing_run-2 \
     --inputfiles ${rest_ted_dir}/desc-optcom_bold.nii.gz --scale_ts \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/breathing_run-3/${sbj}.results/ optimally_combined_mot_csf_v23_c70_kundu_breathing_run-3 \
+    $sbj ./ ../afniproc_orig/breathing_run-3/${sbj}.results/ optimally_combined_mot_csf_breathing_run-3 \
     --inputfiles ${rest_ted_dir}/desc-optcom_bold.nii.gz --scale_ts \
     --include_motion --include_CSF \
     --task rest
@@ -140,57 +136,64 @@ EOF
 ############################################
 # Tedana Regression with Mot/CSF (regular) #
 ############################################
+# testing out the various tedana versions with a GLM
+
+for ted_version in 'tedana_v23_c70_kundu_' 'tedana_v23_c70_minimal_' 'tedana_v23_kic_kundu_' 'tedana_v23_kic_minimal_'; do
+rest_ted_dir=${ted_version}r01;
+task_ted_dir=${ted_version}r0?;
+
 cat << EOF > ${sbj}_GLM_sbatch_ted.txt
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/WNW/${sbj}.results/ tedana_mot_csf_v23_c70_kundu_wnw \
+    $sbj ./ ../afniproc_orig/WNW/${sbj}.results/ ${ted_version}wnw \
     --inputfiles ${task_ted_dir}/desc-optcomDenoised_bold.nii.gz \
     --include_motion --include_CSF \
     --task wnw
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/movie_run-1/${sbj}.results/ tedana_mot_csf_v23_c70_kundu_movie_run-1 \
+    $sbj ./ ../afniproc_orig/movie_run-1/${sbj}.results/ ${ted_version}movie_run-1 \
     --inputfiles ${rest_ted_dir}/desc-optcomDenoised_bold.nii.gz \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/movie_run-2/${sbj}.results/ tedana_mot_csf_v23_c70_kundu_movie_run-2 \
+    $sbj ./ ../afniproc_orig/movie_run-2/${sbj}.results/ ${ted_version}movie_run-2 \
     --inputfiles ${rest_ted_dir}/desc-optcomDenoised_bold.nii.gz \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/movie_run-3/${sbj}.results/ tedana_mot_csf_v23_c70_kundu_movie_run-3 \
+    $sbj ./ ../afniproc_orig/movie_run-3/${sbj}.results/ ${ted_version}movie_run-3 \
     --inputfiles ${rest_ted_dir}/desc-optcomDenoised_bold.nii.gz \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/breathing_run-1/${sbj}.results/ tedana_mot_csf_v23_c70_kundu_breathing_run-1 \
+    $sbj ./ ../afniproc_orig/breathing_run-1/${sbj}.results/ ${ted_version}breathing_run-1 \
     --inputfiles ${rest_ted_dir}/desc-optcomDenoised_bold.nii.gz \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/breathing_run-2/${sbj}.results/ tedana_mot_csf_v23_c70_kundu_breathing_run-2 \
+    $sbj ./ ../afniproc_orig/breathing_run-2/${sbj}.results/ ${ted_version}breathing_run-2 \
     --inputfiles ${rest_ted_dir}/desc-optcomDenoised_bold.nii.gz \
     --include_motion --include_CSF \
     --task rest
 source /home/handwerkerd/InitConda.sh; \
 cd ${rootdir}; module load afni; \
   python /data/holnessmn/UpToDate_ComplexME/ComplexMultiEcho1/FMRI_processing/Denoising_GLMs.py \
-    $sbj ./ ../afniproc_orig/breathing_run-3/${sbj}.results/ tedana_mot_csf_v23_c70_kundu_breathing_run-3 \
+    $sbj ./ ../afniproc_orig/breathing_run-3/${sbj}.results/ ${ted_version}breathing_run-3 \
     --inputfiles ${rest_ted_dir}/desc-optcomDenoised_bold.nii.gz \
     --include_motion --include_CSF \
     --task rest
 EOF
+done
 
 #########################################################
 # Combined Regressors 70 Components Kundu Decision Tree #
@@ -263,9 +266,9 @@ cd ${rootdir}; module load afni; \
 EOF
 
 swarm --time 12:00:00 -g 12 -t 8 -m afni --merge-output --job-name ${sbj}_GLMS ${sbj}_GLM_sbatch_2nd_echo.txt
-# swarm --time 12:00:00 -g 12 -t 8 -m afni --merge-output --job-name ${sbj}_GLMS ${sbj}_GLM_sbatch_OC.txt
+swarm --time 12:00:00 -g 12 -t 8 -m afni --merge-output --job-name ${sbj}_GLMS ${sbj}_GLM_sbatch_OC.txt
 swarm --time 12:00:00 -g 12 -t 8 -m afni --merge-output --job-name ${sbj}_GLMS ${sbj}_GLM_sbatch_ted.txt
-# swarm --time 12:00:00 -g 12 -t 8 -m afni --merge-output --job-name ${sbj}_GLMS ${sbj}_GLM_sbatch_CR.txt
+swarm --time 12:00:00 -g 12 -t 8 -m afni --merge-output --job-name ${sbj}_GLMS ${sbj}_GLM_sbatch_CR.txt
 
 ########################
 ##### OLD analyses...... #####
