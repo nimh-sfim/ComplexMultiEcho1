@@ -85,8 +85,8 @@ arguments="$filter";
 function=isc_dataframe; call_function
 
 # This runs in 2-3 minutes, so can be called from the command line
-# bash quick_script.sh isc_dataframe all
-# bash quick_script.sh isc_dataframe motion
-# bash quick_script.sh isc_dataframe task_compliant
-# bash quick_script.sh isc_dataframe special_group
+# bash Create_ISC_datatables.sh isc_dataframe all
+# bash Create_ISC_datatables.sh isc_dataframe motion
+# bash Create_ISC_datatables.sh isc_dataframe task_compliant
+# bash Create_ISC_datatables.sh isc_dataframe special_group
 

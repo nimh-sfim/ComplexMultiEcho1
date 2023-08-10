@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Template to warp all subject EPIs to the same grid template
+# Common space is MNI152_2009_template and field-of-view and grid is based on the aligned data from sub-01
 # This group template will be used for the ISC correlations
 # Ultimately, it will warp breathing/movie runs to same template for all subjects
 

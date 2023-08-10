@@ -1,6 +1,11 @@
 #!/bin/bash
 
 # a file to organize all the files you're correlating to minimize errors
+# For each run type, create a variable to pass the run names to ISC_correlations.sh
+# A key part of this script is that, for the movie runs, breathing pattern A
+# is sometimes run 1 and sometimes run 2. Therefore, there is a hard-coded list
+# of which is which for all 25 subjects, and this is the script that organizes them
+
 
 rootdir=/data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/
 warpDir=${rootdir}GroupResults/GroupISC/warped_files/orig_warped/

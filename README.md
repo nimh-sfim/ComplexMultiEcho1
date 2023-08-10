@@ -1,12 +1,13 @@
 # ComplexMultiEcho1
 
-This project is part of a larger goal to improve fMRI data by thorough removal of noise and artifacts.
-This specific study is examining ways to combine:
+This project is part of a larger goal to improve fMRI data thorough removal of noise and artifacts.
+While the processing code here does not do everything, these data were collected with the goal of
+examining ways to combine:
 
 - Thermal noise reduction methods that take advantage of using complex (vs magnitude-only) fMRI
   data and noise scans (building off of NORDIC)
 - Multi-echo fMRI denoising (building off of tedana)
-- Cardiac and respiratory noise removal using respiratory and cardiac recordings
+- Cardiac and respiratory noise removal using respiratory and cardiac recordings (potentially combining the AROMA approach with the tedana approach)
 
 ## Data
 

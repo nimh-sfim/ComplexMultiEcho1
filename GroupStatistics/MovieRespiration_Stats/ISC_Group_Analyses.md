@@ -6,7 +6,7 @@
 * Maximum time to complete the processing (per subprocess) as well as what type of job to run is included
 * These times might increase depending on how many subjects you are analyzing
 
-<br>Warp the original files to the 1st subject's template: swarm (1 hr)
+<br>Warp the original files to a common template MNI152_2009_template: swarm (1 hr)
 ```
 bash warping_group_template.sh orig_warped sub-??
 ```
@@ -17,7 +17,7 @@ bash GroupMask_MH.sh masking_warped_files
 ```
 
 <br>Within-Subject Correlations: swarm (2 hrs)
-<br>Correlates all of the runs across subjects by datatype (2nd echo, OC, TedDN, combined regressors, lm regressors)
+<br>Correlates all of the runs within subjects by datatype (2nd echo, OC, TedDN, combined regressors, lm regressors)
 ```
 bash ISC_correlations.sh movie_A_x_movie_B
 bash ISC_correlations.sh movie_A_x_resp_A1
@@ -41,7 +41,7 @@ bash GroupMask_MH.sh blurring_between_correlations
 
 <br>Create the .txt files that contain the table for the 'blurred' between-subject correlations (< 1 min)
 ```
-bash quick_script.sh isc_dataframe all
+bash Create_ISC_datatables.sh isc_dataframe all
 ```
 
 <br>Group T-test for Within-Subject Correlations: swarm (10 mins)
@@ -63,9 +63,9 @@ bash GroupStats_Corrs.sh ISC resp_A2_x_resp_A2 all
 <br>(Optional): If you'd like to compare performance across certain groups of subjects (i.e., good task performance or low motion or 'sepcial_group' - low motion and task compliant), you can call "motion" or "task_compliant" or "special_group"
 <br>(Example)
 ```
-bash quick_script.sh isc_dataframe motion
-bash quick_script.sh isc_dataframe task_compliant
-bash quick_script.sh isc_dataframe special_group
+bash Create_ISC_datatables.sh isc_dataframe motion
+bash Create_ISC_datatables.sh isc_dataframe task_compliant
+bash Create_ISC_datatables.sh isc_dataframe special_group
 Ttest movie_A_x_movie_B task_compliant
 Ttest movie_A_x_movie_B motion
 ISC movie_A_x_movie_B motion

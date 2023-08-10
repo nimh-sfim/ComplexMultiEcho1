@@ -5,6 +5,11 @@
 # The fixed components is not ideal, but it should allow ICA to converge for all runs and will avoid runs
 # where the estimate from KIC is implausibly too large or small
 
+# This script is not designed to be run from the command line.
+# Run the first half to generate the swarm file and then run swarm on biowulf
+# After all jobs are finished running, the second half checks that all
+# expected outputs were generated.
+
 
 
 cd /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/

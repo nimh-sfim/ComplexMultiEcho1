@@ -8,7 +8,13 @@
 
 # NOTE: sub-04's TR is 1.519, note says to consider interpolation for ISC*
 
+
+# When this is run, several variables are loaded into shell memory:
+
 . ./organized_breathing_files.sh
+
+
+
 . ./shared_variables.sh
 
 cd ${rootdir}GroupResults/GroupISC/

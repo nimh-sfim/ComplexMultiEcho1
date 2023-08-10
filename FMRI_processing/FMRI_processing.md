@@ -13,11 +13,10 @@ run_afniproc.sh sub-??
 ```
 
 ## <br> Tedana Multi-echo PCA & ICA
-### <br>Run variations of tedana with different PCA selection criteria with [Create_tedana_swarm.sh](Create_tedana_swarm.sh)
-<font size="1">This is primarily to better understand how various criteria affect the number of components generated</font>
-```
-Create_tedana_swarm.sh
-```
+### <br>Run variations of tedana with different PCA dimensionality reductino criteria with [Create_tedana_swarm.sh](Create_tedana_swarm.sh)
+<font size="1">This is primarily to better understand how various criteria affect the number of components generated. Note that this script
+is not designed to be run from the command line. Excute the first half, then call `swarm` to submit the jobs.
+Then the second half is used to make sure the correct outputs were generated after the submitted jobs complete</font>
 
 ## <br> Linear Model fits to noise Regressors
 ### <br>Fit the motion, physiology, CSF, and white matter regressors to the ICA components from tedana and create a combined regressor file of the rejected components with [../PhysioProcessing/run_FitReg2ICA.sh](../PhysioProcessing/run_FitReg2ICA.sh)
@@ -29,7 +28,7 @@ Create_tedana_swarm.sh
 ## <br> General Linear Model
 ### Run various GLMs with [Make_GLM_swarm.sh](Make_GLM_swarm.sh)
 <br><font size="1">
-This creates submits multiple jobs to biowulf that call `Denoising_GLMs.py`.<br>
+This creates submits multiple jobs to biowulf that call [Denoising_GLMs.py](./Denoising_GLMs.py).<br>
 `Denoising_GLMs.py` is a way to select various inputs to the GLM (i.e. 2nd echo, optimally combined) and various options for the nuisance noise regressors to include for processing the Word-Nonword task.<br>
 There is also an option to include a custom csv file with nuisance regressors.
 </font>

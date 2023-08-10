@@ -15,7 +15,7 @@ Basic instructions:
 - Each run includes 12 trials for each condition and the intent is to collect 3 runs per volunteer.
 The stimuli are presented in groups of 4 of the same condition, each 1 sec apart (4 sec of stimulation/trial)
 - Participants are instructed to press a button if the same stimulus appears twice in a group of 4.
-- All groups of 4 stimuli/trial are listed in [AllStimuli.csv](AllStimuli.csv) and the sound files for each word are the sound_files subdirectory
+- All groups of 4 stimuli/trial are listed in [AllStimuli.csv](AllStimuli.csv) and the sound files for each word are the [sound_files](./sound_files/) subdirectory
 
 Stimulus order:
 - There are 9 hard-coded stimulus orders. These were generated using [CreatingStimuliOrders.ipynb](CreatingStimuliOrders.ipynb). These orders are in files like [WordNonword_Run1.csv](WordNonword_Run1.csv.
