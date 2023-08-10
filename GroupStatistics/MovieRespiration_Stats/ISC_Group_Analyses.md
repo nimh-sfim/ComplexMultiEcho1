@@ -17,7 +17,7 @@ bash GroupMask_MH.sh masking_warped_files
 ```
 
 <br>Within-Subject Correlations: swarm (2 hrs)
-<br>Correlates all of the runs within subjects by datatype (2nd echo, OC, TedDN, combined regressors, lm regressors)
+<br>Correlates all of the runs across subjects by datatype (2nd echo, OC, TedDN, combined regressors)
 ```
 bash ISC_correlations.sh movie_A_x_movie_B
 bash ISC_correlations.sh movie_A_x_resp_A1
