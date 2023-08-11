@@ -9,12 +9,14 @@
 # NOTE: sub-04's TR is 1.519, note says to consider interpolation for ISC*
 
 
-# When this is run, several variables are loaded into shell memory:
-
+# When this is run, several variables are loaded into shell memory with names like:
+# breathing_files_r1_warped_2nd_echo_no_correction, breathing_files_r2_warped_2nd_echo_no_correction
+# movie_A_warped_2nd_echo movie_A_warped_OC ...
 . ./organized_breathing_files.sh
 
-
-
+# Loads several variables into shell memory including:
+# rootdir, all_subjects, low_motion, task_compliant, special_group
+#  special_group are the subjects that are both low_motion and task_compliant
 . ./shared_variables.sh
 
 cd ${rootdir}GroupResults/GroupISC/
