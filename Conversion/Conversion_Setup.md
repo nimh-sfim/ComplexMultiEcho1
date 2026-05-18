@@ -84,6 +84,19 @@ chgrp -R SFIM /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sbj}
 chmod -R 2770 /data/NIMH_SFIM/handwerkerd/ComplexMultiEcho1/Data/${sbj}
 ```
 <br><br>
+
+### Separate noise volumes
+
+After this data was already organized, BIDS came out with a specification that trailing noise volumes at the
+end of a scan should be in a separate file with a `_noRF` suffix.
+[confirm_last_five_noise_volumes.py](confirm_last_five_noise_volumes.py) was used to confirm that
+that exactly the last five volume of every run had much lower signal and was noise.
+The log from running this script is [echo_analysis_results.csv](echo_analysis_results.csv).
+Then [separate_noise_volumes.py](separate_noise_volumes.py) was used to create a swarm script,
+which separated the noise volumes into a new file and overwrite the original data file to
+exclude the noise volumes.
+Do not run this script again because it would then remove 5 good volumes from the end of a file.
+
 ### <b>Convert physiological BIOPAC Acqknowledge (.acq) files to BIDS format (.tsv.gz/.json)</b>
 
 <br>see  `../PhysioProcessing/Physiological_Proc.md`
