@@ -1,0 +1,83 @@
+{
+    "TaskDescription": "Event related design with 4 stimulus times. Visual vs audio words. Visual non-words (wingdings font) and audio non-words (vcoded distorted words). Each trial is 4 stimuli 1s apart. Participant presses a button if two stimuli in a row repeat",
+    "StimulusPresentation": {
+        "OperatingSystem": "OSX",
+        "SoftwareName": "PsychoPy2",
+        "Code": "https://github.com/nimh-sfim/ComplexMultiEcho1/blob/main/PsychoPy/WordNonword"
+    },
+    "Run": {
+        "Description": "There are 9 fixed sets of pseudorandom stimuli. This number indicates which of the 9 sets was used for this run."
+    },
+    "TrialN": {
+        "Description": "The trial order within each run. There are 48 total trials and an initial and final Null trial so there are 50 counted trials per run. -1 are extra key presses outside of trials."
+    },
+    "ProcedureID": {
+        "Description": "The procedure ID for each trial. 0=Null, 1=VisProc, 2=AudProc, 3=FalVisProc, 4=FalAudProc, -1=KeyPressOutsideTrial"
+    },
+    "Procedure": {
+        "Description": "The trial type: Null=no stimuli, VisProc=text words, AudProc=audio words, FalVisProc=wingdings font nonwords, FalAudProc=distorted audio nonwords, KeyPressOutsideTrial=keypress outside of trial"
+    },
+    "TrialStartSecExpected": {
+        "Description": "The expected start time for each trial in seconds, as defined in the PsychoPy script."
+    },
+    "stim1_time": {
+        "Description": "The onset time for the first stimulus."
+    },
+    "stim2_time": {
+        "Description": "The onset time for the second stimulus."
+    },
+    "stim3_time": {
+        "Description": "The onset time for the third stimulus."
+    },
+    "stim4_time": {
+        "Description": "The onset time for the fourth stimulus."
+    },
+    "Expected_Response": {
+        "Description": "The expected response for each trial. TRUE=participant should press a button because there was a repeated stimulus, FALSE=participant should not press a button."
+    },
+    "Correct Response": {
+        "Description": "The correct response for each trial. A button was pressed for a repeated stimulus or no button was pressed for a non-repeated stimulus. Note that Null trials are logged as TRUE for no button press but this is excluded from the summary count of correct trials."
+    },
+    "keypress time": {
+        "Description": "The time of the keypress in seconds. Only has a value when a key is pressed"
+    },
+    "Font": {
+        "Description": "The font used for the visual stimuli."
+    },
+    "stim1": {
+        "Description": "The first stimulus. For false audio trials, the name is the distorted word followed by _fal. This is because audio stimuli are each a separate sound file. These files are stored here https://github.com/nimh-sfim/ComplexMultiEcho1/tree/main/PsychoPy/WordNonword/sound_files"
+    },
+    "stim2": {
+        "Description": "The second stimulus."
+    },
+    "stim3": {
+        "Description": "The third stimulus."
+    },
+    "stim4": {
+       "Description": "The fourth stimulus."
+    },
+   "key pressed": {
+       "Description": "The key on the button box that was pressed. The button box has four keys with possible values of r, b, g, y. Participants were instructed to pick any button and use that same button for all responses. If no button was pressed, this value is n/a."
+    },
+   "ITI divisible by TR": {
+       "Description": "The expected Inter-Trial Interval (ITI) in seconds. These should be multiple of the inputted TR (1.5s). The ITI is from the onset of one trial to the onset of the next trial."
+    },
+   "ITI before TR adjustment": {
+       "Description": " The script has a default Inter-Trial Interval (ITI) that is shifted to a multiple of the inputted TR."
+    },
+   "stim1_dur": {
+       "Description": " The duration in seconds of the first stimulus in a visual trial. Should be 0.6sec. The duration of audio stimuli were not logged. The maximum audio length was 0.9sec, but the actual duration of each audio stimulus varied."
+   },
+   "stim2_dur": {
+       "Description": " The duration of the second stimulus in a visual trial."
+   },
+   "stim3_dur": {
+       "Description": " The duration of the third stimulus in a visual trial."
+   },
+  	"stim4_dur": {
+		"Description":" The duration of the fourth stimulus in a visual trial."
+    },
+    "csv-log stim1_time": {
+        "Description": "The stim1_time onset in seconds is logged in both the csv and log files. This is the difference between the start time of the run in each of these files. It should be very small."
+    }
+}

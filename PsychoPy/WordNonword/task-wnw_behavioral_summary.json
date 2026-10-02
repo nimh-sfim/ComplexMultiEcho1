@@ -1,0 +1,138 @@
+{
+    "TaskDescription": "Summary data for the word/nonword task. Each row is the summary from a single run defined in a task-wnw_run-?_events.tsv file. In additional behavioral measures, there is a separate subjective scanning log with notes on general attention and headphone audio quality. Some values in this files are behavioral and some are internal checks to make sure the run ran correctly and information was logged properly. Overall, this is an event-related task where volunteers saw 4 stimuli each 1s apart and pressed a button if the same stimulus appeared twice in a row. Stimulus types were visual words, audio words, visual false words (wingdings font), and audio false words (distorted speech).",
+    "participant_id": {
+        "Description": "Participant identification. (sub-01 to sub-25)"
+    },
+    "Run Acq Order": {
+        "Description": "The temporal order the runs were acquired during the session."
+    },
+    "Acquisition hour": {
+        "Description": "The hour of the day the run was acquired. Instead of including minutes, was rounded to 1/10 of an hour to make it slightly harder to identify."
+    },
+    "Run": {
+        "Description": "There are 9 fixed sets of pseudorandom stimuli. This number indicates which of the 9 sets was used for this run."
+    },
+    "Experiment Name": {
+        "Description": "The experiment name is the same for all runs and is used to identify the task."
+    },
+    "Correct Trials (count)": {
+        "Description": "The number of trials where the participant correctly identified a repeated stimulus or correctedly did not press a button."
+    },
+    "Correct Trials (percent)": {
+        "Description": "The percentage of trials where the participant correctly identified a repeated stimulus or correctedly did not press a button."
+    },
+    "Correct Keypresses (count)": {
+        "Description": "The number of correct button presses during trials with a repeated stimulus."
+    },
+    "Correct Keypresses (percent)": {
+        "Description": "The percentage of correct button presses during trials with a repeated stimulus."
+    },
+    "Incorrect Keypress (count)": {
+        "Description": "The number of button presses in trials without a repeated stimulus or outside of trials."
+    },
+    "VisProc N Trials": {
+        "Description": "The number of word visual processing trials (should always be 12). Each trial had 4 stimuli presented 1s apart. The first 3 stimuli were always different and the 4th stimulus was either a repeat of the 3rd or a new stimulus."
+    },
+    "VisProc N Expected Keypresses": {
+        "Description": "The number of expected button presses during word visual processing trials (should always be 2)."
+    },
+    "VisProc N Correct Keypresses": {
+        "Description": "The number of button presses during word visual processing trials with a repeated stimulus."
+    },
+    "VisProc N Incorrect Keypresses": {
+        "Description": "The number of button presses during word visual processing trials without a repeated stimulus."
+    },
+    "FalVisProc N Trials": {
+        "Description": "The number of non-word visual processing trials (should always be 12). Each trial had 4 stimuli presented 1s apart. The first 3 stimuli were always different and the 4th stimulus was either a repeat of the 3rd or a new stimulus."
+    },
+    "FalVisProc N Expected Keypresses": {
+        "Description": "The number of expected button presses during non-wordvisual processing trials (should always be 2)."
+    },
+    "FalVisProc N Correct Keypresses": {
+        "Description": "The number of button presses during non-word visual processing trials without a repeated stimulus."
+    },
+    "FalVisProc N Incorrect Keypresses": {
+        "Description": "The number of button presses during non-word visual processing trials without a repeated stimulus."
+    },
+    "AudProc N Trials": {
+        "Description": "The number of word auditory processing trials (should always be 12). Each trial had 4 stimuli presented 1s apart. The first 3 stimuli were always different and the 4th stimulus was either a repeat of the 3rd or a new stimulus."
+    },
+    "AudProc N Expected Keypresses": {
+        "Description": "The number of expected button presses during word auditory processing trials (should always be 2)."
+    },
+    "AudProc N Correct Keypresses": {
+        "Description": "The number of button presses during word auditory processing trials with a repeated stimulus."
+    },
+    "AudProc N Incorrect Keypresses": {
+        "Description": "The number of button presses during word auditory processing trials without a repeated stimulus."
+    },
+    "FalAudProc N Trials": {
+        "Description": "The number of non-word auditory processing trials (should always be 12). Each trial had 4 stimuli presented 1s apart. The first 3 stimuli were always different and the 4th stimulus was either a repeat of the 3rd or a new stimulus."
+    },
+    "FalAudProc N Expected Keypresses": {
+        "Description": "The number of expected button presses during non-word auditory processing trials (should always be 2)."
+    },
+    "FalAudProc N Correct Keypresses": {
+        "Description": "The number of button presses during non-word auditory processing trials without a repeated stimulus."
+    },
+    "FalAudProc N Incorrect Keypresses": {
+        "Description": "The number of button presses during non-word auditory processing trials without a repeated stimulus."
+    },
+    "TR measured (mean)": {
+        "Description": "The mean TR (seconds)measured from the scanner during the run (defined by time between every t keypress). This is a check to make sure the scanner was running at the expected TR."
+    },
+    "TR measured (std)": {
+        "Description": "The standard deviation of the TR measured from the scanner during the run (defined by time between every t keypress). This is a check to make sure the scanner was running at the expected TR."
+    },
+    "Closest TR - trial start (mean)": {
+        "Description": "The mean time from the closest TR to the start of each trial. Trials should start at a TR boundary so this number should be very small."
+    },
+    "Closest TR - trial start (std)": {
+        "Description": "The standard deviation of the time from the closest TR to the start of each trial. Trials should start at a TR boundary so this number should be very small."
+    },
+    "Real - expected trial start (mean sec)": {
+        "Description": "The mean time from the expected trial start (defined in the PsychoPy script) and the measured trial start. Should be very small."
+    },
+    "Real - expected trial start (std sec)": {
+        "Description": "The standard deviation of the time from the expected trial start (defined in the PsychoPy script) and the measured trial start."
+    },
+    "4th - 1st stimulus (mean sec)": {
+        "Description": "The mean time from the 1st stimulus to the 4th stimulus in each trial. Since stimuli are 1s apart, this should be very close to 3s."
+    },
+    "4th - 1st stimulus (std sec)": {
+        "Description": "The standard deviation of the time from the 1st stimulus to the 4th stimulus in each trial."
+    },
+    "vis stim duration (mean)": {
+        "Description": "The mean duration (seconds) of visual stimuli presentation. Should be very close to 0.6s."
+    },
+    "vis stim duration (std)": {
+        "Description": "The standard deviation of the duration (seconds) of visual stimuli presentation."
+    },
+    "global trigger time csv": {
+        "Description": "The time (seconds)of the global trigger in the PsychoPy response summary csv file. Unclear how this number is used, but logging anyway."
+    },
+    "global trigger trial 1 csv": {
+        "Description": "The time (seconds)of the global trigger in the PsychoPy response summary csv file for trial 1. This is when the task starts with a null trial is other relative time are in reference to this global time. The csv file contains audio and visual trial start time while the log file contains the visual start times, and keypress times."
+    },
+    "global trigger trial 1 diff": {
+        "Description": "The difference (seconds) between the global trigger time in the PsychoPy response summary csv file and the global trigger time for trial 1. This is consistently around 3.6 seconds."
+    },
+    "frame rate (mean)": {
+        "Description": "The mean frame rate (Hz) as recorded by the PsychoPy script."
+    },
+    "frame rate (std)": {
+        "Description": "The standard deviation of the frame rate (Hz) as recorded by the PsychoPy script."
+    },
+    "global start time log": {
+        "Description": "The time (seconds) of the global start time in the PsychoPy log file. The csv file contains audio and visual trial start time while the log file contains the visual start times, and keypress times."
+    },
+    "global start time csv-log": {
+        "Description": "The difference (seconds) between the global start time in the PsychoPy log file and the global trial 1 time in the PsychoPy response summary csv file. This is less than a second difference. The cause is unclear, but the relative time from the global start in each file and the start of trial 1 is nearly identical (vis trial start time csv-log) so the relative differences between the start time and each keypress is on the same scale."
+    },
+    "vis trial start time csv-log (mean)": {
+        "Description": "The mean difference (seconds) between the visual trial start time in the PsychoPy response summary csv file and the visual trial start time in the PsychoPy log file relative to each of their global start times. These should be very close to 0."
+    },
+    "vis trial start time csv-log (std)": {
+        "Description": "The standard deviation of the difference (seconds) between the visual trial start time in the PsychoPy response summary csv file and the visual trial start time in the PsychoPy log file relative to each of their global start times."
+    }
+}
